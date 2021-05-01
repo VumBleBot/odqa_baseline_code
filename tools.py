@@ -37,8 +37,10 @@ def update_args(args, strategy):
 
     args.alias = temp["alias"]
     for arg_type in ["model", "data", "train"]:
+        temp_type = getattr(args, arg_type)
         for k, v in temp[arg_type].items():
-            setattr(args, k, v)
+            setattr(temp_type, k, v)
+
     return args
 
 

@@ -83,13 +83,11 @@
         "eval_retrieval": true
     },
     "train": {
-        "output_dir": "ST02",
+        "load_best_model_at_end": true,
         "save_total_limit": 2
     }
 }
 ```
-
-
 
 ## How to Usage
 
