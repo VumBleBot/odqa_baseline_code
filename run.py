@@ -1,3 +1,4 @@
+import wandb
 import os.path as p
 from itertools import product
 from argparse import Namespace
@@ -14,6 +15,7 @@ def train_reader(args):
     seeds = args.seeds[: args.run_cnt]
 
     for idx, (seed, strategy) in enumerate(product(seeds, strategis)):
+        wandb.init(project="p-stage-3", reinit=True)
         args = update_args(args, strategy)  # auto add args.save_path, args.base_path
         args.strategy, args.seed = strategy, seed
         args.info = Namespace()
