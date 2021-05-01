@@ -26,6 +26,13 @@ def str2intlist(v):
 
     return list(map(int, v.strip().split(",")))
 
+def str2bool(v):
+    if v.lower() in ('true', 't', 'yes', 'y', '1'):
+        return True
+    elif v.lower() in ('false', 'f', 'no', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Debug 모드는 true/false 중 하나를 선택해주세요. ')
 
 def update_args(args, strategy):
     json_path = os.path.join(args.data_path, "config", f"{strategy}.json")
@@ -51,6 +58,7 @@ def get_args():
     arg_parser.add_argument("--run_cnt", type=int, default=1)
     arg_parser.add_argument("--seeds", type=str2intlist, default=SEEDS)
     arg_parser.add_argument("--data_path", type=str, default="../input/")
+    arg_parser.add_argument("--debug", type=str2bool, default="False")
 
     # data_path + 'info', 시각화를 위한 정보 저장
     # data_path + 'checkpoint', 모델 가중치 저장
@@ -89,5 +97,15 @@ def get_args():
     args.model = model_args
     args.data = data_args
     args.train = training_args
-
     return args
+
+
+def run_test(tcls):
+    import unittest
+    """
+    Runs unit tests from a test class
+    :param tcls: A class, derived from unittest.TestCase
+    """
+    suite = unittest.TestLoader().loadTestsFromTestCase(tcls)
+    runner = unittest.TextTestRunner(verbosity=2)
+    runner.run(suite)

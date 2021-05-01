@@ -24,7 +24,7 @@ def get_retriever(args):
     return retriever
 
 
-def get_reader_model(args):
+def get_reader_model(args):         
     config = AutoConfig.from_pretrained(
         args.model.config_name if args.model.config_name else args.model.model_name_or_path
     )
@@ -43,16 +43,21 @@ def get_reader_model(args):
     return model, tokenizer
 
 
-def prepare_dataset(args, is_train=True):
+def prepare_dataset(args, is_train=True, debug=False):
     datasets = None
 
     if args.data.dataset_name == "train_dataset":
         if is_train:
             datasets = load_from_disk(p.join(args.path.train_data_dir, args.data.dataset_name))
+            if debug:
+                datasets=datasets['train'][:int(len(datasets)*0.05)]
         else:
             datasets = load_from_disk(p.join(args.path.train_data_dir, "test_dataset"))
     elif args.data.dataset_name == "squad_kor_v1":
-        datasets = load_dataset(args.data.dataset_name)
+        if debug:
+            datasets = load_dataset(args.data.dataset_name,split='train[:5%]') 
+        else:
+            datasets = load_dataset(args.data.dataset_name)
 
     if datasets is None:
         raise KeyError(f"{args.data.dataset_name}데이터는 존재하지 않습니다.")

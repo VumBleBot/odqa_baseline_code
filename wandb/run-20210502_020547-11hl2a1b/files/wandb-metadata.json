@@ -1,0 +1,31 @@
+{
+    "os": "Linux-4.4.0-59-generic-x86_64-with-debian-buster-sid",
+    "python": "3.7.7",
+    "heartbeatAt": "2021-05-01T17:05:48.559920",
+    "startedAt": "2021-05-01T17:05:47.100841",
+    "docker": null,
+    "gpu": "Tesla P40",
+    "gpu_count": 1,
+    "cpu_count": 4,
+    "cuda": null,
+    "args": [
+        "--strategis",
+        "ST01",
+        "--run_cnt",
+        "3",
+        "--debug",
+        "true"
+    ],
+    "state": "running",
+    "program": "/opt/ml/odqa_baseline_code/run.py",
+    "codePath": "run.py",
+    "git": {
+        "remote": "https://github.com/VumBleBot/odqa_baseline_code.git",
+        "commit": "c02295a83048cddf8829ee77f9080071c2d71cda"
+    },
+    "email": "ebbunnim@gmail.com",
+    "root": "/opt/ml/odqa_baseline_code",
+    "host": "d4e95580dcc6",
+    "username": "root",
+    "executable": "/opt/conda/bin/python"
+}
