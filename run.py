@@ -38,9 +38,9 @@ def train_reader(args):
         # 새로운 전략(json)을 만드는 것을 추천합니다.
 
         args.train.run_name = "_".join([strategy, str(seed), args.alias])
-        print(args.train.run_name)
+        wandb.run.name = args.train.run_name
         args.train.output_dir = p.join(args.path.checkpoint, args.train.run_name)
-        print(args.train.output_dir)
+        print("checkpoint_dir: ", args.train.output_dir)
 
         # TRAIN MRC
         trainer = QuestionAnsweringTrainer(
