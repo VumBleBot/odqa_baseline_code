@@ -43,7 +43,7 @@ def get_reader_model(args):
     return model, tokenizer
 
 
-def prepare_dataset(args, is_train=True, debug=False):
+def prepare_dataset(args, is_train=True):
     datasets = None
 
     if args.data.dataset_name == "train_dataset":

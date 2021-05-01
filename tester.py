@@ -17,7 +17,7 @@ def test_train_reader(anc_args):
     args = deepcopy(anc_args)
     strategis = args.strategis
     SEED = random.choice(args.seeds) # fix run_cnt 1
-
+    
     @run_test
     class TestReader(unittest.TestCase):
         def test_all_strategy(self,args=args):
@@ -35,7 +35,7 @@ def test_train_reader(anc_args):
                 set_seed(seed) 
 
                 try : 
-                    prepare_dataset(args, is_train=True, debug=True)
+                    prepare_dataset(args, is_train=True)
                 except KeyError:
                     assert False, "존재하지 않는 dataset입니다. "
 
