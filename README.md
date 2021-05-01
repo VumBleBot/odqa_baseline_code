@@ -57,6 +57,40 @@
     - trainer_qa.py
     - utils_qa.py
 
+## Json File Example
+
+- config/model_args.py
+- config/train_args.py
+- config/data_args.py
+
+```json
+{
+    "alias": "temp",
+    "model": {
+        "model_name_or_path": "monologg/koelectra-small-v3-discriminator",
+        "config_name": "",
+        "tokenizer_name": ""
+    },
+    "data": {
+        "dataset_name": "train_dataset",
+        "overwrite_cache": false,
+        "preprocessing_num_workers": 4,
+        "max_seq_length": 384,
+        "pad_to_max_length": false,
+        "doc_stride": 128,
+        "max_answer_length": 30,
+        "train_retrieval": true,
+        "eval_retrieval": true
+    },
+    "train": {
+        "output_dir": "ST02",
+        "save_total_limit": 2
+    }
+}
+```
+
+
+
 ## How to Usage
 
 Server의 디렉토리 구조에서 input과 같은 수준에 위치하면 됩니다.
