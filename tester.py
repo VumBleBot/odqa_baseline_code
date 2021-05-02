@@ -75,7 +75,7 @@ class TestReader(unittest.TestCase):
             data_collator = DataCollatorWithPadding(tokenizer, pad_to_multiple_of=8 if args.train.fp16 else None)
 
             args.train.do_train = True
-            args.train.run_name = "_".join([strategy, str(seed), args.alias, 'test'])
+            args.train.run_name = "_".join([strategy, args.alias, str(seed), 'test'])
             wandb.run.name = args.train.run_name
 
             # TRAIN MRC

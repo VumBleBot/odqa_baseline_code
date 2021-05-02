@@ -41,7 +41,7 @@ def train_reader(args):
         # 테스트 해본 전략을 수정하고 다시 run 할 경우 덮어씌워집니다.
         # 새로운 전략(json)을 만드는 것을 추천합니다.
 
-        args.train.run_name = "_".join([strategy, str(seed), args.alias])
+        args.train.run_name = "_".join([strategy, args.alias, str(seed)])
         wandb.run.name = args.train.run_name
         args.train.output_dir = p.join(args.path.checkpoint, args.train.run_name) + "/"
 
