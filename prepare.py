@@ -16,6 +16,22 @@ def compute_metrics(p):
 
 
 def get_retriever(args):
+    """
+    Get appropriate retriver.
+
+    AVAILABLE OPTIONS(2021.05.02)
+    - Term-based
+        - TF-IDF : use konlpy-Mecab for word tokenization.
+        - TODO : BM-25
+    - Vector Embedding
+        - Sparse
+        - TODO : Dense
+    Need more retriever and retriever options.
+
+    :param args
+        - model.retriever_name : [tfidf]
+    :return: Retriever which contains embedded vector(+indexer if faiss is built).
+    """
     if args.model.retriever_name == "tfidf":
         from konlpy.tag import Mecab
 
@@ -26,6 +42,20 @@ def get_retriever(args):
 
 
 def get_reader_model(args):
+    """
+    Get pretrained MRC-Reader model and tokenizer.
+    If model setting is KoBERT, then load tokenizer from public KoBERT Tokenizer.
+    Else, transformers library autosets appropriate tokenizer from model(when tokenizer is not specified).
+
+    :param args:
+        - model.model_name_or_path(required) : model repository name that registered in huggingface library.
+            (ex - 'monologg/koelectra-small-v3-discriminator')
+        - model.model_path : saved checkpoint in server disk.
+            (ex - '/input/checkpoint/ST01_0_temp/checkpoint-500')
+        - model.config_name
+        - model_tokenizer_name
+    :return: pretrained model and tokenizer.
+    """
     config = AutoConfig.from_pretrained(
         args.model.config_name if args.model.config_name else args.model.model_name_or_path
     )
@@ -46,6 +76,15 @@ def get_reader_model(args):
 
 
 def prepare_dataset(args, is_train=True):
+    """
+    Load dataset from datset path in disk.
+
+    :param args
+        - data.dataset_name : [train_dataset, test_dataset, squad_kor_v1]
+        - debug : True expressions. If this setting is true, epoch and dataset will be restricted for quck testing.
+    :param is_train: True for training, False for validation.
+    :return: Loaded dataset.
+    """
     datasets = None
 
     if args.data.dataset_name == "train_dataset":
@@ -55,6 +94,7 @@ def prepare_dataset(args, is_train=True):
             datasets = load_from_disk(p.join(args.path.train_data_dir, "test_dataset"))
     elif args.data.dataset_name == "squad_kor_v1":
         datasets = load_dataset(args.data.dataset_name)
+    # Add more dataset option here.
 
     if datasets is None:
         raise KeyError(f"{args.data.dataset_name}데이터는 존재하지 않습니다.")
@@ -67,6 +107,23 @@ def prepare_dataset(args, is_train=True):
 
 
 def preprocess_dataset(args, datasets, tokenizer, is_train=True):
+    """
+    Setup dataset for training/validation/inference.
+    Inner fuctions
+        - prepare_train_features : for train dataset. tokenizing, offset mapping + answer position that model predicts.
+        - prepare_validation_feature : for validation dataset.  tokenizing, offset mapping.
+
+    :param args
+        - data.max_seq_length
+        - data.doc_stride
+        - data.pad_to_max_length
+        - max_answer_length
+    :param datasets
+    :param tokenizer
+    :param is_train : [True, False]
+        use prepare_train_features function if True. else, use prepare_validation_features function.
+    :return: (preprocessed dataset, postprocessing function for prediction)
+    """
     data_type = "train" if is_train else "validation"
 
     column_names = datasets[data_type].column_names
