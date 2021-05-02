@@ -62,6 +62,9 @@ def get_args():
     arg_parser.add_argument("--data_path", type=str, default="../input/")
     arg_parser.add_argument("--debug", type=str2bool, default=False)
 
+    # use for predict
+    arg_parser.add_argument("--model_path", type=str, default="")
+
     # data_path + 'info', 시각화를 위한 정보 저장
     # data_path + 'checkpoint', 모델 가중치 저장
     # data_path + 'config', 모델 하이퍼파라미터

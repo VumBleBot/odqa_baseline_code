@@ -1,5 +1,6 @@
 import faiss
 from sklearn.feature_extraction.text import TfidfVectorizer
+from datasets import Sequence, Value, Features, DatasetDict
 
 from tqdm.auto import tqdm
 import pandas as pd
@@ -72,6 +73,34 @@ class SparseRetrieval:
         self.indexer = faiss.IndexIVFScalarQuantizer(quantizer, quantizer.d, quantizer.ntotal, faiss.METRIC_L2)
         self.indexer.train(p_emb)
         self.indexer.add(p_emb)
+
+    def retrieve_pipeline(self, args, query_or_dataset, topk=1):
+        df = self.retrieve(query_or_dataset, topk=topk)
+
+        if args.train.do_predict is True:
+            f = Features(
+                {
+                    "context": Value(dtype="string", id=None),
+                    "id": Value(dtype="string", id=None),
+                    "question": Value(dtype="string", id=None),
+                }
+            )
+        else:
+            f = Features(
+                {
+                    "answers": Sequence(
+                        feature={"text": Value(dtype="string", id=None), "answer_start": Value(dtype="int32", id=None)},
+                        length=-1,
+                        id=None,
+                    ),
+                    "context": Value(dtype="string", id=None),
+                    "id": Value(dtype="string", id=None),
+                    "question": Value(dtype="string", id=None),
+                }
+            )
+
+        datasets = DatasetDict({"validation": Dataset.from_pandas(df, features=f)})
+        return datasets
 
     def retrieve(self, query_or_dataset, topk=1):
         assert (

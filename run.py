@@ -7,7 +7,7 @@ from transformers import set_seed
 from tools import update_args
 from trainer_qa import QuestionAnsweringTrainer
 from transformers import DataCollatorWithPadding
-from prepare import prepare_dataset, preprocess_dataset, get_reader_model, compute_metrics
+from prepare import prepare_dataset, preprocess_dataset, get_reader_model, compute_metrics, get_retriever
 
 
 def train_reader(args):
@@ -20,12 +20,16 @@ def train_reader(args):
         args.strategy, args.seed = strategy, seed
         args.info = Namespace()
         set_seed(seed)
-        print(strategy, seed)
 
         datasets = prepare_dataset(args, is_train=True)
         model, tokenizer = get_reader_model(args)
 
+        retriever = get_retriever(args)
+        retriever.get_sparse_embedding()
+
         train_dataset, post_processing_function = preprocess_dataset(args, datasets, tokenizer, is_train=True)
+
+        eval_dataset = retriever.retrieve_pipeline(args, datasets["validation"])
         eval_dataset, _ = preprocess_dataset(args, datasets, tokenizer, is_train=False)
 
         data_collator = DataCollatorWithPadding(tokenizer, pad_to_multiple_of=8 if args.train.fp16 else None)
@@ -39,7 +43,8 @@ def train_reader(args):
 
         args.train.run_name = "_".join([strategy, str(seed), args.alias])
         wandb.run.name = args.train.run_name
-        args.train.output_dir = p.join(args.path.checkpoint, args.train.run_name)
+        args.train.output_dir = p.join(args.path.checkpoint, args.train.run_name) + "/"
+
         print("checkpoint_dir: ", args.train.output_dir)
 
         # TRAIN MRC
@@ -56,7 +61,10 @@ def train_reader(args):
             compute_metrics=compute_metrics,
         )
 
-        trainer.train()
+        train_results = trainer.train()
+        eval_results = trainer.evaluate()
+
+        print(train_results, eval_results)
 
 
 if __name__ == "__main__":

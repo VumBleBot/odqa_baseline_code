@@ -179,6 +179,7 @@ def preprocess_dataset(args, datasets, tokenizer, is_train=True):
             predictions=predictions,
             max_answer_length=args.data.max_answer_length,
             output_dir=training_args.output_dir,
+            prefix="test" if args.train.do_predict else "valid",
         )
         # Format the result to the format the metric expects.
         formatted_predictions = [{"id": k, "prediction_text": v} for k, v in predictions.items()]
