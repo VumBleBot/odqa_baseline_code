@@ -86,9 +86,7 @@ ST00.json 하이퍼파라미터는 아래 파일들을 참고해서 수정할 �
         "eval_retrieval": true
     },
     "train": {
-        "load_best_model_at_end": true,
         "save_total_limit": 2,
-        "save_strategy": "steps",
         "save_steps": 100,
         "logging_steps": 100,
         "overwrite_output_dir": true,
