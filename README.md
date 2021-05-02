@@ -112,33 +112,33 @@ python -m run --strategis ST01 --run_cnt 3
 단일 실행도 가능합니다.
 
 # TDD
-- [tester.py](./tester.py) : 구현된 기능이 정상 작동되는지 테스트    
+| [tester.py](./tester.py) : 구현된 기능이 정상 작동되는지 테스트     
 
-- seed값은 임의의 seed가 할당됨 (run_cnt=1)    
-
-- 검증할 전략은 옵션으로 입력
+검증할 전략을 옵션으로 입력
 
 ```
 python -m tester --strategis ST02,ST01
 ```
 
 ```
-python -m run --strategis ST01 --run_cnt 3
+python -m run --strategis ST01
 ```
 
 - [example] 결과 해석
  
     - 5가지 단위 테스트 중 1 fail, 1 error 발생     
     ```
+
+    ===================================================
+    ERROR: test_strategis_with_dataset (__main__.TestReader)
+    (Constraint)
+    ---------------------------------------------------
+    .... 
+
     ===================================================
     FAIL: test_valid_dataset (__main__.TestReader)
     ---------------------------------------------------
-    Traceback (most recent call last):
-    File "/opt/ml/odqa_baseline_code/tester.py", line 40, in test_valid_dataset
-        prepare_dataset(args, is_train=True)
-    KeyError: 'bambam데이터는 존재하지 않습니다.'
-
-    During handling of the above exception, another exception occurred:
+    ....
 
     Traceback (most recent call last):
     File "/opt/ml/odqa_baseline_code/tester.py", line 42, in test_valid_dataset
