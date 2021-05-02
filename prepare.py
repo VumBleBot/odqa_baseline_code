@@ -21,6 +21,7 @@ def get_retriever(args):
 
         mecab = Mecab()
         retriever = SparseRetrieval(args, tokenize_fn=mecab.morphs)
+        retriever.get_sparse_embedding()
     return retriever
 
 

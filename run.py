@@ -25,7 +25,6 @@ def train_reader(args):
         model, tokenizer = get_reader_model(args)
 
         retriever = get_retriever(args)
-        retriever.get_sparse_embedding()
 
         train_dataset, post_processing_function = preprocess_dataset(args, datasets, tokenizer, is_train=True)
 
