@@ -64,6 +64,7 @@ if __name__ == "__main__":
     args = get_args()
     if args.debug: # 단위 테스트 
         test_train_reader(args)
+        assert False
     else:
         train_reader(args)
     

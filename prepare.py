@@ -57,6 +57,10 @@ def prepare_dataset(args, is_train=True):
     if datasets is None:
         raise KeyError(f"{args.data.dataset_name}데이터는 존재하지 않습니다.")
 
+    if args.debug:
+        args.train.num_train_epochs = 1.0
+        datasets["train"] = datasets["train"].select(range(100))
+
     return datasets
 
 

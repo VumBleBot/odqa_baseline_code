@@ -48,7 +48,7 @@ def test_train_reader(anc_args):
                 model, tokenizer = get_reader_model(args)
                 train_dataset, post_processing_function = preprocess_dataset(args, datasets, tokenizer, is_train=True)
                 train_dataset = train_dataset.select(range(100)) # select 100
-
+                
                 data_collator = DataCollatorWithPadding(tokenizer, pad_to_multiple_of=8 if args.train.fp16 else None)
 
                 args.train.do_train = True
