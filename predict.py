@@ -48,6 +48,5 @@ if __name__ == "__main__":
     from tools import get_args
 
     args = get_args()
-    args.model.model_name_or_path = args.model_path
 
     predict(args)
