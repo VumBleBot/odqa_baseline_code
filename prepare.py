@@ -24,7 +24,7 @@ def get_retriever(args):
     return retriever
 
 
-def get_reader_model(args):
+def get_reader_model(args):         
     config = AutoConfig.from_pretrained(
         args.model.config_name if args.model.config_name else args.model.model_name_or_path
     )

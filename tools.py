@@ -35,7 +35,6 @@ def str2intlist(v):
 
     return list(map(int, v.strip().split(",")))
 
-
 def update_args(args, strategy):
     json_path = os.path.join(args.data_path, "config", f"{strategy}.json")
     if not os.path.exists(json_path):
@@ -99,5 +98,15 @@ def get_args():
     args.model = model_args
     args.data = data_args
     args.train = training_args
-
     return args
+
+
+def run_test(tcls):
+    import unittest
+    """
+    Runs unit tests from a test class
+    :param tcls: A class, derived from unittest.TestCase
+    """
+    suite = unittest.TestLoader().loadTestsFromTestCase(tcls)
+    runner = unittest.TextTestRunner(verbosity=2)
+    runner.run(suite)

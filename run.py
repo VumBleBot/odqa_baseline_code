@@ -4,11 +4,11 @@ from itertools import product
 from argparse import Namespace
 from transformers import set_seed
 
-from tools import update_args
+from tools import update_args, run_test
 from trainer_qa import QuestionAnsweringTrainer
 from transformers import DataCollatorWithPadding
 from prepare import prepare_dataset, preprocess_dataset, get_reader_model, compute_metrics
-
+from tester import test_train_reader
 
 def train_reader(args):
     strategis = args.strategis
@@ -61,6 +61,6 @@ def train_reader(args):
 
 if __name__ == "__main__":
     from tools import get_args
-
     args = get_args()
     train_reader(args)
+    
