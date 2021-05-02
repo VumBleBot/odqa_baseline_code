@@ -6,10 +6,8 @@
 
 ## ISSUE
 
-- trainer.train 실행 시 wandb하고 tensorboard 로깅 폴더가 현재 디렉토리에 생성된다.
-- run_mrc가 coupling이 심해서 곰곰이 생각해봤는데 하나의 Reader 모델마다 run_mrc같은 함수가 하나씩 만들어질 것 같습니다. 
-    - 예를 들어서 start_logits, end_logits을 사용하지 않는 모델의 경우 post_processing을 새로 만들어 줘야 합니다.
-
+- run.py에서 train 이후에 evaluate 진행
+- inference.py -> predict.py로 파일 수정
 
 ## 파일 구조
 
@@ -49,7 +47,7 @@
     - retriever
         - sparse
         - dense
-    - **inference.py**
+    - predict.py
     - prepare.py 
     - run.py 
     - tokenization_bert.py ( `kobert`, `distilkobert` )
@@ -59,13 +57,16 @@
 
 ## Json File Example
 
+ST00.json 하이퍼파라미터는 아래 파일들을 참고해서 수정할 수 있습니다.
+
 - config/model_args.py
 - config/train_args.py
 - config/data_args.py
+- config/readme.md
 
 ```json
 {
-    "alias": "temp",
+    "alias": "base",
     "model": {
         "model_name_or_path": "monologg/koelectra-small-v3-discriminator",
         "config_name": "",
@@ -84,7 +85,12 @@
     },
     "train": {
         "load_best_model_at_end": true,
-        "save_total_limit": 2
+        "save_total_limit": 2,
+        "save_strategy": "steps",
+        "save_steps": 100,
+        "logging_steps": 100,
+        "overwrite_output_dir": true,
+        "report_to": ["wandb"]
     }
 }
 ```
