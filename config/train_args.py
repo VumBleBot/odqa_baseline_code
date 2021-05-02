@@ -9,5 +9,4 @@ class TrainArguments:
     """
 
     output_dir: Optional[str] = field(default="train_checkpoint", metadata={"help": "checkpoint_dir"})
-    report_to: Optional[str] = field(default="wandb", metadata={"help": "wandb or tensorboard"})
-    logging_steps: Optional[int] = field(default=100, metadata={"help": "logging_steps"})
+    # TrainArguments는 config/ST00.json 에서 수정해 주시면 됩니다.
