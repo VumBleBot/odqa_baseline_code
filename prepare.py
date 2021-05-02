@@ -30,7 +30,8 @@ def get_reader_model(args):
     )
 
     if args.model.model_name_or_path in ["monologg/kobert", "monologg/distilkobert"]:
-        tokenizer = KoBertTokenizer.from_pretrained(args.model.model_name_or_path)
+        # if args.model_path != "" then load from args.model_path
+        tokenizer = KoBertTokenizer.from_pretrained(args.model_path or args.model.model_name_or_path)
     else:
         tokenizer = AutoTokenizer.from_pretrained(
             args.model.tokenizer_name if args.model.tokenizer_name else args.model.model_name_or_path, use_fast=True
