@@ -117,7 +117,7 @@ ST01, ST02 전략을 다른 seed값으로 3번씩 실행
 python -m run --strategis ST01 --run_cnt 3
 ```
 
-**Train Reulst**
+**Train Result**
 
 - input
     - checkpoint
@@ -134,7 +134,7 @@ python -m run --strategis ST01 --run_cnt 3
 python -m run --strategis ST01 --model_path ../input/checkpoint/ST02_95_temp/checkpoint-500
 ```
 
-**Predict Reulst**
+**Predict Result**
 
 - input
     - checkpoint
