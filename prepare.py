@@ -5,7 +5,7 @@ from utils_qa import postprocess_qa_predictions
 from datasets import load_from_disk, load_dataset, load_metric
 from transformers import EvalPrediction
 from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoTokenizer
-from retriever.sparse import SparseRetrieval
+from retrieval.sparse import SparseRetrieval
 
 
 metric = load_metric("squad")

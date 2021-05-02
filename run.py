@@ -30,7 +30,7 @@ def train_reader(args):
         train_dataset, post_processing_function = preprocess_dataset(args, datasets, tokenizer, is_train=True)
 
         eval_dataset = retriever.retrieve_pipeline(args, datasets["validation"])
-        eval_dataset, _ = preprocess_dataset(args, datasets, tokenizer, is_train=False)
+        eval_dataset, _ = preprocess_dataset(args, eval_dataset, tokenizer, is_train=False)
 
         data_collator = DataCollatorWithPadding(tokenizer, pad_to_multiple_of=8 if args.train.fp16 else None)
 
