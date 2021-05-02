@@ -33,7 +33,7 @@
         - BM25
             - embeddding.bin
             - bm25.bin
-        - desne_bert ( dense는 docs임베딩을 저장하거나, token vector를 저장할 듯 싶습니다.)
+        - dense_bert (dense는 docs임베딩을 저장하거나, token vector를 저장할 듯 싶습니다.)
             - embeddding.bin
             - dense_bert.bin
         ...
@@ -115,7 +115,7 @@ ST01, ST02 전략을 다른 seed값으로 3번씩 실행
 python -m run --strategis ST01 --run_cnt 3
 ```
 
-**Train Reulst**
+**Train Result**
 
 - input
     - checkpoint
@@ -132,7 +132,7 @@ python -m run --strategis ST01 --run_cnt 3
 python -m run --strategis ST01 --model_path ../input/checkpoint/ST02_95_temp/checkpoint-500
 ```
 
-**Predict Reulst**
+**Predict Result**
 
 - input
     - checkpoint
