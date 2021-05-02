@@ -33,7 +33,7 @@
         - BM25
             - embeddding.bin
             - bm25.bin
-        - desne_bert ( dense는 docs임베딩을 저장하거나, token vector를 저장할 듯 싶습니다.)
+        - dense_bert (dense는 docs임베딩을 저장하거나, token vector를 저장할 듯 싶습니다.)
             - embeddding.bin
             - dense_bert.bin
         ...
