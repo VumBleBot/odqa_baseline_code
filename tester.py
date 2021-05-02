@@ -12,62 +12,83 @@ import unittest
 import random
 import requests
 from copy import deepcopy
+from tools import get_args
 
-def test_train_reader(anc_args):
-    args = deepcopy(anc_args)
-    strategis = args.strategis
-    SEED = random.choice(args.seeds) # fix run_cnt 1
+args = get_args()
+
+strategis = args.strategis
+SEED = random.choice(args.seeds) # fix run_cnt 1
+
+@run_test
+class TestReader(unittest.TestCase):
+    def test_strategy_is_not_none(self,args=args):
+        self.assertIsNotNone(strategis, "전달받은 전략이 없습니다.")
     
-    @run_test
-    class TestReader(unittest.TestCase):
-        def test_all_strategy(self,args=args):
-            self.assertIsNotNone(strategis, "전달받은 전략이 없습니다.")
-
-            for seed,strategy in [(SEED,strategy) for strategy in strategis]:
-                try : 
-                    update_args(args,strategy)
-                except FileNotFoundError:
-                    assert False, "전략명이 맞는지 확인해주세요. "
-                    
-                wandb.init(project="p-stage-3-test", reinit=True)
-                args = update_args(args, strategy)  
-                args.strategy, args.seed = strategy, seed
-                set_seed(seed) 
-
-                try : 
-                    prepare_dataset(args, is_train=True)
-                except KeyError:
-                    assert False, "존재하지 않는 dataset입니다. "
-
-                try : 
-                    get_reader_model(args)
-                except Exception:
-                    assert False, "hugging face에 존재하지 않는 model 혹은 잘못된 경로입니다. "
-
-                datasets = prepare_dataset(args, is_train=True) 
-                model, tokenizer = get_reader_model(args)
-                train_dataset, post_processing_function = preprocess_dataset(args, datasets, tokenizer, is_train=True)
-                train_dataset = train_dataset.select(range(100)) # select 100
+    def test_valid_strategy(self,args=args):
+        for strategy in strategis:
+            try : 
+                update_args(args,strategy)
+            except FileNotFoundError:
+                assert False, "전략명이 맞는지 확인해주세요. "
                 
-                data_collator = DataCollatorWithPadding(tokenizer, pad_to_multiple_of=8 if args.train.fp16 else None)
+    def test_valid_dataset(self,args=args):
+        for seed,strategy in [(SEED,strategy) for strategy in strategis]:
+            args = update_args(args, strategy) 
+            args.strategy, args.seed = strategy, seed
+            set_seed(seed) 
+            try : 
+                prepare_dataset(args, is_train=True)
+            except KeyError:
+                assert False, "존재하지 않는 dataset입니다. "
 
-                args.train.do_train = True
-                args.train.run_name = "_".join([strategy, str(seed), args.alias, 'test'])
-                wandb.run.name = args.train.run_name
-                args.train.output_dir = p.join(args.path.checkpoint, args.train.run_name)
-                print("checkpoint_dir: ", args.train.output_dir)
+    def test_valid_model(self,args=args):
+        for seed,strategy in [(SEED,strategy) for strategy in strategis]:
+            args = update_args(args, strategy) 
+            args.strategy, args.seed = strategy, seed
+            set_seed(seed) 
+            try : 
+                get_reader_model(args)
+            except Exception:
+                assert False, "hugging face에 존재하지 않는 model 혹은 잘못된 경로입니다. "
 
-                # TRAIN MRC
-                args.train.num_train_epochs=1.0 # fix epoch 1
-                trainer = QuestionAnsweringTrainer(
-                    model=model,
-                    args=args.train,  # training_args
-                    custom_args=args,
-                    train_dataset=train_dataset,
-                    tokenizer=tokenizer,
-                    data_collator=data_collator,
-                    post_process_function=post_processing_function,
-                    compute_metrics=compute_metrics,
-                )
+    def test_strategis_with_dataset(self,args=args):
+        """
+            (Constraint)
+                - num_train_epoch 1
+                - random seed 1
+                - dataset fragment (rows : 100)
+            (Caution) 
+                ERROR가 표시된다면, 상위 단위 테스트 결과를 확인하세요.
+        """
+        for seed,strategy in [(SEED,strategy) for strategy in strategis]:
+            wandb.init(project="p-stage-3-test", reinit=True)
+            args = update_args(args, strategy)  
+            args.strategy, args.seed = strategy, seed
+            set_seed(seed) 
 
-                trainer.train()
+            datasets = prepare_dataset(args, is_train=True) 
+            model, tokenizer = get_reader_model(args)
+            train_dataset, post_processing_function = preprocess_dataset(args, datasets, tokenizer, is_train=True)
+            
+            train_dataset = train_dataset.select(range(100)) # select 100
+            
+            data_collator = DataCollatorWithPadding(tokenizer, pad_to_multiple_of=8 if args.train.fp16 else None)
+
+            args.train.do_train = True
+            args.train.run_name = "_".join([strategy, str(seed), args.alias, 'test'])
+            wandb.run.name = args.train.run_name
+
+            # TRAIN MRC
+            args.train.num_train_epochs=1.0 # fix epoch 1
+            trainer = QuestionAnsweringTrainer(
+                model=model,
+                args=args.train,  # training_args
+                custom_args=args,
+                train_dataset=train_dataset,
+                tokenizer=tokenizer,
+                data_collator=data_collator,
+                post_process_function=post_processing_function,
+                compute_metrics=compute_metrics,
+            )
+
+            trainer.train()

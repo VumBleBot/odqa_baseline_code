@@ -62,9 +62,8 @@ def train_reader(args):
 if __name__ == "__main__":
     from tools import get_args
     args = get_args()
-    if args.debug: # 단위 테스트 
-        test_train_reader(args)
-        assert False
-    else:
-        train_reader(args)
+    # if args.debug: # 단위 테스트 
+        # test_train_reader(args)
+    # else:
+    train_reader(args)
     
