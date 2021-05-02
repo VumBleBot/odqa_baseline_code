@@ -102,5 +102,16 @@ def get_args():
     args.model = model_args
     args.data = data_args
     args.train = training_args
-
     return args
+
+
+def run_test(tcls):
+    import unittest
+
+    """
+    Runs unit tests from a test class
+    :param tcls: A class, derived from unittest.TestCase
+    """
+    suite = unittest.TestLoader().loadTestsFromTestCase(tcls)
+    runner = unittest.TextTestRunner(verbosity=2)
+    runner.run(suite)

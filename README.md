@@ -54,6 +54,8 @@
     - tools.py
     - trainer_qa.py
     - utils_qa.py
+    - tester.py
+
 
 ## Json File Example
 
@@ -103,6 +105,8 @@ Server의 디렉토리 구조에서 input과 같은 수준에 위치하면 됩�
 - code
 - new_baseline_code
 
+### How to Usage: Train
+
 ```
 python -m run --strategis ST01,ST02 --run_cnt 3
 ```
@@ -113,4 +117,77 @@ ST01, ST02 전략을 다른 seed값으로 3번씩 실행
 python -m run --strategis ST01 --run_cnt 3
 ```
 
+**Train Reulst**
+
+- input
+    - checkpoint
+        -ST02_95_temp
+            -checkpoint...
+        - nbest_predictions_valid.json
+        - predictions_valid.json
+
+### How to Usage: Predict
+
+- strategis에 한 개의 전략만 집어넣는 것을 추천합니다.
+
+```
+python -m run --strategis ST01 --model_path ../input/checkpoint/ST02_95_temp/checkpoint-500
+```
+
+**Predict Reulst**
+
+- input
+    - checkpoint
+        -ST01
+            - nbest_predictions_test.json
+            - predictions_test.json
+
+
 단일 실행도 가능합니다.
+
+# TDD
+| [tester.py](./tester.py) : 구현된 기능이 정상 작동되는지 테스트     
+
+검증할 전략을 옵션으로 입력
+
+```
+python -m tester --strategis ST02,ST01
+```
+
+```
+python -m run --strategis ST01
+```
+
+- [example] 결과 해석
+ 
+    - 5가지 단위 테스트 중 1 fail, 1 error 발생     
+    ```
+
+    ===================================================
+    ERROR: test_strategis_with_dataset (__main__.TestReader)
+    (Constraint)
+    ---------------------------------------------------
+    .... 
+
+    ===================================================
+    FAIL: test_valid_dataset (__main__.TestReader)
+    ---------------------------------------------------
+    ....
+
+    Traceback (most recent call last):
+    File "/opt/ml/odqa_baseline_code/tester.py", line 42, in test_valid_dataset
+        assert False, "존재하지 않는 dataset입니다. "
+    AssertionError: 존재하지 않는 dataset입니다. 
+
+    ---------------------------------------------------
+    Ran 5 tests in 11.046s
+
+    FAILED (failures=1, errors=1)
+    ```
+    - 5가지 단위 테스트 모두 통과 
+    ```
+    ----------------------------
+    Ran 5 tests in 76.858s
+
+    OK
+    ```
