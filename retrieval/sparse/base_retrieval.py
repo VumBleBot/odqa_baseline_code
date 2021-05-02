@@ -75,6 +75,26 @@ class SparseRetrieval:
         self.indexer.add(p_emb)
 
     def retrieve_pipeline(self, args, query_or_dataset, topk=1):
+        """
+        Create retrieved result dataframe as refined form. Then return it as DatasetDict.
+        Before:
+            - features: ['__index_level_0__', 'answers', 'context', 'document_id', 'id', 'question', 'title']
+                - 'id' : question(query) id. (ex - mrc-0-0000,...)
+                - 'answers'
+                    - 'answer_start' : offset position number of start character in answer string.
+                    - 'text' : ground-truth answer string. It is answer for question(query).
+        After:
+            - validation
+                - features: ['answers', 'context', 'id', 'question']
+            - predict : exclude 'answers' from validation features. The result doesn't need to be scored.
+                - features: ['context', 'id', 'question']
+
+        :param args
+            - train.do_predict
+        :param query_or_dataset: single string query or dataset to retrieve.
+        :param topk: Number which retriever returns from retrieved result.
+        :return: DatasetDict of retrieved result (as refined form).
+        """
         df = self.retrieve(query_or_dataset, topk=topk)
 
         if args.train.do_predict is True:
@@ -119,12 +139,12 @@ class SparseRetrieval:
                 tmp = {
                     "question": example["question"],
                     "id": example["id"],
-                    "context_id": doc_indices[idx][0],  # retrieved id
-                    "context": self.contexts[doc_indices[idx][0]],  # retrieved doument
+                    "context_id": doc_indices[idx][0],  # retrieved document id
+                    "context": self.contexts[doc_indices[idx][0]],  # retrieved document
                 }
                 if "context" in example.keys() and "answers" in example.keys():
-                    tmp["original_context"] = example["context"]  # original document
-                    tmp["answers"] = example["answers"]  # original answer
+                    tmp["original_context"] = example["context"]  # original document(ground-truth context)
+                    tmp["answers"] = example["answers"]  # original answer(ground-truth answer)
                 total.append(tmp)
 
             cqas = pd.DataFrame(total)
