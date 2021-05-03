@@ -1,6 +1,6 @@
 import os.path as p
 
-from reader import DPRReader
+from reader import DprReader
 from retrieval.sparse import SparseRetrieval
 from tokenization_kobert import KoBertTokenizer
 from datasets import load_from_disk, load_dataset, load_metric
@@ -9,7 +9,7 @@ from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoTokenize
 
 metric = load_metric("squad")
 
-READER = {"DPR": DPRReader}
+READER = {"DPR": DprReader}
 
 
 def get_retriever(args):
@@ -39,7 +39,7 @@ def get_retriever(args):
     return retriever
 
 
-def get_reader_model(args, datasets):
+def get_reader(args, datasets):
     """
     Get pretrained MRC-Reader model and tokenizer.
     If model setting is KoBERT, then load tokenizer from public KoBERT Tokenizer.
@@ -75,7 +75,7 @@ def get_reader_model(args, datasets):
     return reader
 
 
-def prepare_dataset(args, is_train=True):
+def get_dataset(args, is_train=True):
     """
     Load dataset from dataset path in disk.
 
