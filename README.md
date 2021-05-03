@@ -106,13 +106,13 @@ Server의 디렉토리 구조에서 input과 같은 수준에 위치하면 됩�
 ### How to Usage: Train
 
 ```
-python -m run --strategis ST01,ST02 --run_cnt 3
+python -m run --strategies ST01,ST02 --run_cnt 3
 ```
 
 ST01, ST02 전략을 다른 seed값으로 3번씩 실행
 
 ```
-python -m run --strategis ST01 --run_cnt 3
+python -m run --strategies ST01 --run_cnt 3
 ```
 
 **Train Result**
@@ -126,10 +126,10 @@ python -m run --strategis ST01 --run_cnt 3
 
 ### How to Usage: Predict
 
-- strategis에 한 개의 전략만 집어넣는 것을 추천합니다.
+- strategies 한 개의 전략만 집어넣는 것을 추천합니다.
 
 ```
-python -m run --strategis ST01 --model_path ../input/checkpoint/ST02_95_temp/checkpoint-500
+python -m run --strategies ST01 --model_path ../input/checkpoint/ST02_95_temp/checkpoint-500
 ```
 
 **Predict Result**
@@ -149,11 +149,11 @@ python -m run --strategis ST01 --model_path ../input/checkpoint/ST02_95_temp/che
 검증할 전략을 옵션으로 입력
 
 ```
-python -m tester --strategis ST02,ST01
+python -m tester --strategies ST02,ST01
 ```
 
 ```
-python -m run --strategis ST01
+python -m run --strategies ST01
 ```
 
 - [example] 결과 해석
@@ -162,7 +162,7 @@ python -m run --strategis ST01
     ```
 
     ===================================================
-    ERROR: test_strategis_with_dataset (__main__.TestReader)
+    ERROR: test_strategies_with_dataset (__main__.TestReader)
     (Constraint)
     ---------------------------------------------------
     .... 

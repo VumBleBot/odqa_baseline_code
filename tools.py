@@ -94,7 +94,7 @@ def get_args():
     """
     arg_parser = argparse.ArgumentParser(description="mrc-stage-openqa-vumblebot")
 
-    arg_parser.add_argument("--strategis", type=str2list)
+    arg_parser.add_argument("--strategies", type=str2list)
     arg_parser.add_argument("--run_cnt", type=int, default=1)
     arg_parser.add_argument("--seeds", type=str2intlist, default=SEEDS)
     arg_parser.add_argument("--data_path", type=str, default="../input/")
