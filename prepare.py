@@ -17,7 +17,7 @@ def compute_metrics(p):
 
 def get_retriever(args):
     """
-    Get appropriate retriver.
+    Get appropriate retriever.
 
     AVAILABLE OPTIONS(2021.05.02)
     - Term-based
@@ -77,11 +77,11 @@ def get_reader_model(args):
 
 def prepare_dataset(args, is_train=True):
     """
-    Load dataset from datset path in disk.
+    Load dataset from dataset path in disk.
 
     :param args
         - data.dataset_name : [train_dataset, test_dataset, squad_kor_v1]
-        - debug : True expressions. If this setting is true, epoch and dataset will be restricted for quck testing.
+        - debug : True expressions. If this setting is true, epoch and dataset will be restricted for quick testing.
     :param is_train: True for training, False for validation.
     :return: Loaded dataset.
     """
@@ -109,7 +109,7 @@ def prepare_dataset(args, is_train=True):
 def preprocess_dataset(args, datasets, tokenizer, is_train=True):
     """
     Setup dataset for training/validation/inference.
-    Inner fuctions
+    Inner functions
         - prepare_train_features : for train dataset. tokenizing, offset mapping + answer position that model predicts.
         - prepare_validation_feature : for validation dataset.  tokenizing, offset mapping.
 

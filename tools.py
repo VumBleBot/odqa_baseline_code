@@ -47,15 +47,15 @@ def str2list(v):
 
 def str2intlist(v):
     """
-        Transform user input list(arguments) to be list of integer.
-        Multiple options needs comma(,) between each options.
-        ex)
-            --seeds 42
-            --seeds 42, 84, 126
+    Transform user input list(arguments) to be list of integer.
+    Multiple options needs comma(,) between each options.
+    ex)
+        --seeds 42
+        --seeds 42, 84, 126
 
-        :param v: (string) user input
-        :return: list of option interger. (ex - [42, 84, 126])
-        """
+    :param v: (string) user input
+    :return: list of option interger. (ex - [42, 84, 126])
+    """
     if isinstance(v, list):
         return v
 
