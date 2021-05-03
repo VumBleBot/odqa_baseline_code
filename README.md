@@ -16,10 +16,7 @@
 
 - 코드 수정 후 main branch로 pull request
 
-## File Structure
-
-**굵게** 칠해진 곳은 아직 코딩중입니다.. :(
-
+## File Structure  
 ### input
   
 ```
@@ -134,9 +131,12 @@ ST00.json 하이퍼파라미터는 아래 파일들을 참고해서 수정할 �
 
 Server의 디렉토리 구조에서 input과 같은 수준에 위치하면 됩니다.
 
-- input
-- code
-- new_baseline_code
+```
+root/  
+├── input/  
+├── code/  
+└── odqa_baseline_code/  
+```
 
 ### Usage: Train   
   
