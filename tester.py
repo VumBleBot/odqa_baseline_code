@@ -16,23 +16,23 @@ from tools import get_args
 
 args = get_args()
 
-strategis = args.strategis
+strategies = args.strategies
 SEED = random.choice(args.seeds) # fix run_cnt 1
 
 @run_test
 class TestReader(unittest.TestCase):
     def test_strategy_is_not_none(self,args=args):
-        self.assertIsNotNone(strategis, "전달받은 전략이 없습니다.")
+        self.assertIsNotNone(strategies, "전달받은 전략이 없습니다.")
     
     def test_valid_strategy(self,args=args):
-        for strategy in strategis:
+        for strategy in strategies:
             try : 
                 update_args(args,strategy)
             except FileNotFoundError:
                 assert False, "전략명이 맞는지 확인해주세요. "
                 
     def test_valid_dataset(self,args=args):
-        for seed,strategy in [(SEED,strategy) for strategy in strategis]:
+        for seed,strategy in [(SEED,strategy) for strategy in strategies]:
             args = update_args(args, strategy) 
             args.strategy, args.seed = strategy, seed
             set_seed(seed) 
@@ -42,7 +42,7 @@ class TestReader(unittest.TestCase):
                 assert False, "존재하지 않는 dataset입니다. "
 
     def test_valid_model(self,args=args):
-        for seed,strategy in [(SEED,strategy) for strategy in strategis]:
+        for seed,strategy in [(SEED,strategy) for strategy in strategies]:
             args = update_args(args, strategy) 
             args.strategy, args.seed = strategy, seed
             set_seed(seed) 
@@ -51,7 +51,7 @@ class TestReader(unittest.TestCase):
             except Exception:
                 assert False, "hugging face에 존재하지 않는 model 혹은 잘못된 경로입니다. "
 
-    def test_strategis_with_dataset(self,args=args):
+    def test_strategies_with_dataset(self,args=args):
         """
             (Constraint)
                 - num_train_epoch 1
@@ -60,7 +60,7 @@ class TestReader(unittest.TestCase):
             (Caution) 
                 ERROR가 표시된다면, 상위 단위 테스트 결과를 확인하세요.
         """
-        for seed,strategy in [(SEED,strategy) for strategy in strategis]:
+        for seed,strategy in [(SEED,strategy) for strategy in strategies]:
             wandb.init(project="p-stage-3-test", reinit=True)
             args = update_args(args, strategy)  
             args.strategy, args.seed = strategy, seed

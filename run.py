@@ -7,14 +7,19 @@ from transformers import set_seed
 from tools import update_args
 from trainer_qa import QuestionAnsweringTrainer
 from transformers import DataCollatorWithPadding
-from prepare import prepare_dataset, preprocess_dataset, get_reader_model, compute_metrics, get_retriever
-
+from prepare import (
+    prepare_dataset, 
+    preprocess_dataset, 
+    get_reader_model, 
+    compute_metrics, 
+    get_retriever
+)
 
 def train_reader(args):
-    strategis = args.strategis
+    strategies = args.strategies
     seeds = args.seeds[: args.run_cnt]
 
-    for idx, (seed, strategy) in enumerate(product(seeds, strategis)):
+    for idx, (seed, strategy) in enumerate(product(seeds, strategies)):
         wandb.init(project="p-stage-3", reinit=True)
         args = update_args(args, strategy)  # auto add args.save_path, args.base_path
         args.strategy, args.seed = strategy, seed
