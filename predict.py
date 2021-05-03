@@ -9,9 +9,9 @@ from prepare import prepare_dataset, preprocess_dataset, get_reader_model, compu
 def predict(args):
     # Don't use wandb
 
-    strategis = args.strategis
+    strategies = args.strategies
 
-    for idx, strategy in enumerate(strategis):
+    for idx, strategy in enumerate(strategies):
         args = update_args(args, strategy)  # auto add args.save_path, args.base_path
         args.strategy = strategy
         args.train.do_predict = True
