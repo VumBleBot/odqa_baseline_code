@@ -31,6 +31,7 @@ def train_reader(args):
         datasets = retriever.retrieve_pipeline(args, datasets["validation"])
         eval_dataset, _ = preprocess_dataset(args, datasets, tokenizer, is_train=False)
 
+        # DataCollator forms batch from dataset elements input.
         data_collator = DataCollatorWithPadding(tokenizer, pad_to_multiple_of=8 if args.train.fp16 else None)
 
         args.train.do_train = True
@@ -40,6 +41,7 @@ def train_reader(args):
         # 테스트 해본 전략을 수정하고 다시 run 할 경우 덮어씌워집니다.
         # 새로운 전략(json)을 만드는 것을 추천합니다.
 
+        # Runname = strategy name + alias + seed number
         args.train.run_name = "_".join([strategy, args.alias, str(seed)])
         wandb.run.name = args.train.run_name
         args.train.output_dir = p.join(args.path.checkpoint, args.train.run_name) + "/"

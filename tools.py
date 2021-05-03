@@ -14,6 +14,12 @@ SEEDS = [95, 12, 0, 7, 63, 3, 2, 61, 4, 32, 40, 94, 2033, 2314]
 
 
 def str2bool(v):
+    """
+    Transform user input(argument) to be boolean expression.
+
+    :param v: (string) user input
+    :return: Bool(True, False)
+    """
     if v.lower() in ("yes", "true", "t", "y", "1"):
         return True
     elif v.lower() in ("no", "false", "f", "n", "0"):
@@ -23,6 +29,16 @@ def str2bool(v):
 
 
 def str2list(v):
+    """
+    Transform user input list(arguments) to be list of string.
+    Multiple options needs comma(,) between each options.
+    ex)
+        --strategies ST01
+        --strategies ST01,ST02,ST03
+
+    :param v: (string) user input
+    :return: list of option string. (ex - ['ST01', 'ST02', 'ST03')
+    """
     if isinstance(v, list):
         return v
 
@@ -30,6 +46,16 @@ def str2list(v):
 
 
 def str2intlist(v):
+    """
+    Transform user input list(arguments) to be list of integer.
+    Multiple options needs comma(,) between each options.
+    ex)
+        --seeds 42
+        --seeds 42, 84, 126
+
+    :param v: (string) user input
+    :return: list of option interger. (ex - [42, 84, 126])
+    """
     if isinstance(v, list):
         return v
 
@@ -37,6 +63,13 @@ def str2intlist(v):
 
 
 def update_args(args, strategy):
+    """
+    Setup args with strategy setting file(ex-ST01.json) in config.
+
+    :param args: args to setup with.
+    :param strategy: strategy file name in config directory(input/config/).
+    :return: updated args.
+    """
     json_path = os.path.join(args.data_path, "config", f"{strategy}.json")
     if not os.path.exists(json_path):
         raise FileNotFoundError("JSON 파일이 보이지 않습니다.")
@@ -54,6 +87,11 @@ def update_args(args, strategy):
 
 
 def get_args():
+    """
+    Parse arguments and handle exceptions.
+
+    :return: processed arg(arguments)
+    """
     arg_parser = argparse.ArgumentParser(description="mrc-stage-openqa-vumblebot")
 
     arg_parser.add_argument("--strategis", type=str2list)
