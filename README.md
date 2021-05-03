@@ -146,13 +146,16 @@ root/
 `python -m run --strategies ST01,ST02 --run_cnt 3`   
   
 #### Train result  
-  
-- input
-    - checkpoint
-        -ST02_95_temp
-            -checkpoint...
-        - nbest_predictions_valid.json
-        - predictions_valid.json
+
+```
+input/  
+└── checkpoint/  
+    ├── ST02_temp_95/
+    │   ├── checkpoint-500/
+    │   └── ...
+    ├── nbest_predictions_valid.json
+    └── predictions_valid.json
+```
 
 ### Usage: Predict
 
@@ -161,13 +164,14 @@ root/
   
 #### Predict result  
  
-- input
-    - checkpoint
-        -ST01
-            - nbest_predictions_test.json
-            - predictions_test.json
-
-
+```
+input/  
+└── checkpoint/  
+    └── ST01/
+        ├── nbest_predictions_test.json
+        └── predictions_test.json
+```
+  
 단일 실행도 가능합니다.
   
 ## TDD
