@@ -1,6 +1,7 @@
 # Custom
 **/*/wandb
 **/*/runs
+**/*/__pycache__
 /wandb
 
 Created by https://www.toptal.com/developers/gitignore/api/python,vscode,pycharm,jupyternotebooks,windows,macos,linux,vim

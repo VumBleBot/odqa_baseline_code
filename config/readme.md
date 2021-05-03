@@ -12,9 +12,11 @@
 - train_retrieval
 - eval_retrieval
 
-## ModelArgs
+## ModelArgs ( Reader, Retriver, Model, Tokenizer 관련 인자들 )
 
 - model_name_or_path
+- retriever_name
+- reader_name
 - config_name
 - tokenizer_name
 
