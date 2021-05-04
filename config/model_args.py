@@ -13,7 +13,7 @@ class ModelArguments:
         metadata={"help": "Reader Backbone, Path to pretrained model or model identifier from huggingface.co/models"},
     )
 
-    retriever_name: str = field(default="tfidf", metadata={"help": "this args used in tools/get_retriever"})
+    retriever_name: str = field(default="TFIDF", metadata={"help": "this args used in tools/get_retriever"})
     reader_name: str = field(default="DPR")
 
     config_name: Optional[str] = field(

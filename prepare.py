@@ -2,7 +2,7 @@ import os.path as p
 
 from reader import DprReader
 from retrieval.dense import DprRetrieval
-from retrieval.sparse import TfidfRetrieval
+from retrieval.sparse import TfidfRetrieval, BM25Retrieval
 from tokenization_kobert import KoBertTokenizer
 from datasets import load_from_disk, load_dataset, load_metric
 from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoTokenizer
@@ -11,7 +11,7 @@ from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoTokenize
 metric = load_metric("squad")
 
 
-RETRIEVER = {"TFIDF": TfidfRetrieval, "DPR": DprRetrieval}
+RETRIEVER = {"TFIDF": TfidfRetrieval, "DPR": DprRetrieval, "BM25": BM25Retrieval}
 READER = {"DPR": DprReader}
 
 
@@ -19,17 +19,17 @@ def get_retriever(args):
     """
     Get appropriate retriever.
 
-    AVAILABLE OPTIONS(2021.05.02)
+    AVAILABLE OPTIONS(2021.05.05)
     - Term-based
         - TF-IDF : use konlpy-Mecab for word tokenization.
-        - TODO : BM-25
+        - BM-25
     - Vector Embedding
         - Sparse
-        - TODO : Dense
+        - Dense
     Need more retriever and retriever options.
 
     :param args
-        - model.retriever_name : [tfidf]
+        - model.retriever_name : [TFIDF, DPR, BM25]
     :return: Retriever which contains embedded vector(+indexer if faiss is built).
     """
 
