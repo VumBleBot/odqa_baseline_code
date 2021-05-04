@@ -32,7 +32,7 @@ class Retrieval:
         assert self.p_embedding is not None, "get_embedding()을 먼저 수행한 후에 retrieve()를 작동시켜 주세요. "
 
         total = []
-        doc_scores, doc_indices = self.get_relevant_doc_bulk(query_or_dataset["question"], k=topk)
+        doc_scores, doc_indices = self.get_relevant_doc_bulk(query_or_dataset["question"], k=self.args.retriever.topk)
 
         for idx, example in enumerate(tqdm(query_or_dataset, desc="Retrieval: ")):
             for doc_id in range(topk):

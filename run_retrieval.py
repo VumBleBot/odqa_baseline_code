@@ -25,6 +25,8 @@ def train_retriever(args):
     topk_result = defaultdict(list)
 
     for idx, (seed, strategy) in enumerate(product(seeds, strategies)):
+        wandb.init(project="p-stage-3", reinit=True)
+
         args = update_args(args, strategy)  # auto add args.save_path, args.base_path
         args.strategy, args.seed = strategy, seed
         args.info = Namespace()
@@ -34,8 +36,7 @@ def train_retriever(args):
 
         datasets = get_dataset(args, is_train=True)
         origin_datasets = datasets["validation"]
-
-        retriever = get_retriever(args, topk=args.retriever.topk)
+        retriever = get_retriever(args)
         datasets = retriever.retrieve(datasets["validation"])
 
         id_to_context = {row["id"]: row["context"] for row in origin_datasets}
@@ -57,3 +58,4 @@ if __name__ == "__main__":
 
     args = get_args()
     train_retriever(args)
+    assert False

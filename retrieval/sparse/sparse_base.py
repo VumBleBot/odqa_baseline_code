@@ -10,8 +10,8 @@ class SparseRetrieval(Retrieval):
 
         self.name = args.model.retriever_name
 
-        self.embed_path = p.join(args.path.embed, "embedding.bin")
-        self.encoder_path = p.join(args.path.embed, f"{self.name}.bin")
+        self.embed_path = p.join(args.path.embed, self.name, "embedding.bin")
+        self.encoder_path = p.join(args.path.embed, self.name, f"{self.name}.bin")
 
     def _exec_embedding(self):
         raise NotImplementedError
