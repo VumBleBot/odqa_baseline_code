@@ -21,7 +21,7 @@ def predict(args):
         model, tokenizer = get_reader_model(args)
 
         retriever = get_retriever(args)
-        retriever.get_sparse_embedding()
+        # retriever.get_sparse_embedding() # [Delete] get_retriever에서 이미 구현된 애 
 
         datasets = retriever.retrieve_pipeline(args, datasets["validation"])
         eval_dataset, post_processing_function = preprocess_dataset(args, datasets, tokenizer, is_train=False)

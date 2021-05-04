@@ -5,7 +5,8 @@ from utils_qa import postprocess_qa_predictions
 from datasets import load_from_disk, load_dataset, load_metric
 from transformers import EvalPrediction
 from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoTokenizer
-from retrieval.sparse import SparseRetrieval
+# from retrieval.sparse import SparseRetrieval
+from retrieval.sparse.sparse_base import TfidfRetrieval
 
 
 metric = load_metric("squad")
@@ -36,8 +37,10 @@ def get_retriever(args):
         from konlpy.tag import Mecab
 
         mecab = Mecab()
-        retriever = SparseRetrieval(args, tokenize_fn=mecab.morphs)
-        retriever.get_sparse_embedding()
+        # retriever = SparseRetrieval(args, tokenize_fn=mecab.morphs)
+        # retriever.get_sparse_embedding()
+        retriever = TfidfRetrieval(args, tokenize_fn=mecab.morphs)
+    retriever.get_embedding()
     return retriever
 
 
