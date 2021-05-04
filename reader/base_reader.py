@@ -48,7 +48,7 @@ class BaseReader:
         self.question_column_name = "question" if "question" in column_names else column_names[0]
         self.context_column_name = "context" if "context" in column_names else column_names[1]
         self.answer_column_name = "answers" if "answers" in column_names else column_names[2]
- 
+
         self.pad_on_right = self.tokenizer.padding_side == "right"
         self.max_seq_length = min(self.args.data.max_seq_length, self.tokenizer.model_max_length)
 
@@ -175,7 +175,7 @@ class BaseReader:
         return self.metric.compute(predictions=p.predictions, references=p.label_ids)
 
     def get_trainer(self):
-        pass
+        raise NotImplementedError
 
 
 class DprReader(BaseReader):
