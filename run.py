@@ -5,7 +5,7 @@ from argparse import Namespace
 from transformers import set_seed
 
 from tools import update_args
-from prepare import prepare_dataset, get_reader_model, get_retriever
+from prepare import get_dataset, get_reader, get_retriever
 
 
 def train_reader(args):
@@ -19,8 +19,6 @@ def train_reader(args):
         args.info = Namespace()
         set_seed(seed)
 
-        datasets = prepare_dataset(args, is_train=True)
-
         # below codes must run before 'reader.get_trainer()'
         # run_name: strategy + alias + seed
         args.train.run_name = "_".join([strategy, args.alias, str(seed)])
@@ -29,11 +27,12 @@ def train_reader(args):
 
         print("checkpoint_dir: ", args.train.output_dir)
 
-        reader = get_reader_model(args, datasets)
+        datasets = get_dataset(args, is_train=True)
         retriever = get_retriever(args)
+        reader = get_reader(args, datasets)
 
         datasets = retriever.retrieve_pipeline(args, datasets["validation"])
-        reader.eval_dataset = reader.preprocess_dataset(datasets, is_train=False)
+        reader.set_dataset(datasets, is_run=True)
 
         trainer = reader.get_trainer()
 

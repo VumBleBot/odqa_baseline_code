@@ -1,1 +1,1 @@
-from .reader_base import BaseReader as DPRReader
+from .base_reader import BaseReader, DprReader
