@@ -5,15 +5,15 @@ from retrieval.base_retrieval import Retrieval
 
 
 class SparseRetrieval(Retrieval):
-    def __init__(self, args, name):
-        self.name = name  # Please input lower case. (eg. tfidf/bm25/dpr)
+    def __init__(self, args):
+        super().__init__(args)  # wiki 데이터 contexts 생성
+
+        self.name = args.model.reader_name  # Please input lower case. (eg. tfidf/bm25/dpr)
 
         self.embed_path = p.join(args.path.embed, "embedding.bin")
         self.encoder_path = p.join(args.path.embed, f"{self.name}.bin")
 
-        super().__init__(args)  # contexts, ids
-
-    def exec_embedding(self):
+    def _exec_embedding(self):
         raise NotImplementedError
 
     def get_embedding(self):

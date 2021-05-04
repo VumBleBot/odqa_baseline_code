@@ -3,6 +3,7 @@ import os.path as p
 from datasets import load_from_disk
 
 import torch
+import numpy as np
 import torch.nn.functional as F
 from transformers import BertConfig, BertTokenizer, TensorDataset, RandomSampler, DataLoader
 from transformers import BertModel, BertPreTrainedModel, AdamW, TrainingArguments, get_linear_schedule_with_warmup
@@ -24,11 +25,9 @@ class BertEncoder(BertPreTrainedModel):
 
 
 class DprRetrieval(DenseRetrieval):
-    def __init__(self, args, name):
-        super().__init__(name)
-
+    def __init__(self, args):
+        super().__init__(args)
         self.backbone = "bert-base-multilingual-cased"
-        self.p_embedding, self.encoder = self.get_embedding()
 
     def train(self, training_args, dataset, p_model, q_model):
         train_sampler = RandomSampler(dataset)
@@ -142,6 +141,12 @@ class DprRetrieval(DenseRetrieval):
 
         p_encoder, q_encoder = self.train(args, train_dataset, p_encoder, q_encoder)
 
-        p_embedding = None
+        p_embedding = []
 
+        for passage in self.contexts:  # wiki
+            passage = tokenizer(passage, padding="max_length", truncation=True, return_tensors="pt").cuda()
+            p_emb = p_encoder(**passage).to("cpu").numpy()
+            p_embedding.append(p_emb)
+
+        p_embedding = np.array(p_embedding).squeeze()  # numpy
         return p_embedding, q_encoder

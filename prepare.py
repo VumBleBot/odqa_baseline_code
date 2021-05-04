@@ -1,19 +1,17 @@
 import os.path as p
 
 from reader import DPRReader
-from retrieval.sparse import SparseRetrieval
+from retrieval.dense import DprRetrieval
+from retrieval.sparse import TfidfRetrieval
 from tokenization_kobert import KoBertTokenizer
 from datasets import load_from_disk, load_dataset, load_metric
 from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoTokenizer
-<<<<<<< HEAD
-# from retrieval.sparse import SparseRetrieval
-from retrieval.sparse.sparse_base import TfidfRetrieval
-=======
->>>>>>> a28121b4cc6edf6a6b4823823d138006f8709442
 
 
 metric = load_metric("squad")
 
+
+RETRIEVER = {"TFIDF": TfidfRetrieval, "DPR": DprRetrieval}
 READER = {"DPR": DPRReader}
 
 
@@ -34,20 +32,10 @@ def get_retriever(args):
         - model.retriever_name : [tfidf]
     :return: Retriever which contains embedded vector(+indexer if faiss is built).
     """
-    if args.model.retriever_name == "tfidf":
-        from konlpy.tag import Mecab
 
-        mecab = Mecab()
-<<<<<<< HEAD
-        # retriever = SparseRetrieval(args, tokenize_fn=mecab.morphs)
-        # retriever.get_sparse_embedding()
-        retriever = TfidfRetrieval(args, tokenize_fn=mecab.morphs)
+    retriever = READER[args.model.retriever_name](args)
     retriever.get_embedding()
-=======
-        retriever = SparseRetrieval(args, tokenize_fn=mecab.morphs)
-        retriever.get_sparse_embedding()
 
->>>>>>> a28121b4cc6edf6a6b4823823d138006f8709442
     return retriever
 
 

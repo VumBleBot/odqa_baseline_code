@@ -7,8 +7,8 @@ from retrieval.sparse import SparseRetrieval
 
 # 일단 모든 base는 다르게 tfidf로 대표해서 구현됨. 동일한거 나오면 다시 추상화할 것임.
 class TfidfRetrieval(SparseRetrieval):  # 이거는 tf-idf한정. 근데 bm25 나오면 Sparse base로 다시 추상화해야 함.
-    def __init__(self, args, name="tfidf"):
-        super().__init__(name)
+    def __init__(self, args):
+        super().__init__(args)
 
         mecab = Mecab()
         self.encoder = TfidfVectorizer(
@@ -16,7 +16,7 @@ class TfidfRetrieval(SparseRetrieval):  # 이거는 tf-idf한정. 근데 bm25 �
         )  # vectorizer in sparse retrieval / encoder in dense retrieval
         self.p_embedding = None
 
-    def exec_embedding(self):  # tf-idf의 경우는 vecotrizer, bm25도 일단 tf-idf 쓰나?
+    def _exec_embedding(self):  # tf-idf의 경우는 vecotrizer, bm25도 일단 tf-idf 쓰나?
         p_embedding = self.encoder.fit_transform(self.contexts)
         return p_embedding, self.encoder
 
