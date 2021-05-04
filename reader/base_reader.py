@@ -13,12 +13,16 @@ class BaseReader:
 
         self.model, self.tokenizer = model, tokenizer
 
-        self.train_dataset = self.preprocess_dataset(self.datasets, is_train=True)
+        self.train_dataset = None
         self.eval_dataset = None
 
         self.data_collator = DataCollatorWithPadding(
             self.tokenizer, pad_to_multiple_of=8 if self.args.train.fp16 else None
         )
+
+    def set_dataset(self, datasets, is_run=True):
+        self.train_dataset = self.preprocess_dataset(self.datasets, is_train=True) if is_run else None
+        self.eval_dataset = self.preprocess_dataset(datasets, is_train=False)
 
     def preprocess_dataset(self, datasets, is_train=True):
         """
@@ -44,7 +48,7 @@ class BaseReader:
         self.question_column_name = "question" if "question" in column_names else column_names[0]
         self.context_column_name = "context" if "context" in column_names else column_names[1]
         self.answer_column_name = "answers" if "answers" in column_names else column_names[2]
-
+ 
         self.pad_on_right = self.tokenizer.padding_side == "right"
         self.max_seq_length = min(self.args.data.max_seq_length, self.tokenizer.model_max_length)
 
@@ -169,6 +173,14 @@ class BaseReader:
 
     def _compute_metrics(self, p):
         return self.metric.compute(predictions=p.predictions, references=p.label_ids)
+
+    def get_trainer(self):
+        pass
+
+
+class DprReader(BaseReader):
+    def __init__(self, args, model, tokenizer, datasets):
+        super().__init__(args, model, tokenizer, datasets)
 
     def get_trainer(self):
         trainer = QuestionAnsweringTrainer(
