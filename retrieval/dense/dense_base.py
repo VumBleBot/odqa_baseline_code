@@ -50,6 +50,6 @@ class DenseRetrieval(Retrieval):
             q_embedding = q_embedding.detach().cpu().numpy()
 
         # p_embedding: numpy, q_embedding: numpy
-        doc_scores = np.matmul(q_embedding, self.p_embedding.T)
+        doc_scores = np.matmul(q_embedding, self.p_embedding.T)  # TODO: 수정 필요
         doc_indices = np.argsort(doc_scores, axis=1)[:, -k:]
         return doc_scores, doc_indices
