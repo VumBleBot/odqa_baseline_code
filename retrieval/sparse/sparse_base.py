@@ -26,5 +26,11 @@ class SparseRetrieval(Retrieval):
         else:
             self.p_embedding, self.encoder = self._exec_embedding()
 
+            with open(self.embed_path, "wb") as f:
+                pickle.dump(self.p_embedding, f)
+
+            with open(self.encoder_path, "wb") as f:
+                pickle.dump(self.encoder, f)
+
     def get_relevant_doc_bulk(self, queries, k=1):
         raise NotImplementedError
