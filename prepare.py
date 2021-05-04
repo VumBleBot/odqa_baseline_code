@@ -1,6 +1,6 @@
 import os.path as p
 
-from reader import DPRReader
+from reader import DprReader
 from retrieval.dense import DprRetrieval
 from retrieval.sparse import TfidfRetrieval
 from tokenization_kobert import KoBertTokenizer
@@ -12,7 +12,7 @@ metric = load_metric("squad")
 
 
 RETRIEVER = {"TFIDF": TfidfRetrieval, "DPR": DprRetrieval}
-READER = {"DPR": DPRReader}
+READER = {"DPR": DprReader}
 
 
 def get_retriever(args):
@@ -33,7 +33,7 @@ def get_retriever(args):
     :return: Retriever which contains embedded vector(+indexer if faiss is built).
     """
 
-    retriever = READER[args.model.retriever_name](args)
+    retriever = RETRIEVER[args.model.retriever_name](args)
     retriever.get_embedding()
 
     return retriever

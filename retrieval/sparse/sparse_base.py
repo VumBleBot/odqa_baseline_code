@@ -6,9 +6,9 @@ from retrieval.base_retrieval import Retrieval
 
 class SparseRetrieval(Retrieval):
     def __init__(self, args):
-        super().__init__(args)  # wiki 데이터 contexts 생성
+        super().__init__(args)
 
-        self.name = args.model.reader_name  # Please input lower case. (eg. tfidf/bm25/dpr)
+        self.name = args.model.retriever_name
 
         self.embed_path = p.join(args.path.embed, "embedding.bin")
         self.encoder_path = p.join(args.path.embed, f"{self.name}.bin")
@@ -24,7 +24,7 @@ class SparseRetrieval(Retrieval):
             with open(self.encoder_path, "rb") as f:
                 self.encoder = pickle.load(f)
         else:
-            self.p_embedding, self.encoder = self.exec_embedding()
+            self.p_embedding, self.encoder = self._exec_embedding()
 
     def get_relevant_doc_bulk(self, queries, k=1):
         raise NotImplementedError

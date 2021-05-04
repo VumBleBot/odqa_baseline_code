@@ -5,8 +5,16 @@ from datasets import load_from_disk
 import torch
 import numpy as np
 import torch.nn.functional as F
-from transformers import BertConfig, BertTokenizer, TensorDataset, RandomSampler, DataLoader
-from transformers import BertModel, BertPreTrainedModel, AdamW, TrainingArguments, get_linear_schedule_with_warmup
+from torch.utils.data import TensorDataset, DataLoader, RandomSampler
+from transformers import (
+    BertConfig,
+    BertTokenizer,
+    BertModel,
+    BertPreTrainedModel,
+    AdamW,
+    TrainingArguments,
+    get_linear_schedule_with_warmup,
+)
 
 from retrieval.dense import DenseRetrieval
 
@@ -104,7 +112,7 @@ class DprRetrieval(DenseRetrieval):
 
         return p_model, q_model
 
-    def exec_embedding(self):
+    def _exec_embedding(self):
         config = BertConfig.from_pretrained(self.backbone)
 
         p_encoder = BertEncoder.from_pretrained(self.backbone, config=config).cuda()
@@ -112,8 +120,10 @@ class DprRetrieval(DenseRetrieval):
 
         tokenizer = BertTokenizer.from_pretrained(self.backbone)
 
-        datasets = load_from_disk(p.join(self.args.path.data, "train_data"))
-        #  tokenizer_input = tokenizer(datasets["train"][1]["context"], padding="max_length", truncation=True)
+        datasets = load_from_disk(p.join(self.args.path.train_data_dir, "train_dataset"))
+        tokenizer_input = tokenizer(datasets["train"][1]["context"], padding="max_length", truncation=True)
+
+        print("tokenizer:", tokenizer.convert_ids_to_tokens(tokenizer_input["input_ids"]))
 
         train_dataset = datasets["train"]
 
