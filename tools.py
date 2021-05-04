@@ -3,9 +3,10 @@ import json
 import argparse
 import os.path as p
 
-from config.data_args import DataTrainingArguments
 from config.train_args import TrainArguments
 from config.model_args import ModelArguments
+from config.data_args import DataTrainingArguments
+from config.retriever_args import RetrievalTrainingArguments
 
 from transformers import HfArgumentParser, TrainingArguments
 
@@ -133,13 +134,15 @@ def get_args():
     if args.run_cnt > len(SEEDS):
         raise ValueError("SEEDS를 직접 입력하거나 SEEDS Default 값을 늘려주세요. ")
 
-    parser = HfArgumentParser((ModelArguments, DataTrainingArguments, TrainArguments))
-    model_args, data_args, train_args = parser.parse_args_into_dataclasses(args=[])
+    parser = HfArgumentParser((ModelArguments, DataTrainingArguments, TrainArguments, RetrievalTrainingArguments))
+    model_args, data_args, train_args, retriever_args = parser.parse_args_into_dataclasses(args=[])
     training_args = TrainingArguments(output_dir=args.path.checkpoint)
 
     args.model = model_args
     args.data = data_args
     args.train = training_args
+    args.retriever = retriever_args
+
     return args
 
 

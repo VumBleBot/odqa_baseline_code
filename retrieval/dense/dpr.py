@@ -120,7 +120,7 @@ class DprRetrieval(DenseRetrieval):
 
         tokenizer = BertTokenizer.from_pretrained(self.backbone)
 
-        datasets = load_from_disk(p.join(self.args.path.train_data_dir, "train_dataset"))
+        datasets = load_from_disk(p.join(self.args.path.train_data_dir, self.args.retriever.dense_train_dataset))
         tokenizer_input = tokenizer(datasets["train"][1]["context"], padding="max_length", truncation=True)
 
         print("tokenizer:", tokenizer.convert_ids_to_tokens(tokenizer_input["input_ids"]))
