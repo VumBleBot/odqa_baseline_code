@@ -17,9 +17,9 @@ class Retrieval:
         with open(os.path.join(self.args.data_path, "data", "wikipedia_documents.json"), "r") as f:
             wiki = json.load(f)
 
-        self.contexts = list(dict.fromkeys([v["text"] for v in wiki.values()]))  # 데이터셋에는 56737개의 unique contexts 존재
+        self.contexts = list(dict.fromkeys([v["text"] for v in wiki.values()]))
 
-    def _exec_embedding(self):  # tf-idf의 경우는 vecotrizer, 다른 애는
+    def _exec_embedding(self):
         raise NotImplementedError
 
     def get_embedding(self):
@@ -28,10 +28,8 @@ class Retrieval:
     def get_relevant_doc_bulk(self, queries, k=1):
         raise NotImplementedError
 
-    def retrieve(self, query_or_dataset, topk=1):  
-        assert (
-            self.p_embedding is not None
-        ), "get_embedding()을 먼저 수행한 후에 retrieve()를 작동시켜 주세요. "
+    def retrieve(self, query_or_dataset, topk=1):
+        assert self.p_embedding is not None, "get_embedding()을 먼저 수행한 후에 retrieve()를 작동시켜 주세요. "
 
         total = []
         doc_scores, doc_indices = self.get_relevant_doc_bulk(query_or_dataset["question"], k=topk)
@@ -51,7 +49,7 @@ class Retrieval:
 
         df = pd.DataFrame(total)
 
-        if args.train.do_predict is True:
+        if self.args.train.do_predict is True:
             f = Features(
                 {
                     "context": Value(dtype="string", id=None),
