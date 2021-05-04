@@ -1,0 +1,162 @@
+import os.path as p
+
+from datasets import load_from_disk
+
+import torch
+import numpy as np
+import torch.nn.functional as F
+from torch.utils.data import TensorDataset, DataLoader, RandomSampler
+from transformers import (
+    BertConfig,
+    BertTokenizer,
+    BertModel,
+    BertPreTrainedModel,
+    AdamW,
+    TrainingArguments,
+    get_linear_schedule_with_warmup,
+)
+
+from retrieval.dense import DenseRetrieval
+
+
+class BertEncoder(BertPreTrainedModel):
+    def __init__(self, config):
+        super(BertEncoder, self).__init__(config)
+
+        self.bert = BertModel(config)
+        self.init_weights()
+
+    def forward(self, input_ids, attention_mask=None, token_type_ids=None):
+        outputs = self.bert(input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
+        pooled_output = outputs[1]  # embedding 가져오기
+        return pooled_output
+
+
+class DprRetrieval(DenseRetrieval):
+    def __init__(self, args):
+        super().__init__(args)
+        self.backbone = "bert-base-multilingual-cased"
+
+    def train(self, training_args, dataset, p_model, q_model):
+        train_sampler = RandomSampler(dataset)
+        train_dataloader = DataLoader(
+            dataset, sampler=train_sampler, batch_size=training_args.per_device_train_batch_size
+        )
+
+        no_decay = ["bias", "LayerNorm.weight"]
+        optimizer_grouped_parameters = [
+            {
+                "params": [p for n, p in p_model.named_parameters() if not any(nd in n for nd in no_decay)],
+                "weight_decay": training_args.weight_decay,
+            },
+            {
+                "params": [p for n, p in p_model.named_parameters() if any(nd in n for nd in no_decay)],
+                "weight_decay": 0.0,
+            },
+            {
+                "params": [p for n, p in q_model.named_parameters() if not any(nd in n for nd in no_decay)],
+                "weight_decay": training_args.weight_decay,
+            },
+            {
+                "params": [p for n, p in q_model.named_parameters() if any(nd in n for nd in no_decay)],
+                "weight_decay": 0.0,
+            },
+        ]
+
+        optimizer = AdamW(optimizer_grouped_parameters, lr=training_args.learning_rate, eps=training_args.adam_epsilon)
+        t_total = len(train_dataloader) // training_args.gradient_accumulation_steps * training_args.num_train_epochs
+        scheduler = get_linear_schedule_with_warmup(
+            optimizer, num_warmup_steps=training_args.warmup_steps, num_training_steps=t_total
+        )
+
+        global_step = 0
+
+        p_model.zero_grad()
+        q_model.zero_grad()
+
+        torch.cuda.empty_cache()
+
+        for epoch in range(training_args.num_train_epochs):
+            for step, batch in enumerate(train_dataloader):
+                p_model.train()
+                q_model.train()
+
+                if torch.cuda.is_available():
+                    batch = tuple(t.cuda() for t in batch)
+
+                p_inputs = {"input_ids": batch[0], "attention_mask": batch[1], "token_type_ids": batch[2]}
+                q_inputs = {"input_ids": batch[3], "attention_mask": batch[4], "token_type_ids": batch[5]}
+
+                p_outputs = p_model(**p_inputs)
+                q_outputs = q_model(**q_inputs)
+
+                sim_scores = torch.matmul(q_outputs, torch.transpose(p_outputs, 0, 1))
+                targets = torch.arange(0, training_args.per_device_train_batch_size).long()
+
+                if torch.cuda.is_available():
+                    targets = targets.to("cuda")
+
+                sim_scores = F.log_softmax(sim_scores, dim=1)
+                loss = F.nll_loss(sim_scores, targets)
+
+                print(f"epoch: {epoch:02} step: {step:02} loss: {loss}", end="\r")
+
+                loss.backward()
+                optimizer.step()
+                scheduler.step()
+                p_model.zero_grad()
+                q_model.zero_grad()
+                global_step += 1
+
+                torch.cuda.empty_cache()
+
+        return p_model, q_model
+
+    def _exec_embedding(self):
+        config = BertConfig.from_pretrained(self.backbone)
+
+        p_encoder = BertEncoder.from_pretrained(self.backbone, config=config).cuda()
+        q_encoder = BertEncoder.from_pretrained(self.backbone, config=config).cuda()
+
+        tokenizer = BertTokenizer.from_pretrained(self.backbone)
+
+        datasets = load_from_disk(p.join(self.args.path.train_data_dir, "train_dataset"))
+        tokenizer_input = tokenizer(datasets["train"][1]["context"], padding="max_length", truncation=True)
+
+        print("tokenizer:", tokenizer.convert_ids_to_tokens(tokenizer_input["input_ids"]))
+
+        train_dataset = datasets["train"]
+
+        q_seqs = tokenizer(train_dataset["question"], padding="max_length", truncation=True, return_tensors="pt")
+        p_seqs = tokenizer(train_dataset["context"], padding="max_length", truncation=True, return_tensors="pt")
+
+        train_dataset = TensorDataset(
+            p_seqs["input_ids"],
+            p_seqs["attention_mask"],
+            p_seqs["token_type_ids"],
+            q_seqs["input_ids"],
+            q_seqs["attention_mask"],
+            q_seqs["token_type_ids"],
+        )
+
+        args = TrainingArguments(
+            output_dir="dense_retrieval",
+            evaluation_strategy="epoch",
+            learning_rate=2e-5,
+            per_device_train_batch_size=4,
+            per_device_eval_batch_size=4,
+            num_train_epochs=2,
+            weight_decay=0.01,
+        )
+
+        p_encoder, q_encoder = self.train(args, train_dataset, p_encoder, q_encoder)
+
+        p_embedding = []
+
+        for passage in self.contexts:  # wiki
+            passage = tokenizer(passage, padding="max_length", truncation=True, return_tensors="pt").cuda()
+            p_emb = p_encoder(**passage).to("cpu").numpy()
+            p_embedding.append(p_emb)
+
+        p_embedding = np.array(p_embedding).squeeze()  # numpy
+        return p_embedding, q_encoder

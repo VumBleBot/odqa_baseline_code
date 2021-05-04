@@ -1,2 +1,2 @@
-from .base_retrieval import SparseRetrieval
-from .bm25 import BM25
+from .sparse_base import SparseRetrieval
+from .tfidf import TfidfRetrieval
