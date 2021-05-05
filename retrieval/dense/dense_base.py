@@ -24,6 +24,10 @@ class DenseRetrieval(Retrieval):
         self.encoder = None
         self.p_embedding = None
 
+    def _get_encoder(self):
+        """ 모델 구조 가져오기 """
+        raise NotImplementedError
+
     def _exec_embedding(self):
         raise NotImplementedError
 
@@ -32,8 +36,8 @@ class DenseRetrieval(Retrieval):
             with open(self.embed_path, "rb") as f:
                 self.p_embedding = pickle.load(f)
 
-            with open(self.encoder_path, "rb") as f:
-                self.encoder = pickle.load(f)
+            self.encoder = self._get_encoder()
+            self.encoder.load_state_dict(torch.load(self.encoder_path))
         else:
             self.p_embedding, self.encoder = self._exec_embedding()
             self.p_embedding.squeeze_()  # in-place
@@ -42,8 +46,7 @@ class DenseRetrieval(Retrieval):
             with open(self.embed_path, "wb") as f:
                 pickle.dump(self.p_embedding, f)
 
-            with open(self.encoder_path, "wb") as f:
-                torch.save(self.encoder.state_dict())
+            torch.save(self.encoder.state_dict())
 
     def get_relevant_doc_bulk(self, queries, k=1):
         self.encoder.eval()  # question encoder

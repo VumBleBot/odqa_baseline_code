@@ -37,6 +37,11 @@ class DprRetrieval(DenseRetrieval):
         super().__init__(args)
         self.backbone = "bert-base-multilingual-cased"
 
+    def _get_encoder(self):
+        config = BertConfig.from_pretrained(self.backbone)
+        q_encoder = BertEncoder(config=config).cuda()
+        return q_encoder
+
     def train(self, training_args, dataset, p_model, q_model):
         train_sampler = RandomSampler(dataset)
         train_dataloader = DataLoader(
