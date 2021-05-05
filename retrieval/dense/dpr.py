@@ -1,3 +1,4 @@
+import tqdm
 import os.path as p
 
 from datasets import load_from_disk
@@ -157,7 +158,7 @@ class DprRetrieval(DenseRetrieval):
 
         p_embedding = []
 
-        for passage in self.contexts:  # wiki
+        for passage in tqdm.tqdm(self.contexts):  # wiki
             passage = self.tokenizer(passage, padding="max_length", truncation=True, return_tensors="pt").to("cuda")
             p_emb = p_encoder(**passage).to("cpu").detach().numpy()
             p_embedding.append(p_emb)
