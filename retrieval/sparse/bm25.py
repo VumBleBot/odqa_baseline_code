@@ -1,3 +1,4 @@
+import tqdm
 import pickle
 import numpy as np
 import os.path as p
@@ -50,7 +51,7 @@ class BM25Retrieval(SparseRetrieval):
         doc_scores = []
         doc_indices = []
 
-        for query_vec in query_vecs:
+        for query_vec in tqdm.tqdm(query_vecs):
             p_emb_for_q = self.p_embedding.tocsc()[:, query_vec.indices]
             denom = p_emb_for_q + (k1 * (1 - b + b * len_p / avdl))[:, None]
 
