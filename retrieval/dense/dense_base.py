@@ -44,7 +44,7 @@ class DenseRetrieval(Retrieval):
             with open(self.embed_path, "wb") as f:
                 pickle.dump(self.p_embedding, f)
 
-            torch.save(self.encoder.state_dict())
+            torch.save(self.encoder.state_dict(), self.encoder_path)
 
     def get_relevant_doc_bulk(self, queries, k=1):
         self.encoder.eval()  # question encoder

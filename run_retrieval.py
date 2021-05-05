@@ -68,7 +68,7 @@ def train_retriever(args):
     wandb.run.name = "COMPARE RETRIEVER"
 
     for idx, (seed, strategy) in enumerate(product(seeds, strategies)):
-        args = update_args(args, strategy)  # auto add args.save_path, args.base_path
+        args = update_args(args, strategy)
         set_seed(seed)
 
         datasets = get_dataset(args, is_train=True)
