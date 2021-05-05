@@ -36,6 +36,7 @@ class DprRetrieval(DenseRetrieval):
     def __init__(self, args):
         super().__init__(args)
         self.backbone = "bert-base-multilingual-cased"
+        self.tokenizer = BertTokenizer.from_pretrained(self.backbone)
 
     def _get_encoder(self):
         config = BertConfig.from_pretrained(self.backbone)
@@ -123,17 +124,15 @@ class DprRetrieval(DenseRetrieval):
         p_encoder = BertEncoder.from_pretrained(self.backbone, config=config).cuda()
         q_encoder = BertEncoder.from_pretrained(self.backbone, config=config).cuda()
 
-        tokenizer = BertTokenizer.from_pretrained(self.backbone)
-
         datasets = load_from_disk(p.join(self.args.path.train_data_dir, self.args.retriever.dense_train_dataset))
-        tokenizer_input = tokenizer(datasets["train"][1]["context"], padding="max_length", truncation=True)
+        tokenizer_input = self.tokenizer(datasets["train"][1]["context"], padding="max_length", truncation=True)
 
-        print("tokenizer:", tokenizer.convert_ids_to_tokens(tokenizer_input["input_ids"]))
+        print("tokenizer:", self.tokenizer.convert_ids_to_tokens(tokenizer_input["input_ids"]))
 
         train_dataset = datasets["train"]
 
-        q_seqs = tokenizer(train_dataset["question"], padding="max_length", truncation=True, return_tensors="pt")
-        p_seqs = tokenizer(train_dataset["context"], padding="max_length", truncation=True, return_tensors="pt")
+        q_seqs = self.tokenizer(train_dataset["question"], padding="max_length", truncation=True, return_tensors="pt")
+        p_seqs = self.tokenizer(train_dataset["context"], padding="max_length", truncation=True, return_tensors="pt")
 
         train_dataset = TensorDataset(
             p_seqs["input_ids"],
@@ -159,7 +158,7 @@ class DprRetrieval(DenseRetrieval):
         p_embedding = []
 
         for passage in self.contexts:  # wiki
-            passage = tokenizer(passage, padding="max_length", truncation=True, return_tensors="pt").to("cuda")
+            passage = self.tokenizer(passage, padding="max_length", truncation=True, return_tensors="pt").to("cuda")
             p_emb = p_encoder(**passage).to("cpu").detach().numpy()
             p_embedding.append(p_emb)
 
