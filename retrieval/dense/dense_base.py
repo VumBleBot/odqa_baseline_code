@@ -40,23 +40,21 @@ class DenseRetrieval(Retrieval):
             self.encoder.load_state_dict(torch.load(self.encoder_path))
         else:
             self.p_embedding, self.encoder = self._exec_embedding()
-            self.p_embedding.squeeze_()  # in-place
-            self.p_embedding = self.p_embedding.detach().cpu().numpy()
 
             with open(self.embed_path, "wb") as f:
                 pickle.dump(self.p_embedding, f)
 
-            torch.save(self.encoder.state_dict())
+            torch.save(self.encoder.state_dict(), self.encoder_path)
 
     def get_relevant_doc_bulk(self, queries, k=1):
         self.encoder.eval()  # question encoder
         self.encoder.cuda()
 
         with torch.no_grad():
-            q_seqs_val = self.tokenizer(queries, padding="max_length", truncation=True, return_tensors="pt").cuda()
+            q_seqs_val = self.tokenizer(queries, padding="max_length", truncation=True, return_tensors="pt").to("cuda")
             q_embedding = self.encoder(**q_seqs_val)
             q_embedding.squeeze_()  # in-place
-            q_embedding = q_embedding.detach().cpu().numpy()
+            q_embedding = q_embedding.cpu().detach().numpy()
 
         # p_embedding: numpy, q_embedding: numpy
         doc_scores = np.matmul(q_embedding, self.p_embedding.T)

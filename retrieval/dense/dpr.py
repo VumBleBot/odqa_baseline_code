@@ -1,10 +1,11 @@
+import tqdm
 import os.path as p
 
-from datasets import load_from_disk
 
 import torch
 import numpy as np
 import torch.nn.functional as F
+from datasets import load_from_disk
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler
 from transformers import (
     BertConfig,
@@ -17,6 +18,7 @@ from transformers import (
 )
 
 from retrieval.dense import DenseRetrieval
+from tokenization_kobert import KoBertTokenizer
 
 
 class BertEncoder(BertPreTrainedModel):
@@ -36,6 +38,7 @@ class DprRetrieval(DenseRetrieval):
     def __init__(self, args):
         super().__init__(args)
         self.backbone = "bert-base-multilingual-cased"
+        self.tokenizer = BertTokenizer.from_pretrained(self.backbone)
 
     def _get_encoder(self):
         config = BertConfig.from_pretrained(self.backbone)
@@ -123,17 +126,15 @@ class DprRetrieval(DenseRetrieval):
         p_encoder = BertEncoder.from_pretrained(self.backbone, config=config).cuda()
         q_encoder = BertEncoder.from_pretrained(self.backbone, config=config).cuda()
 
-        tokenizer = BertTokenizer.from_pretrained(self.backbone)
-
         datasets = load_from_disk(p.join(self.args.path.train_data_dir, self.args.retriever.dense_train_dataset))
-        tokenizer_input = tokenizer(datasets["train"][1]["context"], padding="max_length", truncation=True)
+        tokenizer_input = self.tokenizer(datasets["train"][1]["context"], padding="max_length", truncation=True)
 
-        print("tokenizer:", tokenizer.convert_ids_to_tokens(tokenizer_input["input_ids"]))
+        print("tokenizer:", self.tokenizer.convert_ids_to_tokens(tokenizer_input["input_ids"]))
 
         train_dataset = datasets["train"]
 
-        q_seqs = tokenizer(train_dataset["question"], padding="max_length", truncation=True, return_tensors="pt")
-        p_seqs = tokenizer(train_dataset["context"], padding="max_length", truncation=True, return_tensors="pt")
+        q_seqs = self.tokenizer(train_dataset["question"], padding="max_length", truncation=True, return_tensors="pt")
+        p_seqs = self.tokenizer(train_dataset["context"], padding="max_length", truncation=True, return_tensors="pt")
 
         train_dataset = TensorDataset(
             p_seqs["input_ids"],
@@ -147,10 +148,10 @@ class DprRetrieval(DenseRetrieval):
         args = TrainingArguments(
             output_dir="dense_retrieval",
             evaluation_strategy="epoch",
-            learning_rate=2e-5,
+            learning_rate=3e-5,
             per_device_train_batch_size=4,
             per_device_eval_batch_size=4,
-            num_train_epochs=2,
+            num_train_epochs=4,
             weight_decay=0.01,
         )
 
@@ -158,10 +159,24 @@ class DprRetrieval(DenseRetrieval):
 
         p_embedding = []
 
-        for passage in self.contexts:  # wiki
-            passage = tokenizer(passage, padding="max_length", truncation=True, return_tensors="pt").to("cuda")
+        for passage in tqdm.tqdm(self.contexts):  # wiki
+            passage = self.tokenizer(passage, padding="max_length", truncation=True, return_tensors="pt").to("cuda")
             p_emb = p_encoder(**passage).to("cpu").detach().numpy()
             p_embedding.append(p_emb)
 
         p_embedding = np.array(p_embedding).squeeze()  # numpy
         return p_embedding, q_encoder
+
+
+class DprKobertRetrieval(DprRetrieval):
+    def __init__(self, args):
+        super().__init__(args)
+        self.backbone = "monologg/kobert"
+        self.tokenizer = KoBertTokenizer.from_pretrained(self.backbone)
+
+
+class DprKorquadBertRetrieval(DprRetrieval):
+    def __init__(self, args):
+        super().__init__(args)
+        self.backbone = "sangrimlee/bert-base-multilingual-cased-korquad"
+        self.tokenizer = BertTokenizer.from_pretrained(self.backbone)
