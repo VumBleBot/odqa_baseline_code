@@ -179,4 +179,4 @@ class DprKorquadBertRetrieval(DprRetrieval):
     def __init__(self, args):
         super().__init__(args)
         self.backbone = "sangrimlee/bert-base-multilingual-cased-korquad"
-        self.tokenizer = KoBertTokenizer.from_pretrained(self.backbone)
+        self.tokenizer = BertTokenizer.from_pretrained(self.backbone)
