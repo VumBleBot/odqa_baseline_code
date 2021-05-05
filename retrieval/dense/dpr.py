@@ -1,16 +1,19 @@
 import tqdm
 import os.path as p
 
-
 import torch
 import numpy as np
+import torch.nn as nn
 import torch.nn.functional as F
 from datasets import load_from_disk
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler
 from transformers import (
+    AutoModel,
+    AutoConfig,
     BertConfig,
-    BertTokenizer,
     BertModel,
+    AutoTokenizer,
+    BertTokenizer,
     BertPreTrainedModel,
     AdamW,
     TrainingArguments,
@@ -34,11 +37,28 @@ class BertEncoder(BertPreTrainedModel):
         return pooled_output
 
 
+class AutoEncoder(nn.Module):
+    def __init__(self, model_name, config):
+        super().__init__()
+        self.backbone = AutoModel.from_pretrained(model_name, config=config)
+
+    def forward(self, input_ids, attention_mask=None, token_type_ids=None):
+        outputs = self.backbone(input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
+        pooled_output = outputs[1]  # embedding 가져오기
+        return pooled_output
+
+
 class DprRetrieval(DenseRetrieval):
     def __init__(self, args):
         super().__init__(args)
         self.backbone = "bert-base-multilingual-cased"
         self.tokenizer = BertTokenizer.from_pretrained(self.backbone)
+
+    def _load_model(self):
+        config = BertConfig.from_pretrained(self.backbone)
+        p_encoder = BertEncoder.from_pretrained(self.backbone, config=config).cuda()
+        q_encoder = BertEncoder.from_pretrained(self.backbone, config=config).cuda()
+        return p_encoder, q_encoder
 
     def _get_encoder(self):
         config = BertConfig.from_pretrained(self.backbone)
@@ -79,6 +99,9 @@ class DprRetrieval(DenseRetrieval):
 
         global_step = 0
 
+        p_model.train()
+        q_model.train()
+
         p_model.zero_grad()
         q_model.zero_grad()
 
@@ -86,8 +109,6 @@ class DprRetrieval(DenseRetrieval):
 
         for epoch in range(training_args.num_train_epochs):
             for step, batch in enumerate(train_dataloader):
-                p_model.train()
-                q_model.train()
 
                 if torch.cuda.is_available():
                     batch = tuple(t.cuda() for t in batch)
@@ -121,10 +142,7 @@ class DprRetrieval(DenseRetrieval):
         return p_model, q_model
 
     def _exec_embedding(self):
-        config = BertConfig.from_pretrained(self.backbone)
-
-        p_encoder = BertEncoder.from_pretrained(self.backbone, config=config).cuda()
-        q_encoder = BertEncoder.from_pretrained(self.backbone, config=config).cuda()
+        p_encoder, q_encoder = self._load_model()
 
         datasets = load_from_disk(p.join(self.args.path.train_data_dir, self.args.retriever.dense_train_dataset))
         tokenizer_input = self.tokenizer(datasets["train"][1]["context"], padding="max_length", truncation=True)
@@ -174,9 +192,31 @@ class DprKobertRetrieval(DprRetrieval):
         self.backbone = "monologg/kobert"
         self.tokenizer = KoBertTokenizer.from_pretrained(self.backbone)
 
+    def _load_model(self):
+        config = AutoConfig.from_pretrained(self.backbone)
+        p_encoder = AutoEncoder(self.backbone, config=config).cuda()
+        q_encoder = AutoEncoder(self.backbone, config=config).cuda()
+        return p_encoder, q_encoder
+
+    def _get_encoder(self):
+        config = AutoConfig.from_pretrained(self.backbone)
+        q_encoder = AutoEncoder(self.backbone, config=config).cuda()
+        return q_encoder
+
 
 class DprKorquadBertRetrieval(DprRetrieval):
     def __init__(self, args):
         super().__init__(args)
         self.backbone = "sangrimlee/bert-base-multilingual-cased-korquad"
-        self.tokenizer = BertTokenizer.from_pretrained(self.backbone)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone)
+
+    def _load_model(self):
+        config = AutoConfig.from_pretrained(self.backbone)
+        p_encoder = AutoEncoder(self.backbone, config=config).cuda()
+        q_encoder = AutoEncoder(self.backbone, config=config).cuda()
+        return p_encoder, q_encoder
+
+    def _get_encoder(self):
+        config = AutoConfig.from_pretrained(self.backbone)
+        q_encoder = AutoEncoder(self.backbone, config=config).cuda()
+        return q_encoder
