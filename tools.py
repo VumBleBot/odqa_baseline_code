@@ -79,7 +79,7 @@ def update_args(args, strategy):
         temp = json.load(f)
 
     args.alias = temp["alias"]
-    for arg_type in ["model", "data", "train"]:
+    for arg_type in ["model", "data", "train", "retriever"]:
         temp_type = getattr(args, arg_type)
         for k, v in temp[arg_type].items():
             setattr(temp_type, k, v)
@@ -137,7 +137,6 @@ def get_args():
     parser = HfArgumentParser((ModelArguments, DataTrainingArguments, TrainArguments, RetrievalTrainingArguments))
     model_args, data_args, train_args, retriever_args = parser.parse_args_into_dataclasses(args=[])
     training_args = TrainingArguments(output_dir=args.path.checkpoint)
-    
 
     args.model = model_args
     args.data = data_args

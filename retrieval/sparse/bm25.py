@@ -19,7 +19,7 @@ class BM25Retrieval(SparseRetrieval):
         self.p_embedding = None
 
     def get_embedding(self):
-        if p.isfile(self.embed_path) and p.isfile(self.encoder_path):
+        if p.isfile(self.embed_path) and p.isfile(self.encoder_path) and not self.args.retriever.retrain:
             with open(self.embed_path, "rb") as f:
                 self.p_embedding = pickle.load(f)
 

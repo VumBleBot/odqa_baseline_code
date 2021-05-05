@@ -1,3 +1,4 @@
+import os
 import pickle
 import os.path as p
 
@@ -10,14 +11,21 @@ class SparseRetrieval(Retrieval):
 
         self.name = args.model.retriever_name
 
-        self.embed_path = p.join(args.path.embed, self.name, "embedding.bin")
-        self.encoder_path = p.join(args.path.embed, self.name, f"{self.name}.bin")
+        save_dir = p.join(args.path.embed, self.name)
+        if not p.exists(save_dir):
+            os.mkdir(save_dir)
+
+        self.embed_path = p.join(save_dir, "embedding.bin")
+        self.encoder_path = p.join(save_dir, f"{self.name}.bin")
+
+        self.encoder = None
+        self.p_embedding = None
 
     def _exec_embedding(self):
         raise NotImplementedError
 
     def get_embedding(self):
-        if p.isfile(self.embed_path) and p.isfile(self.encoder_path):
+        if p.isfile(self.embed_path) and p.isfile(self.encoder_path) and not self.args.retriever.retrain:
             with open(self.embed_path, "rb") as f:
                 self.p_embedding = pickle.load(f)
 

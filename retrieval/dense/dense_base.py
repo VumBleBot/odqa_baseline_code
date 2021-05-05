@@ -1,3 +1,4 @@
+import os
 import pickle
 import os.path as p
 
@@ -12,8 +13,13 @@ class DenseRetrieval(Retrieval):
         super().__init__(args)  # wiki context load
         self.name = args.model.retriever_name
 
-        self.embed_path = p.join(args.path.embed, "embedding.bin")
-        self.encoder_path = p.join(args.path.embed, f"{self.name}.pth")
+        save_dir = p.join(args.path.embed, self.name)
+
+        if not p.exists(save_dir):
+            os.mkdir(save_dir)
+
+        self.embed_path = p.join(save_dir, "embedding.bin")
+        self.encoder_path = p.join(save_dir, f"{self.name}.pth")
 
         self.encoder = None
         self.p_embedding = None
@@ -22,7 +28,7 @@ class DenseRetrieval(Retrieval):
         raise NotImplementedError
 
     def get_embedding(self):
-        if p.isfile(self.embed_path) and p.isfile(self.encoder_path):
+        if p.isfile(self.embed_path) and p.isfile(self.encoder_path) and not self.args.retriever.retrain:
             with open(self.embed_path, "rb") as f:
                 self.p_embedding = pickle.load(f)
 
