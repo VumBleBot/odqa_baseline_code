@@ -80,8 +80,9 @@ def train_retriever(args):
 
         print(f"전략: {strategy} RETRIEVER: {args.model.retriever_name}")
         legend_name = "_".join([strategy, args.model.retriever_name])
+        topk = args.retriever.topk
 
-        for idx, topk_dataset in enumerate(zip([datasets["validation"][i::10] for i in range(args.retriever.topk)])):
+        for idx, topk_dataset in enumerate(zip([datasets["validation"][i::topk] for i in range(topk)])):
             for row in zip(topk_dataset[0]["id"], topk_dataset[0]["context"]):
                 if id_to_context[row[0]] == row[1]:
                     cur_cnt += 1
