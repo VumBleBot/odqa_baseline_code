@@ -55,7 +55,6 @@ class Retrieval:
                     "context": Value(dtype="string", id=None),
                     "id": Value(dtype="string", id=None),
                     "question": Value(dtype="string", id=None),
-                    "context_id": Value(dtype="string", id=None),
                 }
             )
         else:
@@ -67,9 +66,9 @@ class Retrieval:
                         id=None,
                     ),
                     "context": Value(dtype="string", id=None),
-                    "context_id": Value(dtype="string", id=None),
                     "id": Value(dtype="string", id=None),
                     "question": Value(dtype="string", id=None),
+                    "original_context": Value(dtype="string", id=None),
                 }
             )
 
