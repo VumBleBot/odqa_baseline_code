@@ -154,8 +154,8 @@ class DprRetrieval(DenseRetrieval):
         p_embedding = []
 
         for passage in self.contexts:  # wiki
-            passage = tokenizer(passage, padding="max_length", truncation=True, return_tensors="pt").cuda()
-            p_emb = p_encoder(**passage).to("cpu").numpy()
+            passage = tokenizer(passage, padding="max_length", truncation=True, return_tensors="pt").to("cuda")
+            p_emb = p_encoder(**passage).to("cpu").detach().numpy()
             p_embedding.append(p_emb)
 
         p_embedding = np.array(p_embedding).squeeze()  # numpy
