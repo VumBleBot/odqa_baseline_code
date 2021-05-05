@@ -3,6 +3,7 @@ from itertools import product
 from collections import defaultdict
 
 import wandb
+import numpy as np
 import matplotlib.pyplot as plt
 from transformers import set_seed
 
@@ -31,7 +32,7 @@ def get_topk_fig(args, topk_result):
             dup.add(tuple((co, mk, li)))
             tries -= 1
 
-        raise TimeoutError("코드 이상한 듯")
+        raise TimeoutError("운이 안 좋으면 일어날 수 있는 에러")
 
     fig, ax = plt.subplots(ncols=1, nrows=1, figsize=(10, 10))
     ax.set_title("Compare TOP-K", loc="left", fontsize=12, va="bottom", fontweight="semibold")
@@ -71,20 +72,23 @@ def train_retriever(args):
         set_seed(seed)
 
         datasets = get_dataset(args, is_train=True)
-        origin_datasets = datasets["validation"]
-        retriever = get_retriever(args)
-        datasets = retriever.retrieve(datasets["validation"])
 
-        id_to_context = {row["id"]: row["context"] for row in origin_datasets}
-        cur_cnt, tot_cnt = 0, len(origin_datasets)
+        retriever = get_retriever(args)
+        valid_datasets = retriever.retrieve(datasets["validation"], topk=args.retriever.topk)
 
         print(f"전략: {strategy} RETRIEVER: {args.model.retriever_name}")
         legend_name = "_".join([strategy, args.model.retriever_name])
         topk = args.retriever.topk
 
-        for idx, topk_dataset in enumerate(zip([datasets["validation"][i::topk] for i in range(topk)])):
-            for row in zip(topk_dataset[0]["id"], topk_dataset[0]["context"]):
-                if id_to_context[row[0]] == row[1]:
+        cur_cnt, tot_cnt = 0, len(datasets["validation"])
+
+        indexes = np.array(range(tot_cnt * topk))
+
+        for idx, fancy_index in enumerate(zip([indexes[i::topk] for i in range(topk)])):
+            topk_dataset = valid_datasets["validation"][fancy_index[0]]
+
+            for real, pred in zip(topk_dataset["original_context"], topk_dataset["context"]):
+                if real == pred:
                     cur_cnt += 1
 
             topk_acc = cur_cnt / tot_cnt
