@@ -94,6 +94,7 @@ ST00.json 하이퍼파라미터는 아래 파일들을 참고해서 수정할 �
 - config/model_args.py
 - config/train_args.py
 - config/data_args.py
+- config/retriever_args.py
 - config/readme.md
 
 ```json
@@ -124,6 +125,11 @@ ST00.json 하이퍼파라미터는 아래 파일들을 참고해서 수정할 �
         "overwrite_output_dir": true,
         "report_to": ["wandb"]
     }
+    "retriever": {
+        "retrain": false,
+        "dense_train_dataset": "train_dataset",
+        "topk": 30
+    }
 }
 ```
 
@@ -140,12 +146,14 @@ root/
 
 ### Usage: Train   
   
+#### READER Train
+
 - ST01 전략을 서로 다른 seed 값으로 3번 실행  
 `python -m run --strategies ST01 --run_cnt 3`    
 - ST01, ST02 전략을 서로 다른 seed 값으로 3번씩 실행 (총 6번)   
 `python -m run --strategies ST01,ST02 --run_cnt 3`   
-  
-#### Train result  
+
+#### READER Result  
 
 ```
 input/  
@@ -156,6 +164,46 @@ input/
     ├── nbest_predictions_valid.json
     └── predictions_valid.json
 ```
+
+#### RETRIVER Train
+
+- 전략(ST00.json)에 있는 Reader 모델은 사용하지 않습니다.
+- Retriver 모델은 학습이 완료된 이후로는 결과가 불변이기 때문에 run_cnt 값을 1로 설정해주시면 됩니다.
+- retrain 인자를 사용해서 재학습을 진행할 수 있습니다.
+
+`python -m run_retriver --strategies ST01,ST02,ST03,ST04 --run_cnt 1`
+
+#### RETRIVER Result
+
+- wandb.ai에서 이미지를 확인 할 수 있습니다.
+
+```
+전략: ST01 RETRIEVER: TFIDF
+TOPK: 0 ACC: 22.08
+TOPK: 1 ACC: 32.92
+TOPK: 2 ACC: 36.25
+TOPK: 3 ACC: 40.42
+TOPK: 4 ACC: 43.33
+TOPK: 5 ACC: 47.08
+TOPK: 6 ACC: 49.58
+TOPK: 7 ACC: 51.25
+TOPK: 8 ACC: 52.92
+TOPK: 9 ACC: 55.00
+```
+
+![image](https://user-images.githubusercontent.com/40788624/117123189-b0264400-add1-11eb-8ec6-77b05097d4c8.png)
+
+```
+input
+└── embed
+    ├── BM25
+    │   ├── BM25.bin
+    │   └── embedding.bin
+    └── TFIDF
+        ├── TFIDF.bin
+        └── embedding.bin
+```
+ 
 
 ### Usage: Predict
 
