@@ -108,6 +108,8 @@ class DprRetrieval(DenseRetrieval):
         torch.cuda.empty_cache()
 
         for epoch in range(training_args.num_train_epochs):
+            total_loss = 0.0
+
             for step, batch in enumerate(train_dataloader):
 
                 if torch.cuda.is_available():
@@ -129,6 +131,7 @@ class DprRetrieval(DenseRetrieval):
                 loss = F.nll_loss(sim_scores, targets)
 
                 print(f"epoch: {epoch:02} step: {step:02} loss: {loss}", end="\r")
+                total_loss += loss.item()
 
                 loss.backward()
                 optimizer.step()
@@ -138,6 +141,8 @@ class DprRetrieval(DenseRetrieval):
                 global_step += 1
 
                 torch.cuda.empty_cache()
+
+            print(f"epoch: {epoch:02} step: {step:02} loss: {total_loss / len(train_dataloader)}")
 
         return p_model, q_model
 
@@ -166,10 +171,10 @@ class DprRetrieval(DenseRetrieval):
         args = TrainingArguments(
             output_dir="dense_retrieval",
             evaluation_strategy="epoch",
-            learning_rate=3e-5,
+            learning_rate=2e-5,
             per_device_train_batch_size=4,
             per_device_eval_batch_size=4,
-            num_train_epochs=4,
+            num_train_epochs=2,
             weight_decay=0.01,
         )
 
