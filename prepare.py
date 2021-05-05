@@ -1,7 +1,7 @@
 import os.path as p
 
 from reader import DprReader
-from retrieval.dense import DprRetrieval
+from retrieval.dense import DprRetrieval, DprKobertRetrieval
 from retrieval.sparse import TfidfRetrieval, BM25Retrieval
 from tokenization_kobert import KoBertTokenizer
 from datasets import load_from_disk, load_dataset, load_metric
@@ -11,7 +11,7 @@ from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoTokenize
 metric = load_metric("squad")
 
 
-RETRIEVER = {"TFIDF": TfidfRetrieval, "DPR": DprRetrieval, "BM25": BM25Retrieval}
+RETRIEVER = {"TFIDF": TfidfRetrieval, "DPR": DprRetrieval, "BM25": BM25Retrieval, "DPRKOBERT": DprKobertRetrieval}
 READER = {"DPR": DprReader}
 
 
