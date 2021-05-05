@@ -40,8 +40,6 @@ class DenseRetrieval(Retrieval):
             self.encoder.load_state_dict(torch.load(self.encoder_path))
         else:
             self.p_embedding, self.encoder = self._exec_embedding()
-            self.p_embedding.squeeze_()  # in-place
-            self.p_embedding = self.p_embedding.detach().cpu().numpy()
 
             with open(self.embed_path, "wb") as f:
                 pickle.dump(self.p_embedding, f)
