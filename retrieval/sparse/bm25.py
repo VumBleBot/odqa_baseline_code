@@ -4,17 +4,31 @@ import numpy as np
 import os.path as p
 from konlpy.tag import Mecab
 from sklearn.feature_extraction.text import TfidfVectorizer
+from tokenization_kobert import KoBertTokenizer
+from transformers import AutoTokenizer
 
 from retrieval.sparse import SparseRetrieval
 
 
 class BM25Retrieval(SparseRetrieval):
-    def __init__(self, args, b=0.01, k1=0.1):
+    def __init__(self, args):
         super().__init__(args)
-        mecab = Mecab()
-        self.b = b  # 0일 수록 문서 길이의 중요도가 낮아진다. 일반적으로 0.75 사용.
-        self.k1 = k1  # TF의 saturation을 결정하는 요소. 어떤 토큰이 한 번 더 등장했을 때 이전에 비해 점수를 얼마나 높여주어야 하는가를 결정. (1.2~2.0을 사용하는 것이 일반적)
-        self.encoder = TfidfVectorizer(tokenizer=mecab.morphs, ngram_range=(1, 2))
+
+        if self.args.model.tokenizer_name is "":
+            print("Using Mecab tokenizer")
+            mecab = Mecab()
+            self.tokenizer = mecab.morphs
+        elif self.args.model.tokenizer_name in ["monologg/kobert", "monologg/distilkobert"]:
+            print("Using KoBert tokenizer")
+            self.tokenizer = KoBertTokenizer.from_pretrained(args.model.tokenizer_name).tokenize
+        else:
+            print("Using AutoTokenizer: ", args.model.tokenizer_name)
+            self.tokenizer = AutoTokenizer.from_pretrained(args.model.tokenizer_name, use_fast=True).tokenize
+
+
+        self.b = self.args.retriever.b
+        self.k1 = self.args.retriever.k1
+        self.encoder = TfidfVectorizer(tokenizer=self.tokenizer, ngram_range=(1, 2))
 
         self.avdl = None
         self.p_embedding = None
