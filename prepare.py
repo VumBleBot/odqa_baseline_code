@@ -25,17 +25,17 @@ def get_retriever(args):
     """
     Get appropriate retriever.
 
-    AVAILABLE OPTIONS(2021.05.02)
+    AVAILABLE OPTIONS(2021.05.05)
     - Term-based
         - TF-IDF : use konlpy-Mecab for word tokenization.
-        - TODO : BM-25
+        - BM-25
     - Vector Embedding
         - Sparse
-        - TODO : Dense
+        - Dense
     Need more retriever and retriever options.
 
     :param args
-        - model.retriever_name : [tfidf]
+        - model.retriever_name : [TFIDF, DPR, BM25]
     :return: Retriever which contains embedded vector(+indexer if faiss is built).
     """
 
