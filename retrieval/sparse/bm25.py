@@ -9,7 +9,7 @@ from retrieval.sparse import SparseRetrieval
 
 
 class BM25Retrieval(SparseRetrieval):
-    def __init__(self, args, b=0.01, k1=0.1)
+    def __init__(self, args, b=0.01, k1=0.1):
         super().__init__(args)
         mecab = Mecab()
         self.b = b  # 0일 수록 문서 길이의 중요도가 낮아진다. 일반적으로 0.75 사용.
@@ -51,8 +51,10 @@ class BM25Retrieval(SparseRetrieval):
         doc_scores = []
         doc_indices = []
 
+        p_embedding = self.p_embedding.tocsc()
+
         for query_vec in tqdm.tqdm(query_vecs):
-            p_emb_for_q = self.p_embedding.tocsc()[:, query_vec.indices]
+            p_emb_for_q = p_embedding.tocsc()[:, query_vec.indices]
             denom = p_emb_for_q + (k1 * (1 - b + b * len_p / avdl))[:, None]
 
             # idf(t) = log [ n / df(t) ] + 1 in sklearn, so it need to be converted
