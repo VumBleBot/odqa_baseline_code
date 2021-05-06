@@ -6,6 +6,7 @@ from transformers import set_seed
 
 from tools import update_args
 from prepare import get_dataset, get_reader, get_retriever
+from evaluation import evaluation
 
 
 def train_reader(args):
@@ -42,6 +43,7 @@ def train_reader(args):
 
         if args.train.do_eval:
             eval_results = trainer.evaluate()
+            evaluation(args)
             print(eval_results)
 
 
