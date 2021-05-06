@@ -10,7 +10,7 @@ class TfidfRetrieval(SparseRetrieval):
         super().__init__(args)
 
         mecab = Mecab()
-        self.encoder = TfidfVectorizer(tokenizer=mecab.morphs, ngram_range=(1, 2), max_features=50000)
+        self.encoder = TfidfVectorizer(tokenizer=mecab.morphs, ngram_range=(1, 2))
         self.p_embedding = None
 
     def _exec_embedding(self):
