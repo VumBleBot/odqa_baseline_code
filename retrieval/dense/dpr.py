@@ -71,26 +71,7 @@ class DprRetrieval(DenseRetrieval):
             dataset, sampler=train_sampler, batch_size=training_args.per_device_train_batch_size
         )
 
-        no_decay = ["bias", "LayerNorm.weight"]
-        optimizer_grouped_parameters = [
-            {
-                "params": [p for n, p in p_model.named_parameters() if not any(nd in n for nd in no_decay)],
-                "weight_decay": training_args.weight_decay,
-            },
-            {
-                "params": [p for n, p in p_model.named_parameters() if any(nd in n for nd in no_decay)],
-                "weight_decay": 0.0,
-            },
-            {
-                "params": [p for n, p in q_model.named_parameters() if not any(nd in n for nd in no_decay)],
-                "weight_decay": training_args.weight_decay,
-            },
-            {
-                "params": [p for n, p in q_model.named_parameters() if any(nd in n for nd in no_decay)],
-                "weight_decay": 0.0,
-            },
-        ]
-
+        optimizer_grouped_parameters = [{"params": p_model.parameters()}, {"params": q_model.parameters()}]
         optimizer = AdamW(optimizer_grouped_parameters, lr=training_args.learning_rate, eps=training_args.adam_epsilon)
         t_total = len(train_dataloader) // training_args.gradient_accumulation_steps * training_args.num_train_epochs
         scheduler = get_linear_schedule_with_warmup(
@@ -171,8 +152,8 @@ class DprRetrieval(DenseRetrieval):
         args = TrainingArguments(
             output_dir="dense_retrieval",
             evaluation_strategy="epoch",
-            learning_rate=2e-5,
-            per_device_train_batch_size=4,
+            learning_rate=3e-5,
+            per_device_train_batch_size=1000,
             per_device_eval_batch_size=4,
             num_train_epochs=2,
             weight_decay=0.01,
