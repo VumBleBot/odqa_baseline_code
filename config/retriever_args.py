@@ -17,3 +17,12 @@ class RetrievalTrainingArguments:
     # Parameters for bm25
     b: Optional[float] = field(default=0.01, metadata={"help":"0일 수록 문서 길이의 중요도가 낮아진다. 일반적으로 0.75 사용, 우리 모델에서 최적 0.01로 나옴"})
     k1: Optional[float] = field(default=0.1, metadata={"help":"TF의 saturation을 결정하는 요소. 어떤 토큰이 한 번 더 등장했을 때 이전에 비해 점수를 얼마나 높여주어야 하는가를 결정. (1.2~2.0을 사용하는 것이 일반적)"})
+
+    # Parameters for hybrid-retriever
+    alpha : Optional[float] = field(default=0.1, metadata={"help" : "Set weight for sparse retriever"})
+    dense_retriever_name : Optional[str] = field(
+        default="DPR", metadata={"help": "The name of the dense retriever combined with sparse retriever."}
+    )
+    sparse_retriever_name : Optional[str] = field(
+        default="BM25", metadata={"help": "The name of the sparse retriever combined with dense retriever."}
+    )
