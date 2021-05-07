@@ -40,12 +40,14 @@ def get_topk_fig(args, topk_result):
     ax.spines["right"].set_visible(False)
     ax.set_ylim([0, 1])
 
-    x_pos = range(1, args.retriever.topk + 1)
-    ax.set_xticks(x_pos)
+    x_pos = list(range(1, args.retriever.topk + 1))
+    term = args.retriever.topk // 10 if args.retriever.topk >= 10 else args.retriever.topk
+    x_tick = x_pos[:-1][::term] + [x_pos[-1]]
+    ax.set_xticks(x_tick)
 
     for name, topk in topk_result.items():
         co, mk, li = get_cml()
-        ax.plot(x_pos, topk, color=co, marker=mk, linestyle=li)
+        ax.plot(x_pos, topk, color=co, marker=mk, linestyle=li, label=name)
         ax.text(
             x_pos[-1] + 0.1,
             topk[-1],
@@ -53,8 +55,10 @@ def get_topk_fig(args, topk_result):
             fontweight="bold",
             va="center",
             ha="left",
-            bbox=dict(boxstyle="round,pad=0.3", fc="#F36E8E", ec="black", alpha=0.3),
+            bbox=dict(boxstyle="round,pad=0.3", fc=co, ec="black", alpha=0.3),
         )
+
+    ax.legend(loc="lower right")
 
     return fig
 
