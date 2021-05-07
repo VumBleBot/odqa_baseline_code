@@ -4,6 +4,7 @@
 
 - dataset_name
 - overwrite_cache
+- cache_file_name
 - preprocessing_num_workers
 - max_seq_length
 - pad_to_max_length
