@@ -23,6 +23,7 @@ class BaseReader:
     def set_dataset(self, datasets, is_run=True):
         self.train_dataset = self.preprocess_dataset(self.datasets, is_train=True) if is_run else None
         self.eval_dataset = self.preprocess_dataset(datasets, is_train=False)
+        self.retrieve_datasets = datasets
 
     def preprocess_dataset(self, datasets, is_train=True):
         """
@@ -62,6 +63,7 @@ class BaseReader:
             num_proc=self.args.data.preprocessing_num_workers,
             remove_columns=column_names,
             load_from_cache_file=not self.args.data.overwrite_cache,
+            cache_file_name=self.args.data.cache_file_name,
         )
 
         return dataset
@@ -189,7 +191,7 @@ class DprReader(BaseReader):
             custom_args=self.args,
             train_dataset=self.train_dataset,
             eval_dataset=self.eval_dataset,
-            eval_examples=self.datasets["validation"],
+            eval_examples=self.retrieve_datasets["validation"],
             tokenizer=self.tokenizer,
             data_collator=self.data_collator,
             post_process_function=self._post_processing_function,
