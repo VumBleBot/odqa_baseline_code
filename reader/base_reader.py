@@ -62,6 +62,7 @@ class BaseReader:
             num_proc=self.args.data.preprocessing_num_workers,
             remove_columns=column_names,
             load_from_cache_file=not self.args.data.overwrite_cache,
+            cache_file_name=self.args.data.cache_file_name
         )
 
         return dataset
