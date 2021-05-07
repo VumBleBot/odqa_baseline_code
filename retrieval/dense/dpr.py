@@ -152,8 +152,8 @@ class DprRetrieval(DenseRetrieval):
         args = TrainingArguments(
             output_dir="dense_retrieval",
             evaluation_strategy="epoch",
-            learning_rate=3e-5,
-            per_device_train_batch_size=1000,
+            learning_rate=2e-5,
+            per_device_train_batch_size=4,
             per_device_eval_batch_size=4,
             num_train_epochs=2,
             weight_decay=0.01,
