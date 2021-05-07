@@ -7,7 +7,10 @@
 - [Json File Example](#json-file-example)
 - [Usage](#usage)
   - [Usage: Train](#usage-train)
-    - [Train result](#train-result)
+    - [READER Train](#reader-train)
+    - [READER Result](#reader-result)
+    - [RETRIVER Train](#retriver-train)
+    - [RETRIVER Result](#retriver-result)
   - [Usage: Predict](#usage-predict)
     - [Predict result](#predict-result)
 - [TDD](#tdd)
@@ -124,7 +127,7 @@ ST00.json 하이퍼파라미터는 아래 파일들을 참고해서 수정할 �
         "logging_steps": 100,
         "overwrite_output_dir": true,
         "report_to": ["wandb"]
-    }
+    },
     "retriever": {
         "retrain": false,
         "dense_train_dataset": "train_dataset",
@@ -171,7 +174,7 @@ input/
 - Retriver 모델은 학습이 완료된 이후로는 결과가 불변이기 때문에 run_cnt 값을 1로 설정해주시면 됩니다.
 - retrain 인자를 사용해서 재학습을 진행할 수 있습니다.
 
-`python -m run_retriver --strategies ST01,ST02,ST03,ST04 --run_cnt 1`
+`python -m run_retrieval --strategies ST01,ST02,ST03,ST04 --run_cnt 1`
 
 #### RETRIVER Result
 

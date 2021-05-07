@@ -4,17 +4,30 @@ import numpy as np
 import os.path as p
 from konlpy.tag import Mecab
 from sklearn.feature_extraction.text import TfidfVectorizer
+from tokenization_kobert import KoBertTokenizer
+from transformers import AutoTokenizer
 
 from retrieval.sparse import SparseRetrieval
 
 
 class BM25Retrieval(SparseRetrieval):
-    def __init__(self, args, b=0.75, k1=1.2):
+    def __init__(self, args):
         super().__init__(args)
-        mecab = Mecab()
-        self.b = b  # 0일 수록 문서 길이의 중요도가 낮아진다.
-        self.k1 = k1  # TF, TF decay
-        self.encoder = TfidfVectorizer(tokenizer=mecab.morphs, ngram_range=(1, 2), max_features=50000)
+
+        if self.args.model.tokenizer_name == "":
+            print("Using Mecab tokenizer")
+            mecab = Mecab()
+            self.tokenizer = mecab.morphs
+        elif self.args.model.tokenizer_name in ["monologg/kobert", "monologg/distilkobert"]:
+            print("Using KoBert tokenizer")
+            self.tokenizer = KoBertTokenizer.from_pretrained(args.model.tokenizer_name).tokenize
+        else:
+            print("Using AutoTokenizer: ", args.model.tokenizer_name)
+            self.tokenizer = AutoTokenizer.from_pretrained(args.model.tokenizer_name, use_fast=True).tokenize
+
+        self.b = self.args.retriever.b
+        self.k1 = self.args.retriever.k1
+        self.encoder = TfidfVectorizer(tokenizer=self.tokenizer, ngram_range=(1, 2))
 
         self.avdl = None
         self.p_embedding = None
@@ -51,8 +64,10 @@ class BM25Retrieval(SparseRetrieval):
         doc_scores = []
         doc_indices = []
 
+        p_embedding = self.p_embedding.tocsc()
+
         for query_vec in tqdm.tqdm(query_vecs):
-            p_emb_for_q = self.p_embedding.tocsc()[:, query_vec.indices]
+            p_emb_for_q = p_embedding[:, query_vec.indices]
             denom = p_emb_for_q + (k1 * (1 - b + b * len_p / avdl))[:, None]
 
             # idf(t) = log [ n / df(t) ] + 1 in sklearn, so it need to be converted
