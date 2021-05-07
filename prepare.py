@@ -19,6 +19,7 @@ RETRIEVER = {
     "DPRKORQUAD": DprKorquadBertRetrieval,
     "HYBRID": HybridRetrieval
 }
+
 READER = {"DPR": DprReader}
 
 

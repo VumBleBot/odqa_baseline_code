@@ -24,6 +24,9 @@ class DenseRetrieval(Retrieval):
         self.encoder = None
         self.p_embedding = None
 
+    def _load_model(self):
+        raise NotImplementedError
+
     def _get_encoder(self):
         """ 모델 구조 가져오기 """
         raise NotImplementedError

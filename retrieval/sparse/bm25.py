@@ -14,7 +14,7 @@ class BM25Retrieval(SparseRetrieval):
     def __init__(self, args):
         super().__init__(args)
 
-        if self.args.model.tokenizer_name is "":
+        if self.args.model.tokenizer_name == "":
             print("Using Mecab tokenizer")
             mecab = Mecab()
             self.tokenizer = mecab.morphs
@@ -24,7 +24,6 @@ class BM25Retrieval(SparseRetrieval):
         else:
             print("Using AutoTokenizer: ", args.model.tokenizer_name)
             self.tokenizer = AutoTokenizer.from_pretrained(args.model.tokenizer_name, use_fast=True).tokenize
-
 
         self.b = self.args.retriever.b
         self.k1 = self.args.retriever.k1
@@ -68,7 +67,7 @@ class BM25Retrieval(SparseRetrieval):
         p_embedding = self.p_embedding.tocsc()
 
         for query_vec in tqdm.tqdm(query_vecs):
-            p_emb_for_q = p_embedding.tocsc()[:, query_vec.indices]
+            p_emb_for_q = p_embedding[:, query_vec.indices]
             denom = p_emb_for_q + (k1 * (1 - b + b * len_p / avdl))[:, None]
 
             # idf(t) = log [ n / df(t) ] + 1 in sklearn, so it need to be converted
