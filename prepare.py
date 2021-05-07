@@ -1,7 +1,7 @@
 import os.path as p
 
 from reader import DprReader
-from retrieval.dense import DprRetrieval, DprKobertRetrieval, DprKorquadBertRetrieval
+from retrieval.dense import DprRetrieval, DprKobertRetrieval, DprKorquadBertRetrieval, HybridRetrieval
 from retrieval.sparse import TfidfRetrieval, BM25Retrieval
 from tokenization_kobert import KoBertTokenizer
 from datasets import load_from_disk, load_dataset, load_metric
@@ -17,6 +17,7 @@ RETRIEVER = {
     "TFIDF": TfidfRetrieval,
     "DPRKOBERT": DprKobertRetrieval,
     "DPRKORQUAD": DprKorquadBertRetrieval,
+    "HYBRID": HybridRetrieval
 }
 READER = {"DPR": DprReader}
 

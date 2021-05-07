@@ -87,3 +87,4 @@ class BM25Retrieval(SparseRetrieval):
             doc_indices.append(doc_indice)
 
         return doc_scores, doc_indices
+
