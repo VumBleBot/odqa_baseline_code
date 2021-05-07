@@ -1,6 +1,4 @@
 
-from datasets import load_from_disk
-
 import os
 import tqdm
 import pickle
@@ -10,7 +8,7 @@ import os.path as p
 from sklearn.feature_extraction.text import TfidfVectorizer
 from transformers import AutoTokenizer
 import json
-from datasets import Sequence, Value, Features, DatasetDict, Dataset
+from datasets import load_from_disk, Sequence, Value, Features, DatasetDict, Dataset
 
 datasets = load_from_disk(p.join('/opt/ml/input/data/', 'train_dataset'))
 
@@ -114,10 +112,28 @@ class BM25Retrieval:
                 if "context" in example.keys() and "answers" in example.keys():
                     tmp["original_context"] = example["context"]  # original document
                     tmp["answers"] = example["answers"]  # original answer
-                    tmp["retrieval_label"] = 1 if tmp["context_id"] == example["document_id"] else 0
+                    tmp["retrieval_label"] = 1 if tmp["context"] == example["context"] else 0
                 total.append(tmp)
 
         df = pd.DataFrame(total)
+
+        gt_to_add = []
+
+        for idx, example in enumerate(query_or_dataset):
+            if not ((df['id'] == example['id']) & (df['retrieval_label'] == 1)).any():
+                tmp = {
+                    "question": example["question"],
+                    "id": example["id"],
+                    "context_id": example["document_id"],  # retrieved id
+                    "context": example["context"],  # retrieved document
+                }
+                if "context" in example.keys() and "answers" in example.keys():
+                    tmp["original_context"] = example["context"]  # original document
+                    tmp["answers"] = example["answers"]  # original answer
+                    tmp["retrieval_label"] = 1
+            gt_to_add.append(tmp)
+
+        additional_df = pd.DataFrame(gt_to_add)
 
         f = Features(
             {
@@ -134,11 +150,13 @@ class BM25Retrieval:
             }
         )
 
-        datasets = DatasetDict({"validation": Dataset.from_pandas(df, features=f)})
+        df = pd.concat([df, additional_df])
+
+        datasets = DatasetDict({"train": Dataset.from_pandas(df, features=f)})
         return datasets
 
 
 retriever = BM25Retrieval()
 retriever.get_embedding()
 retrieved_dataset = retriever.retrieve(datasets["train"], topk=10)
-retrieved_dataset["validation"].save_to_disk("/opt/ml/input/data/bm25_augmented_dataset")
+retrieved_dataset["train"].save_to_disk("/opt/ml/input/data/bm25_augmented_dataset")
