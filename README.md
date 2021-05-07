@@ -131,7 +131,9 @@ ST00.json 하이퍼파라미터는 아래 파일들을 참고해서 수정할 �
     "retriever": {
         "retrain": false,
         "dense_train_dataset": "train_dataset",
-        "topk": 30
+        "topk": 30,
+        "dense_retriever_name": "DPR",
+        "sparse_retriever_name": "BM25"
     }
 }
 ```

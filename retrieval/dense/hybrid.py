@@ -58,9 +58,7 @@ class HybridRetrieval(DprRetrieval):
         alpha = self.args.retriever.alpha
 
         dense_doc_scores, dense_docs_indices = self.dense_retrieval.get_relevant_doc_bulk(query_or_dataset["question"], topk) 
-        print(len(dense_doc_scores), len(dense_doc_scores[0]))
         sparse_doc_scores, sparse_docs_indices = self.sparse_retrieval.get_relevant_doc_bulk(query_or_dataset["question"], topk)
-        print(len(sparse_doc_scores), len(sparse_doc_scores[0]))
         
         dense_hit, sparse_hit = {}, {}
         doc_scores, doc_indices = [], []
@@ -127,9 +125,3 @@ class HybridRetrieval(DprRetrieval):
         datasets = DatasetDict({"validation": Dataset.from_pandas(df, features=f)})
         return datasets
 
-# if __name__=="__main__":
-#     from tools import get_args
-#     args=get_args()
-#     clss=HybridRetrieval(args)
-# #     clss.get_embedding()
-#     clss.retrieve()
