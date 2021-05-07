@@ -1,3 +1,4 @@
+import json
 import os.path as p
 from datasets import load_from_disk, concatenate_datasets
 
@@ -30,7 +31,12 @@ def main(args):
         temp = check_is_real_cheating(mrc_test_dataset, all_mrc_dummy_dataset, cheat_id)
         cheats[cheat_id] = temp
 
-    print(len(cheats))
+    cheat_path = p.join(args.path.train_data_dir, "cheat.json")
+
+    print(cheats)
+
+    with open(cheat_path, "w") as f:
+        f.write(json.dumps(cheats, indent=4, ensure_ascii=False) + "\n")
 
 
 if __name__ == "__main__":
