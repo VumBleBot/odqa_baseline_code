@@ -7,7 +7,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from transformers import set_seed
 
-from tools import update_args
+from tools import update_args, get_args
+from slack_api import report_retriever_to_slack
 from prepare import get_dataset, get_retriever
 
 
@@ -102,9 +103,10 @@ def train_retriever(args):
     fig = get_topk_fig(args, topk_result)
     wandb.log({"retriever topk result": wandb.Image(fig)})
 
+    if args.report is True:
+        report_retriever_to_slack(fig)
+
 
 if __name__ == "__main__":
-    from tools import get_args
-
     args = get_args()
     train_retriever(args)
