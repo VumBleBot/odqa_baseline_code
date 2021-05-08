@@ -15,10 +15,10 @@ def predict(args):
         args.train.output_dir = p.join(args.path.checkpoint, strategy)
 
         datasets = get_dataset(args, is_train=False)
-        retriever = get_retriever(args, eval_answers=datasets["validation"])
-        dataset["validation"] = retriever.retrieve(datasets["validation"], topk=args.retriever.topk)["validation"]
+        reader = get_reader(args, eval_answers=datasets["validation"])
+        retriever = get_retriever(args)
         
-        reader = get_reader(args)
+        datasets["validation"] = retriever.retrieve(datasets["validation"], topk=args.retriever.topk)["validation"]
         reader.set_dataset(eval_dataset=datasets["validation"])
 
         trainer = reader.get_trainer()
