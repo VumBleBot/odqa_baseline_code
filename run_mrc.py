@@ -23,24 +23,21 @@ def train_reader(args):
 
         # below codes must run before 'reader.get_trainer()'
         # run_name: strategy + alias + seed
-        args.train.run_name = "_".join([strategy, args.alias, str(seed)])
-        args.train.output_dir = p.join(args.path.checkpoint, args.train.run_name)
+        # args.train.run_name = "_".join([strategy, args.alias, str(seed)])
+        # args.train.output_dir = p.join(args.path.checkpoint, args.train.run_name)
         wandb.run.name = args.train.run_name
 
         print("checkpoint_dir: ", args.train.output_dir)
 
         datasets = get_dataset(args, is_train=True)
+        retriever = get_retriever(args)
         reader = get_reader(args)
 
         # TODO: 아래 주석 아직도 유효한지 확인
         # retrieve 과정이 없어 top-k를 반환할 수 없음. 무조건 top-1만 반환
-        reader.set_dataset(train_dataset=datasets["train"], eval_dataset=datasets["validation"])
+        reader.set_dataset(eval_dataset=datasets["validation"])
 
         trainer = reader.get_trainer()
-
-        if args.train.do_train:
-            train_results = trainer.train()
-            print(train_results)
 
         if args.train.do_eval:
             eval_results = trainer.evaluate()
