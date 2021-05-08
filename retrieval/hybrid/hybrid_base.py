@@ -5,7 +5,7 @@ class HybridRetrieval(Retrieval):
     """ 이미 학습된 Sparse, Dense Retriever를 사용한다."""
 
     def __init__(self, args):
-        """super().__init__(args) 생략, wiki를 가지고 있을 필요가 없음"""
+        super().__init__(args)
 
         self.sparse_retriever = None
         self.dense_retriever = None
@@ -13,6 +13,8 @@ class HybridRetrieval(Retrieval):
     def get_embedding(self):
         self.sparse_retriever.get_embedding()
         self.dense_retriever.get_embedding()
+
+        self.p_embedding = 1
 
     def _rank_fusion_by_hybrid(self, dense_hits, sparse_hits):
         ranks = []
@@ -36,14 +38,12 @@ class HybridRetrieval(Retrieval):
         return doc_score, doc_index
 
     def get_relevant_doc_bulk(self, query_or_dataset, topk):
-        assert self.p_embedding is not None, "get_embedding()을 먼저 수행한 후에 retrieve()를 작동시켜 주세요. "
-
-        dense_scores, dense_indices = self.dense_retriever.get_relevant_doc_bulk(query_or_dataset["question"], topk)
-        sparse_scores, sparse_indices = self.sparse_retriever.get_relevant_doc_bulk(query_or_dataset["question"], topk)
+        dense_scores, dense_indices = self.dense_retriever.get_relevant_doc_bulk(query_or_dataset, topk)
+        sparse_scores, sparse_indices = self.sparse_retriever.get_relevant_doc_bulk(query_or_dataset, topk)
 
         doc_scores, doc_indices = [], []
 
-        for idx, query_id in enumerate(query_or_dataset["id"]):
+        for idx, query_id in enumerate(query_or_dataset):
             scores_topk, indexs_topk = dense_scores[idx], dense_indices[idx]
             dense_hits = {indexs_topk[k]: scores_topk[k] for k in range(topk)}
 

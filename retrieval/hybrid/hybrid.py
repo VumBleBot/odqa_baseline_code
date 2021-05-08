@@ -5,6 +5,7 @@ from retrieval.sparse import TfidfRetrieval, BM25Retrieval
 
 class Bm25DprKobert(HybridRetrieval):
     def __init__(self, args):
+        super().__init__(args)
         temp = args.model.retriever_name
 
         args.model.retriever_name = "BM25"
@@ -17,6 +18,7 @@ class Bm25DprKobert(HybridRetrieval):
 
 class TfidfDprKobert(HybridRetrieval):
     def __init__(self, args):
+        super().__init__(args)
         temp = args.model.retriever_name
 
         args.model.retriever_name = "TFIDF"
