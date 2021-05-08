@@ -100,6 +100,7 @@ def get_args():
     arg_parser.add_argument("--seeds", type=str2intlist, default=SEEDS)
     arg_parser.add_argument("--data_path", type=str, default="../input/")
     arg_parser.add_argument("--debug", type=str2bool, default=False)
+    arg_parser.add_argument("--report", type=str2bool, default=True)
 
     # use for predict
     arg_parser.add_argument("--model_path", type=str, default="")

@@ -10,8 +10,9 @@ import sys
 
 from datasets import load_from_disk
 
+
 def get_gt_json(args):
-    """ Get the json file that contain ground truth of validation datasets.
+    """Get the json file that contain ground truth of validation datasets.
         If not exists, generate the json file.
 
     Arguments:
@@ -20,26 +21,24 @@ def get_gt_json(args):
         gt_json
     """
     gt_json = None
-    save_path = p.join(args.path.train_data_dir, 'eval_gt.json')
+    save_path = p.join(args.path.train_data_dir, "eval_gt.json")
 
     if p.isfile(save_path):
-        with open(save_path, "r", encoding='utf-8') as f:
+        with open(save_path, "r", encoding="utf-8") as f:
             gt_json = json.load(f)
     else:
         eval_datasets = load_from_disk(p.join(args.path.train_data_dir, args.data.dataset_name))["validation"]
-        
+
         gt_json = []
         for data in eval_datasets:
-            result = {
-                'id': data['id'],
-                'answer': data['answers']['text']
-            }
+            result = {"id": data["id"], "answer": data["answers"]["text"]}
             gt_json.append(result)
-        
-        with open(save_path, "w", encoding='utf-8') as save_file:
+
+        with open(save_path, "w", encoding="utf-8") as save_file:
             json.dump(gt_json, save_file, indent=4, ensure_ascii=False)
-    
+
     return gt_json
+
 
 def evaluation(args):
     """Calculate MRC metrics.
@@ -48,8 +47,8 @@ def evaluation(args):
         args: args
     """
 
-    pred_path = p.join(args.train.output_dir, 'predictions_valid.json')
-    save_path = p.join(args.train.output_dir, 'valid_results.json')
+    pred_path = p.join(args.train.output_dir, "predictions_valid.json")
+    save_path = p.join(args.train.output_dir, "valid_results.json")
 
     gt = get_gt_json(args)
     with open(pred_path) as pred_file:
@@ -60,35 +59,25 @@ def evaluation(args):
     for qa in gt:
         total += 1
         if qa["id"] not in preds:
-            message = (
-                "Unanswered question " + qa["id"] + " will receive score 0."
-            )
+            message = "Unanswered question " + qa["id"] + " will receive score 0."
             print(message, file=sys.stderr)
             continue
-        ground_truths = qa['answer']
+        ground_truths = qa["answer"]
         prediction = preds[qa["id"]]
-        exact_match += metric_max_over_ground_truths(
-            exact_match_score, prediction, ground_truths
-        )
+        exact_match += metric_max_over_ground_truths(exact_match_score, prediction, ground_truths)
         f1 += metric_max_over_ground_truths(f1_score, prediction, ground_truths)
 
     exact_match = exact_match / total
     f1 = f1 / total
-    
-    results = {}
-    results["EM"] = {
-        "value": f"{exact_match:.2%}",
-        "rank": True,
-        "decs": True,
-    }
-    results["F1"] = {
-        "value": f"{f1:.2%}",
-        "rank": False,
-        "decs": True,
-    }
 
-    with open(save_path, "w", encoding='utf-8') as save_file:
+    results = {}
+    results["EM"] = {"value": f"{exact_match:.2%}", "rank": True, "decs": True}
+    results["F1"] = {"value": f"{f1:.2%}", "rank": False, "decs": True}
+
+    with open(save_path, "w", encoding="utf-8") as save_file:
         json.dump(results, save_file, indent=4, ensure_ascii=False)
+
+    return results
 
 
 def normalize_answer(s):
