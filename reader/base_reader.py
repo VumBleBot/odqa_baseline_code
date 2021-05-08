@@ -6,7 +6,7 @@ from trainer_qa import QuestionAnsweringTrainer
 
 
 class BaseReader:
-    def __init__(self, args, model, tokenizer):
+    def __init__(self, args, model, tokenizer, eval_answers):
         self.args = args
         self.metric = load_metric("squad")
         self.model, self.tokenizer = model, tokenizer
@@ -15,9 +15,10 @@ class BaseReader:
             self.tokenizer, pad_to_multiple_of=8 if self.args.train.fp16 else None
         )
 
-        self.train_dataset = None
+        self.train_dataset = None # 필요한거: train pp된거, eval 원본, eval retrieve 된거, eval retrieve 되고 pp된거
         self.eval_dataset = None
         self.eval_examples = None
+        self.eval_answers = eval_answers
 
     def set_dataset(self, train_dataset=None, eval_dataset=None):
         if train_dataset:
@@ -170,7 +171,7 @@ class BaseReader:
         elif training_args.do_eval:
             # query, 정답
             references = [
-                {"id": ex["id"], "answers": ex[self.answer_column_name]} for ex in self.datasets["validation"]
+                {"id": ex["id"], "answers": ex[self.answer_column_name]} for ex in self.eval_answers
             ]
             return EvalPrediction(predictions=formatted_predictions, label_ids=references)
 
@@ -182,8 +183,8 @@ class BaseReader:
 
 
 class DprReader(BaseReader):
-    def __init__(self, args, model, tokenizer):
-        super().__init__(args, model, tokenizer)
+    def __init__(self, args, model, tokenizer, eval_answers):
+        super().__init__(args, model, tokenizer, eval_answers)
 
     def get_trainer(self):
         trainer = QuestionAnsweringTrainer(
@@ -192,11 +193,7 @@ class DprReader(BaseReader):
             custom_args=self.args,
             train_dataset=self.train_dataset,
             eval_dataset=self.eval_dataset,
-<<<<<<< Updated upstream
-            eval_examples=self.retrieved_dataset["validation"],
-=======
             eval_examples=self.eval_examples,
->>>>>>> Stashed changes
             tokenizer=self.tokenizer,
             data_collator=self.data_collator,
             post_process_function=self._post_processing_function,

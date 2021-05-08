@@ -18,6 +18,7 @@ def train_reader(args):
         wandb.init(project="p-stage-3", reinit=True)
         args = update_args(args, strategy)  # auto add args.save_path, args.base_path
         args.strategy, args.seed = strategy, seed
+        args.retriever.topk = 1 # for run_mrc
         args.info = Namespace()
         set_seed(seed)
 
@@ -30,14 +31,15 @@ def train_reader(args):
         print("checkpoint_dir: ", args.train.output_dir)
 
         datasets = get_dataset(args, is_train=True)
-        retriever = get_retriever(args)
-        reader = get_reader(args)
-
-        # TODO: 아래 주석 아직도 유효한지 확인
-        # retrieve 과정이 없어 top-k를 반환할 수 없음. 무조건 top-1만 반환
-        reader.set_dataset(eval_dataset=datasets["validation"])
+        reader = get_reader(args, eval_answers=datasets["validation"])
+        
+        reader.set_dataset(train_dataset=datasets["train"], eval_dataset=datasets["validation"])
 
         trainer = reader.get_trainer()
+
+        if args.train.do_train:
+            train_results = trainer.train()
+            print(train_results)
 
         if args.train.do_eval:
             eval_results = trainer.evaluate()
