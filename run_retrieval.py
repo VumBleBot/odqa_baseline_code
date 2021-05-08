@@ -7,7 +7,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from transformers import set_seed
 
-from tools import update_args, get_args
+from fuzzywuzzy import fuzz
+from tools import get_args, update_args
 from slack_api import report_retriever_to_slack
 from prepare import get_dataset, get_retriever
 
@@ -93,7 +94,8 @@ def train_retriever(args):
             topk_dataset = valid_datasets["validation"][fancy_index[0]]
 
             for real, pred in zip(topk_dataset["original_context"], topk_dataset["context"]):
-                if real == pred:
+                # if two texts overlaps more than 95%,
+                if fuzz.ratio(real, pred) > 95:
                     cur_cnt += 1
 
             topk_acc = cur_cnt / tot_cnt
