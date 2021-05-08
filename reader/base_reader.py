@@ -6,27 +6,27 @@ from trainer_qa import QuestionAnsweringTrainer
 
 
 class BaseReader:
-    def __init__(self, args, model, tokenizer, datasets):
+    def __init__(self, args, model, tokenizer):
         self.args = args
-        self.datasets = datasets
         self.metric = load_metric("squad")
-
         self.model, self.tokenizer = model, tokenizer
-
-        self.train_dataset = None
-        self.eval_dataset = None
-        self.retrieved_dataset = None
 
         self.data_collator = DataCollatorWithPadding(
             self.tokenizer, pad_to_multiple_of=8 if self.args.train.fp16 else None
         )
 
-    def set_dataset(self, datasets, is_run=True):
-        self.train_dataset = self.preprocess_dataset(self.datasets, is_train=True) if is_run else None
-        self.eval_dataset = self.preprocess_dataset(datasets, is_train=False)
-        self.retrieved_dataset = datasets
+        self.train_dataset = None
+        self.eval_dataset = None
+        self.eval_examples = None
 
-    def preprocess_dataset(self, datasets, is_train=True):
+    def set_dataset(self, train_dataset=None, eval_dataset=None):
+        if train_dataset:
+            self.train_dataset = self.preprocess_dataset(train_dataset, is_train=True)
+        if eval_dataset:
+            self.eval_dataset = self.preprocess_dataset(eval_dataset, is_train=False)
+            self.eval_examples = eval_dataset
+
+    def preprocess_dataset(self, dataset, is_train=True):
         """
         Setup dataset for training/validation/inference.
         Inner functions
@@ -44,8 +44,7 @@ class BaseReader:
             use prepare_train_features function if True. else, use prepare_validation_features function.
         :return: (preprocessed dataset, postprocessing function for prediction)
         """
-        data_type = "train" if is_train else "validation"
-        column_names = datasets[data_type].column_names
+        column_names = dataset.column_names
 
         self.question_column_name = "question" if "question" in column_names else column_names[0]
         self.context_column_name = "context" if "context" in column_names else column_names[1]
@@ -54,7 +53,6 @@ class BaseReader:
         self.pad_on_right = self.tokenizer.padding_side == "right"
         self.max_seq_length = min(self.args.data.max_seq_length, self.tokenizer.model_max_length)
 
-        dataset = datasets[data_type]
         prepare_func = self._prepare_train_features if is_train else self._prepare_validation_features
 
         dataset = dataset.map(
@@ -184,8 +182,8 @@ class BaseReader:
 
 
 class DprReader(BaseReader):
-    def __init__(self, args, model, tokenizer, datasets):
-        super().__init__(args, model, tokenizer, datasets)
+    def __init__(self, args, model, tokenizer):
+        super().__init__(args, model, tokenizer)
 
     def get_trainer(self):
         trainer = QuestionAnsweringTrainer(
@@ -194,7 +192,11 @@ class DprReader(BaseReader):
             custom_args=self.args,
             train_dataset=self.train_dataset,
             eval_dataset=self.eval_dataset,
+<<<<<<< Updated upstream
             eval_examples=self.retrieved_dataset["validation"],
+=======
+            eval_examples=self.eval_examples,
+>>>>>>> Stashed changes
             tokenizer=self.tokenizer,
             data_collator=self.data_collator,
             post_process_function=self._post_processing_function,
