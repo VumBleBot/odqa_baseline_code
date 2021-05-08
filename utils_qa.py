@@ -80,7 +80,7 @@ def postprocess_qa_predictions(
         examples,
         features,
         predictions: Tuple[np.ndarray, np.ndarray],
-        topk: int = 3,
+        topk: int = 1,
         version_2_with_negative: bool = False,
         n_best_size: int = 20,
         max_answer_length: int = 30,
@@ -127,83 +127,110 @@ def postprocess_qa_predictions(
         features), f"Got {len(predictions[0])} predictions and {len(features)} features."
 
     # Build a map example to its corresponding features.
-    # example_id_to_index = {'mrc-0-00XXXX' : 0, 'mrc-0-00CCCC' : 1, ....} --> topk개를 묶어서 index 하나로 처리.
-    example_id_to_index = {k: i//topk for i, k in enumerate(examples["id"])}
+    # example_id_to_index = {'mrc-0-00XXXX_0' : 0, 'mrc-0-00XXXX_1' : 1, ....} --> 720개 example마다 각각 다른 example_id를 준다.
+    example_id_to_index = {'_'.join([k, str(i % topk)]): i for i, k in enumerate(examples["id"])}
 
     features_per_example = collections.defaultdict(list)
-    # ex) features_per_example[0] ==> [0,1,2,3,4,5,6]
+    # ex) features_per_example[0] ==> [0], features_per_example[0] ==> [1,2,3] ....
+    prev_doc_offset = (-1, -1)[0]
+    doc_id_postfix = 0
     for i, feature in enumerate(features):
-        features_per_example[example_id_to_index[feature['example_id']]].append(i)
+        # token_type_ids로 query sequence 구한 뒤, 거기서부터 뒤로 일정부분 슬라이싱해 docs 구분하기
+        tti = feature['token_type_ids']
+        query_sequence_length = len(tti) - sum(tti)  # query sequence length
+        doc_offset = feature['offset_mapping'][query_sequence_length][0]  # 해당 context sequence의 첫번째 offset
+
+        # offset이 떨어지거나 같으면(0) --> topk묶음이 끝나면
+        if doc_offset <= prev_doc_offset:
+            # doc_id_postfix가 0~topk-1까지 가도록 조정.
+            if (doc_id_postfix + 1) % topk == 0:
+                doc_id_postfix = 0
+            else:
+                doc_id_postfix += 1
+            # example_id_to_index의 키값으로 사용할 문자열 조합
+            # ex) mrc-00-00XXXX_0, mrc-00-00XXXX_2
+
+        # 해당 feature를 example index dict에 등록
+        example_index_key = '_'.join([feature['example_id'], str(doc_id_postfix)])
+        features_per_example[example_id_to_index[example_index_key]].append(i)
+
+        prev_doc_offset = doc_offset
+
     all_predictions = collections.OrderedDict()
     all_nbest_json = collections.OrderedDict()
 
     topk_merged_predictions = []
 
     # 시작
-    for example_index, example in enumerate(tqdm(examples)):
-        feature_indices = features_per_example[example_index]
+    # example은 len(example_to_index) * topk 번을 돈다.
+    # 따라서 각 topk 묶음의 첫번째 인덱스인 bundle_start_index를 활용.
+    for bundle_start_index in tqdm(range(0, len(examples), topk)):
+        for example_index in range(bundle_start_index, bundle_start_index + topk):
+            example = examples[example_index]
 
-        # print(f"example {example_index} | feature_indices {feature_indices}")
+            feature_indices = features_per_example[example_index]
 
-        # 하나의 example에 딸린 context들을 전부 돌면서 prediction 수집
-        prelim_predictions = looping_through_all_features(
-            all_start_logits, all_end_logits, n_best_size, features, max_answer_length, feature_indices
-        )  # [offset, start logit, end logit, score]
+            # print(f"example {example_index} | feature_indices {feature_indices}")
+            # print(f"example {example['question']} | feature_indices {feature_indices}")
 
-        ##### V
-        if example_index % topk == 0:
-            topk_merged_predictions = []  # k개 context 묶음마다 사용하는 list
-        #####
 
-        # TODO: document마다 score 정규화
+            # 하나의 example에 딸린 context들을 전부 돌면서 prediction 수집
+            prelim_predictions = looping_through_all_features(
+                all_start_logits, all_end_logits, n_best_size, features, max_answer_length, feature_indices
+            )  # [offset, start logit, end logit, score]
 
-        # 한 example에 있는 모든 predictions.
-        predictions = sorted(prelim_predictions, key=lambda x: x["score"], reverse=True)[:n_best_size]
 
-        # 01 predictions 정답 텍스트 매핑
-        context = example["context"]
-        for pred in predictions:
-            offsets = pred.pop("offsets")
-            pred["text"] = context[offsets[0]: offsets[1]]
-        # 02 정답이 없다면 Fake 정답 생성
-        if len(predictions) == 0 or (len(predictions) == 1 and predictions[0]["text"] == ""):
-            predictions.insert(0, {"text": "empty", "start_logit": 0.0, "end_logit": 0.0, "score": 0.0})
-        # 03 확률값 계산(sofmax)
-        scores = np.array([pred["score"] for pred in predictions])
-        #         scores = np.array([pred.pop("score") for pred in predictions])
-        exp_scores = np.exp(scores - np.max(scores))
-        probs = exp_scores / exp_scores.sum()
-        for prob, pred in zip(probs, predictions):
-            pred["probability"] = prob
-            pred["answer"] = example['answers']['text']
-            pred["context_id"] = example['context_id']
-            pred["context"] = example['context']
-        # 04 제일 좋은 값 찾기 ( 여기가 Question 겹치는 곳 )
-        # "mrc-01-00001" : "하원의" , top-1
-        # "mrc-01-00001" : "하원"   , top-2 ( 덮어쓰게 된다. )
+            # TODO: document마다 score 정규화
 
-        topk_merged_predictions.extend(predictions)
+            # 한 example에 있는 모든 predictions.
+            predictions = sorted(prelim_predictions, key=lambda x: x["score"], reverse=True)[:n_best_size]
 
-        # print(
-        #     f"len(predictions): {len(predictions)} | len(topk_merged_predictions) : {len(topk_merged_predictions)} | len(prelimed) : {len(prelim_predictions)}")
+            # 01 predictions 정답 텍스트 매핑
+            context = example["context"]
+            for pred in predictions:
+                offsets = pred.pop("offsets")
+                pred["text"] = context[offsets[0]: offsets[1]]
+            # 02 정답이 없다면 Fake 정답 생성
+            if len(predictions) == 0 or (len(predictions) == 1 and predictions[0]["text"] == ""):
+                predictions.insert(0, {"text": "empty", "start_logit": 0.0, "end_logit": 0.0, "score": 0.0})
+            # 03 확률값 계산(softmax)
+            scores = np.array([pred["score"] for pred in predictions])
+            exp_scores = np.exp(scores - np.max(scores))
+            probs = exp_scores / exp_scores.sum()
+            for prob, pred in zip(probs, predictions):
+                pred["probability"] = prob
+                pred["context_id"] = example['context_id']
+                pred["context"] = example['context']
+            # 04 제일 좋은 값 찾기 ( 여기가 Question 겹치는 곳 )
+            # "mrc-01-00001" : "하원의" , top-1
+            # "mrc-01-00001" : "하원"   , top-2 ( 덮어쓰게 된다. )
 
-        # k개 단위로 묶어서 수행할 로직
-        if (example_index + 1) % topk == 0:
 
-            # (빈 답 거르고 softmax한 probability로 계산?)
-            # topk_merged_predictions = [pred for pred in topk_merged_predictions if pred["probability"] != 1.0]
+            topk_merged_predictions.extend(predictions)
 
-            # 1. score로 계산
-            predictions = sorted(topk_merged_predictions, key=lambda x: x["score"], reverse=True)[:n_best_size]
+            # print(f"len(predictions): {len(predictions)} | len(topk_merged_predictions) : {len(topk_merged_predictions)} | len(prelimed) : {len(prelim_predictions)}")
 
-            # 정답 로깅
-            all_predictions[example["id"]] = predictions[0]["text"]
-            # 정답 포함 가능성 있었던 답을 로깅
-            all_nbest_json[example["id"]] = [
-                {k: (float(v) if isinstance(v, (np.float16, np.float32, np.float64)) else v) for k, v in
-                 pred.items()}
-                for pred in predictions
-            ]
+
+        # 아래는 topk개로 묶어서 수행하는 logic
+
+        # (빈 답 거르고 softmax한 probability로 계산?)
+        # topk_merged_predictions = [pred for pred in topk_merged_predictions if pred["probability"] != 1.0]
+
+        # 1. score로 계산
+        predictions = sorted(topk_merged_predictions, key=lambda x: x["score"], reverse=True)[:n_best_size]
+
+        # 정답 로깅
+        all_predictions[example["id"]] = predictions[0]["text"]
+        # 정답 포함 가능성 있었던 답을 로깅
+        all_nbest_json[example["id"]] = [
+            {k: (float(v) if isinstance(v, (np.float16, np.float32, np.float64)) else v) for k, v in
+             pred.items()}
+            for pred in predictions
+        ]
+
+        # print(f"{bundle_start_index+topk+1}, {topk} --- FLUSH")
+        topk_merged_predictions = []  # k개 context를 묶었다가 flush
+
     # 그럼 이제 저장
     if output_dir is not None:
         assert os.path.isdir(output_dir), f"{output_dir} is not a directory."
