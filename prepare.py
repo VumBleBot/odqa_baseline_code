@@ -4,7 +4,7 @@ from reader import DprReader
 from retrieval.dense import DprRetrieval, DprKobertRetrieval, DprKorquadBertRetrieval, HybridRetrieval
 from retrieval.sparse import TfidfRetrieval, BM25Retrieval
 from tokenization_kobert import KoBertTokenizer
-from datasets import load_from_disk, load_dataset, load_metric
+from datasets import load_from_disk, load_dataset, load_metric, concatenate_datasets, Dataset
 from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoTokenizer
 
 
@@ -17,7 +17,7 @@ RETRIEVER = {
     "TFIDF": TfidfRetrieval,
     "DPRKOBERT": DprKobertRetrieval,
     "DPRKORQUAD": DprKorquadBertRetrieval,
-    "HYBRID": HybridRetrieval
+    "HYBRID": HybridRetrieval,
 }
 
 READER = {"DPR": DprReader}
@@ -111,4 +111,37 @@ def get_dataset(args, is_train=True):
         args.train.num_train_epochs = 1.0
         datasets["train"] = datasets["train"].select(range(100))
 
+    if args.data.sub_datasets != "":
+        datasets["train"] = concatenate_datasets_with_ratio(args, datasets["train"])
+
+    print(f"TRAIN DATASET 길이: {len(datasets['train'])}")
+    print(f"VALID DATASET 길이: {len(datasets['validation'])}")
+
     return datasets
+
+
+def concatenate_datasets_with_ratio(args, train_dataset):
+    concatenate_list = []
+
+    for sub_dataset_name, ratio in zip(args.data.sub_datasets.split(","), args.data.sub_datasets_ratio.split(",")):
+        ratio = float(ratio)
+        sub_dataset_path = p.join(args.path.train_data_dir, sub_dataset_name)
+        assert p.exists(sub_dataset_path), f"{sub_dataset_name}이 존재하지 않습니다."
+
+        sub_dataset = load_from_disk(sub_dataset_path)
+        sub_dataset_len = int(len(sub_dataset["train"]) * ratio)
+
+        print(f"ADD SUB DATASET {sub_dataset_name}, LENGTH: {sub_dataset_len}")
+
+        # sub dataset must have same features: ['id', 'title', 'context', 'question', 'answers']
+        features = sub_dataset["train"].features
+
+        new_sub_dataset = sub_dataset["train"].select(range(sub_dataset_len))
+        new_sub_dataset = Dataset.from_pandas(new_sub_dataset.to_pandas(), features=features)
+
+        concatenate_list.append(new_sub_dataset.flatten_indices())
+
+    train_dataset = Dataset.from_pandas(train_dataset.to_pandas(), features=features)
+    train_dataset = concatenate_datasets([train_dataset.flatten_indices()] + concatenate_list)
+
+    return train_dataset
