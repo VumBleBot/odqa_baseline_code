@@ -24,8 +24,8 @@ def train_reader(args):
 
         # below codes must run before 'reader.get_trainer()'
         # run_name: strategy + alias + seed
-        # args.train.run_name = "_".join([strategy, args.alias, str(seed)])
-        # args.train.output_dir = p.join(args.path.checkpoint, args.train.run_name)
+        args.train.run_name = "_".join([strategy, args.alias, str(seed)])
+        args.train.output_dir = p.join(args.path.checkpoint, args.train.run_name)
         wandb.run.name = args.train.run_name
 
         print("checkpoint_dir: ", args.train.output_dir)
