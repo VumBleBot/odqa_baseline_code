@@ -24,25 +24,25 @@
 
 > 학습 후 메모리 해제가 완벽하게 안 되는 이슈가 있습니다! 한 번에 너무 많이 돌리는 것만 지양하면 괜찮을 것 같습니다!
 
-- **reader train**
+- **reader train/validation**
 
 ```bash
 python -m run_mrc --strategies ST01,ST02 --debug True --report False --run_cnt 1
 python -m run_mrc --strategies ST01,ST02 --debug False --report True --run_cnt 3
 ```
 
-- **retriver train**
+- **retriver train/validation**
 
 ```bash
 python -m run_retrieval --strategies ST01,ST02 --debug True --report False --run_cnt 1
 python -m run_retrieval --strategies ST01,ST02 --debug False --report True --run_cnt 3
 ```
 
-- **reader, retriver train**
+- **reader, retriver validation**
 
 ```bash
 python -m run --strategies ST01,ST02 --debug True --report False --run_cnt 1
-python -m run--strategies ST01,ST02 --debug False --report True --run_cnt 3
+python -m run --strategies ST01,ST02 --debug False --report True --run_cnt 3
 ```
 
 - **make dataset**
