@@ -38,7 +38,7 @@ python -m run_retrieval --strategies ST01,ST02 --debug True --report False --run
 python -m run_retrieval --strategies ST01,ST02 --debug False --report True --run_cnt 3
 ```
 
-- **reader, retriver train**
+- **reader, retriever train**
 
 ```bash
 python -m run --strategies ST01,ST02 --debug True --report False --run_cnt 1
@@ -140,7 +140,8 @@ ST00.json 하이퍼파라미터는 아래 파일들을 참고해서 수정할 �
     "model": {
         "model_name_or_path": "monologg/koelectra-small-v3-discriminator",
         "config_name": "",
-        "tokenizer_name": ""
+        "tokenizer_name": "",
+        "retriever_name": "BM25"
     },
     "data": {
         "dataset_name": "train_dataset",
@@ -153,7 +154,8 @@ ST00.json 하이퍼파라미터는 아래 파일들을 참고해서 수정할 �
         "doc_stride": 128,
         "max_answer_length": 30,
         "train_retrieval": true,
-        "eval_retrieval": true
+        "eval_retrieval": true,
+        "wiki_agg": false
     },
     "train": {
         "do_train": true,
@@ -168,8 +170,11 @@ ST00.json 하이퍼파라미터는 아래 파일들을 참고해서 수정할 �
         "retrain": false,
         "dense_train_dataset": "train_dataset",
         "topk": 30,
+        "b": 0.01,
+        "k1": 0.1,
         "dense_retriever_name": "DPR",
-        "sparse_retriever_name": "BM25"
+        "sparse_retriever_name": "BM25",
+        "alpha": 0.1,
     }
 }
 ```

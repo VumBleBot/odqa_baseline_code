@@ -66,6 +66,6 @@ class DataTrainingArguments:
         default=True, metadata={"help": "Whether to run passage retrieval using sparse/dense embedding )."}
     )
 
-    wiki_aggr: bool = field(
+    wiki_agg: bool = field(
         default=False, metadata={"help": "Whether to use aggregated wiki)."}
     )

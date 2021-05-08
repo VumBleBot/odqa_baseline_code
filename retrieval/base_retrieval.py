@@ -6,6 +6,8 @@ from tqdm.auto import tqdm
 from datasets import Dataset
 from datasets import Sequence, Value, Features, DatasetDict
 
+from make_dataset.aggregate_wiki import aggregate_wiki
+
 
 class Retrieval:
     def __init__(self, args):
@@ -14,9 +16,12 @@ class Retrieval:
         self.encoder = None
         self.p_embedding = None
 
-        if args.data.wiki_aggr:
+        if args.data.wiki_agg:
+            if not os.path.isfile(os.path.join(self.args.data_path, "data", "wikipedia_documents_agg.json")):
+                aggregate_wiki(args)
             with open(os.path.join(self.args.data_path, "data", "wikipedia_documents_agg.json"), "r") as f:
                 wiki = json.load(f)
+
         else:
             with open(os.path.join(self.args.data_path, "data", "wikipedia_documents.json"), "r") as f:
                 wiki = json.load(f)
