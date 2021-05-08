@@ -15,6 +15,7 @@ class BaseReader:
 
         self.train_dataset = None
         self.eval_dataset = None
+        self.retrieved_dataset = None
 
         self.data_collator = DataCollatorWithPadding(
             self.tokenizer, pad_to_multiple_of=8 if self.args.train.fp16 else None
@@ -23,6 +24,7 @@ class BaseReader:
     def set_dataset(self, datasets, is_run=True):
         self.train_dataset = self.preprocess_dataset(self.datasets, is_train=True) if is_run else None
         self.eval_dataset = self.preprocess_dataset(datasets, is_train=False)
+        self.retrieved_dataset = datasets
 
     def preprocess_dataset(self, datasets, is_train=True):
         """
@@ -62,7 +64,7 @@ class BaseReader:
             num_proc=self.args.data.preprocessing_num_workers,
             remove_columns=column_names,
             load_from_cache_file=not self.args.data.overwrite_cache,
-            cache_file_name=self.args.data.cache_file_name
+            cache_file_name=self.args.data.cache_file_name,
         )
 
         return dataset
@@ -157,6 +159,7 @@ class BaseReader:
             examples=examples,
             features=features,
             predictions=predictions,
+            topk=self.args.retriever.topk,
             max_answer_length=self.args.data.max_answer_length,
             output_dir=training_args.output_dir,
             prefix="test" if self.args.train.do_predict else "valid",
@@ -167,6 +170,7 @@ class BaseReader:
             return formatted_predictions
 
         elif training_args.do_eval:
+            # query, 정답
             references = [
                 {"id": ex["id"], "answers": ex[self.answer_column_name]} for ex in self.datasets["validation"]
             ]
@@ -190,7 +194,7 @@ class DprReader(BaseReader):
             custom_args=self.args,
             train_dataset=self.train_dataset,
             eval_dataset=self.eval_dataset,
-            eval_examples=self.datasets["validation"],
+            eval_examples=self.retrieved_dataset["validation"],
             tokenizer=self.tokenizer,
             data_collator=self.data_collator,
             post_process_function=self._post_processing_function,

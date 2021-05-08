@@ -39,6 +39,7 @@ class Retrieval:
         doc_scores, doc_indices = self.get_relevant_doc_bulk(query_or_dataset["question"], k=topk)
 
         for idx, example in enumerate(tqdm(query_or_dataset, desc="Retrieval: ")):
+
             for doc_id in range(topk):
                 tmp = {
                     "question": example["question"],
@@ -56,6 +57,7 @@ class Retrieval:
         if self.args.train.do_predict is True:
             f = Features(
                 {
+                    "context_id" : Value(dtype="int32", id=None),
                     "context": Value(dtype="string", id=None),
                     "id": Value(dtype="string", id=None),
                     "question": Value(dtype="string", id=None),
@@ -69,6 +71,7 @@ class Retrieval:
                         length=-1,
                         id=None,
                     ),
+                    "context_id": Value(dtype="int32", id=None),
                     "context": Value(dtype="string", id=None),
                     "id": Value(dtype="string", id=None),
                     "question": Value(dtype="string", id=None),
