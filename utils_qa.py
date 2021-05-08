@@ -38,6 +38,7 @@ def looping_through_all_features(
     min_null_prediction = None
     prelim_predictions = []
     for feature_index in feature_indices:
+        print(f'{feature_index}', end=" ")
         start_logits = all_start_logits[feature_index]
         end_logits = all_end_logits[feature_index]
         offset_mapping = features[feature_index]["offset_mapping"]
@@ -73,6 +74,7 @@ def looping_through_all_features(
                         "end_logit": end_logits[end_index],
                     }
                 )
+    print("")
     return prelim_predictions
 
 
@@ -127,17 +129,29 @@ def postprocess_qa_predictions(
         features), f"Got {len(predictions[0])} predictions and {len(features)} features."
 
     # Build a map example to its corresponding features.
+    # example_id_to_index가 애초에 topk개 단위로 잘려서 들어간다. k: i 이므로 동일한 key를 가진 것이 topk개 들어오면 마지막 1개로 덮어씌워짐.
+    # example_id_to_index {'mrc-0-00XXXX' : 2, 'mrc-0-00CCCC' : 5, ...}
     example_id_to_index = {k: i for i, k in enumerate(examples["id"])}
     features_per_example = collections.defaultdict(list)
+    # feature['example_id'] ==> answers, example_id, original context 등 들고 있는 retrieved doc
+    # example_id_to_index[feature['example_id']] ==> 'mrc-0-00XXX' 같은 QA id를 key로 넣어서, index값 (2,5,8...)을 반환받고 해당 index로 연결시킴.
     for i, feature in enumerate(features):
         features_per_example[example_id_to_index[feature["example_id"]]].append(i)
     all_predictions = collections.OrderedDict()
     all_nbest_json = collections.OrderedDict()
 
+    # for i in range(6):
+    #     print(examples[i])
+    #     print('\n\n')
+
+
     topk_merged_predictions = []
     # 시작
     for example_index, example in enumerate(tqdm(examples)):
         feature_indices = features_per_example[example_index]
+
+        print(f"example {example_index} | feature_indices {feature_indices}")
+
         # 하나의 example에 딸린 context들을 전부 돌면서 prediction 수집
         prelim_predictions = looping_through_all_features(
             all_start_logits, all_end_logits, n_best_size, features, max_answer_length, feature_indices
@@ -149,6 +163,7 @@ def postprocess_qa_predictions(
         #####
 
         # TODO: document마다 score 정규화
+
 
         # 한 example에 있는 모든 predictions.
         predictions = sorted(prelim_predictions, key=lambda x: x["score"], reverse=True)[:n_best_size]
@@ -168,16 +183,30 @@ def postprocess_qa_predictions(
         probs = exp_scores / exp_scores.sum()
         for prob, pred in zip(probs, predictions):
             pred["probability"] = prob
-            pred["ct"] = example["context"][:10]
+            pred["answer"] = example['answers']['text']
+            pred["context"] = example['context'][:10]
+            pred["original_context"] = example['original_context']
         # 04 제일 좋은 값 찾기 ( 여기가 Question 겹치는 곳 )
         # "mrc-01-00001" : "하원의" , top-1
         # "mrc-01-00001" : "하원"   , top-2 ( 덮어쓰게 된다. )
 
-        topk_merged_predictions.extend(predictions)
+        # 빈 답을 거름
+        if predictions[0]["score"] != 0.0:
+            topk_merged_predictions.extend(predictions)
+
+        print(
+            f"len(predictions): {len(predictions)} | len(topk_merged_predictions) : {len(topk_merged_predictions)} | len(prelimed) : {len(prelim_predictions)}")
 
         # k개 단위로 묶어서 수행할 로직
         if (example_index + 1) % topk == 0:
-            predictions = sorted(topk_merged_predictions, key=lambda x: x["score"], reverse=True)[:n_best_size]
+
+            # 1. 그냥 softmax한걸로 score 계산해보기
+
+            predictions = topk_merged_predictions
+            # topk_merged_predictions = [pred for pred in topk_merged_predictions if pred["text"] != ""]
+            # predictions = sorted(topk_merged_predictions, key=lambda x: x["probability"], reverse=True)[:n_best_size]
+
+
 
             # 정답 로깅
             all_predictions[example["id"]] = predictions[0]["text"]
@@ -207,6 +236,7 @@ def postprocess_qa_predictions(
 #     examples,
 #     features,
 #     predictions: Tuple[np.ndarray, np.ndarray],
+#     topk: Optional[int] = 1,
 #     version_2_with_negative: bool = False,
 #     n_best_size: int = 20,
 #     max_answer_length: int = 30,
