@@ -7,7 +7,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from transformers import set_seed
 
-from tools import update_args
+from tools import get_args, update_args
+from fuzzywuzzy import fuzz
 from prepare import get_dataset, get_retriever
 
 
@@ -92,7 +93,8 @@ def train_retriever(args):
             topk_dataset = valid_datasets["validation"][fancy_index[0]]
 
             for real, pred in zip(topk_dataset["original_context"], topk_dataset["context"]):
-                if real == pred:
+                # if two texts overlaps more than 95%,
+                if fuzz.ratio(real, pred) > 95:
                     cur_cnt += 1
 
             topk_acc = cur_cnt / tot_cnt
@@ -104,7 +106,6 @@ def train_retriever(args):
 
 
 if __name__ == "__main__":
-    from tools import get_args
 
     args = get_args()
     train_retriever(args)
