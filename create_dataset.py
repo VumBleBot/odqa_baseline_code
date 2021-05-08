@@ -1,4 +1,3 @@
-
 import os
 import tqdm
 import pickle
@@ -9,6 +8,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from transformers import AutoTokenizer
 import json
 from datasets import load_from_disk, Sequence, Value, Features, DatasetDict, Dataset
+from fuzzywuzzy import fuzz
+import random
 
 datasets = load_from_disk(p.join('/opt/ml/input/data/', 'train_dataset'))
 
@@ -30,6 +31,11 @@ class BM25Retrieval:
             wiki = json.load(f)
 
         self.contexts = list(dict.fromkeys([v["text"] for v in wiki.values()]))
+
+        self.wiki_docid_dict = dict.fromkeys([v["text"] for v in wiki.values()])
+
+        for i in wiki.keys():
+            self.wiki_docid_dict[wiki[i]['text']] = i
 
         self.tokenizer = AutoTokenizer.from_pretrained("xlm-roberta-large", use_fast=True).tokenize
 
@@ -99,64 +105,64 @@ class BM25Retrieval:
         assert self.p_embedding is not None, "get_embedding()을 먼저 수행한 후에 retrieve()를 작동시켜 주세요. "
 
         total = []
-        doc_scores, doc_indices = self.get_relevant_doc_bulk(query_or_dataset["question"], k=topk)
+        doc_scores, doc_indices = self.get_relevant_doc_bulk(query_or_dataset["question"], k=topk + 2)
 
         for idx, example in enumerate(query_or_dataset):
-            for doc_id in range(topk):
-                tmp = {
-                    "question": example["question"],
-                    "id": example["id"],
-                    "context_id": doc_indices[idx][doc_id],  # retrieved id
-                    "context": self.contexts[doc_indices[idx][doc_id]],  # retrieved document
-                }
-                if "context" in example.keys() and "answers" in example.keys():
-                    tmp["original_context"] = example["context"]  # original document
-                    tmp["answers"] = example["answers"]  # original answer
-                    tmp["retrieval_label"] = 1 if tmp["context"] == example["context"] else 0
-                total.append(tmp)
+
+            rand_idx = random.randint(0, topk - 1)
+
+            context_ids = doc_indices[idx]
+
+            # 두 text의 fuzz ratio가 95 이상이면 제외 (정답으로 간주)
+            contexts = [self.contexts[i] for i in context_ids if fuzz.ratio(self.contexts[i], example['context']) < 95][:topk - 1]
+            contexts.insert(rand_idx, example["context"])
+
+            retrieval_labels = [0] * (topk - 1)
+            retrieval_labels.insert(rand_idx, 1)
+
+            tmp = {
+                "question": example["question"],
+                "id": example["id"],
+                "contexts": contexts,  # retrieved documents
+                "original_context": example["context"],
+                "answers": example["answers"],
+                "retrieval_labels": retrieval_labels,
+                "document_id": example["document_id"]
+            }
+
+            total.append(tmp)
 
         df = pd.DataFrame(total)
 
-        gt_to_add = []
-
-        for idx, example in enumerate(query_or_dataset):
-            if not ((df['id'] == example['id']) & (df['retrieval_label'] == 1)).any():
-                tmp = {
-                    "question": example["question"],
-                    "id": example["id"],
-                    "context_id": example["document_id"],  # retrieved id
-                    "context": example["context"],  # retrieved document
-                }
-                if "context" in example.keys() and "answers" in example.keys():
-                    tmp["original_context"] = example["context"]  # original document
-                    tmp["answers"] = example["answers"]  # original answer
-                    tmp["retrieval_label"] = 1
-            gt_to_add.append(tmp)
-
-        additional_df = pd.DataFrame(gt_to_add)
-
         f = Features(
             {
+                "question": Value(dtype="string", id=None),
+                "id": Value(dtype="string", id=None),
+                "contexts": Sequence(
+                    feature=Value(dtype="string", id=None),
+                    length=-1,
+                    id=None,
+                ),
+                "original_context": Value(dtype="string", id=None),
                 "answers": Sequence(
                     feature={"text": Value(dtype="string", id=None), "answer_start": Value(dtype="int32", id=None)},
                     length=-1,
                     id=None,
                 ),
-                "context": Value(dtype="string", id=None),
-                "id": Value(dtype="string", id=None),
-                "question": Value(dtype="string", id=None),
-                "original_context": Value(dtype="string", id=None),
-                "retrieval_label": Value(dtype="int64", id=None)
+                "retrieval_labels": Sequence(
+                    feature=Value(dtype="int32", id=None),
+                    length=-1,
+                    id=None,
+                ),
+                "document_id": Value(dtype="int32", id=None)
             }
         )
+        dataset = Dataset.from_pandas(df, features=f)
 
-        df = pd.concat([df, additional_df])
-
-        datasets = DatasetDict({"train": Dataset.from_pandas(df, features=f)})
-        return datasets
+        return dataset
 
 
 retriever = BM25Retrieval()
 retriever.get_embedding()
-retrieved_dataset = retriever.retrieve(datasets["train"], topk=10)
-retrieved_dataset["train"].save_to_disk("/opt/ml/input/data/bm25_augmented_dataset")
+retrieved_dataset = retriever.retrieve(datasets["train"], topk=16)
+retrieved_dataset.save_to_disk("/opt/ml/input/data/bm25_augmented_dataset")
