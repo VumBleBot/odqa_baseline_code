@@ -5,8 +5,9 @@ from argparse import Namespace
 from transformers import set_seed
 
 from tools import update_args
-from prepare import get_dataset, get_reader, get_retriever
 from evaluation import evaluation
+from prepare import get_dataset, get_reader
+from slack_api import report_reader_to_slack
 
 
 def train_reader(args):
@@ -34,7 +35,6 @@ def train_reader(args):
         args.retriever.topk = 1
 
         datasets = get_dataset(args, is_train=True)
-        retriever = get_retriever(args)
         reader = get_reader(args, datasets)
 
         reader.set_dataset(datasets, is_run=True)
@@ -47,8 +47,14 @@ def train_reader(args):
 
         if args.train.do_eval:
             eval_results = trainer.evaluate()
-            evaluation(args)
+            results = evaluation(args)
+            eval_results["exact_match"] = results["EM"]["value"]
+            eval_results["f1"] = results["F1"]["value"]
+
             print(eval_results)
+
+            if args.report is True:
+                report_reader_to_slack(args, p.basename(__file__), eval_results)
 
 
 if __name__ == "__main__":
