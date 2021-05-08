@@ -106,14 +106,15 @@ def get_dataset(args, is_train=True):
     if datasets is None:
         raise KeyError(f"{args.data.dataset_name}데이터는 존재하지 않습니다.")
 
-    if args.data.sub_datasets != "":
+    if args.data.sub_datasets != "" and is_train:
         datasets["train"] = concatenate_datasets_with_ratio(args, datasets["train"])
 
     if args.debug:
         args.train.num_train_epochs = 1.0
         datasets["train"] = datasets["train"].select(range(100))
 
-    print(f"TRAIN DATASET 길이: {len(datasets['train'])}")
+    if is_train:
+        print(f"TRAIN DATASET 길이: {len(datasets['train'])}")
     print(f"VALID DATASET 길이: {len(datasets['validation'])}")
 
     return datasets
