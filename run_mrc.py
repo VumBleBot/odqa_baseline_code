@@ -31,7 +31,8 @@ def train_reader(args):
         datasets = get_dataset(args, is_train=True)
         retriever = get_retriever(args)
         reader = get_reader(args, datasets)
-        
+
+        # retrieve 과정이 없어 top-k를 반환할 수 없음. 무조건 top-1만 반환
         reader.set_dataset(datasets, is_run=True)
 
         trainer = reader.get_trainer()
