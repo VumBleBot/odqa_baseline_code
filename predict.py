@@ -16,10 +16,10 @@ def predict(args):
 
         datasets = get_dataset(args, is_train=False)
         retriever = get_retriever(args)
-        reader = get_reader(args, datasets)
-
-        datasets = retriever.retrieve(datasets["validation"], topk=args.retriever.topk)
-        reader.set_dataset(datasets, is_run=False)
+        dataset["validation"] = retriever.retrieve(datasets["validation"], topk=args.retriever.topk)["validation"]
+        
+        reader = get_reader(args)
+        reader.set_dataset(eval_dataset=datasets["validation"])
 
         trainer = reader.get_trainer()
 
