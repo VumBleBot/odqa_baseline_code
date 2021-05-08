@@ -41,7 +41,7 @@ class Retrieval:
                     "question": example["question"],
                     "id": example["id"],
                     "context_id": doc_indices[idx][doc_id],  # retrieved id
-                    "context": self.contexts[doc_indices[idx][doc_id]],  # retrieved doument
+                    "context": self.contexts[doc_indices[idx][doc_id]],  # retrieved document
                 }
                 if "context" in example.keys() and "answers" in example.keys():
                     tmp["original_context"] = example["context"]  # original document
@@ -53,7 +53,7 @@ class Retrieval:
         if self.args.train.do_predict is True:
             f = Features(
                 {
-                    # TODO Context_id 추가
+                    "context_id" : Value(dtype="int32", id=None),
                     "context": Value(dtype="string", id=None),
                     "id": Value(dtype="string", id=None),
                     "question": Value(dtype="string", id=None),
@@ -67,6 +67,7 @@ class Retrieval:
                         length=-1,
                         id=None,
                     ),
+                    "context_id": Value(dtype="int32", id=None),
                     "context": Value(dtype="string", id=None),
                     "id": Value(dtype="string", id=None),
                     "question": Value(dtype="string", id=None),
