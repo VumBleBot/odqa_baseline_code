@@ -94,12 +94,14 @@ def train_retriever(args):
 
             for real, pred in zip(topk_dataset["original_context"], topk_dataset["context"]):
                 # if two texts overlaps more than 95%,
-                if fuzz.ratio(real, pred) > 95:
+                # if fuzz.ratio(real, pred) > 95:
+                #     cur_cnt += 1
+                if real in pred:
                     cur_cnt += 1
 
             topk_acc = cur_cnt / tot_cnt
             topk_result[legend_name].append(topk_acc)
-            print(f"TOPK: {idx} ACC: {topk_acc * 100:.2f}")
+            print(f"TOPK: {idx + 1} ACC: {topk_acc * 100:.2f}")
 
     fig = get_topk_fig(args, topk_result)
     wandb.log({"retriever topk result": wandb.Image(fig)})

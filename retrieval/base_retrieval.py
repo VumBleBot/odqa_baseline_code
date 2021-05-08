@@ -14,8 +14,12 @@ class Retrieval:
         self.encoder = None
         self.p_embedding = None
 
-        with open(os.path.join(self.args.data_path, "data", "wikipedia_documents.json"), "r") as f:
-            wiki = json.load(f)
+        if args.data.wiki_aggr:
+            with open(os.path.join(self.args.data_path, "data", "wikipedia_documents_agg.json"), "r") as f:
+                wiki = json.load(f)
+        else:
+            with open(os.path.join(self.args.data_path, "data", "wikipedia_documents.json"), "r") as f:
+                wiki = json.load(f)
 
         self.contexts = list(dict.fromkeys([v["text"] for v in wiki.values()]))
 
@@ -40,7 +44,7 @@ class Retrieval:
                     "question": example["question"],
                     "id": example["id"],
                     "context_id": doc_indices[idx][doc_id],  # retrieved id
-                    "context": self.contexts[doc_indices[idx][doc_id]],  # retrieved doument
+                    "context": self.contexts[doc_indices[idx][doc_id]],  # retrieved document
                 }
                 if "context" in example.keys() and "answers" in example.keys():
                     tmp["original_context"] = example["context"]  # original document
