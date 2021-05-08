@@ -1,6 +1,7 @@
 # VumbleBot - BaselineCode <!-- omit in toc -->
 
 - [Branch](#branch)
+- [Simple Use](#simple-use)
 - [File Structure](#file-structure)
   - [input](#input)
   - [baseline_code](#baseline_code)
@@ -19,7 +20,38 @@
 
 - 코드 수정 후 main branch로 pull request
 
+## Simple Use
+
+- **reader train**
+
+```bash
+python -m run_mrc --strategies ST01,ST02 --debug True --report False --run_cnt 1
+python -m run_mrc --strategies ST01,ST02 --debug False --report True --run_cnt 3
+```
+
+- **retriver train**
+
+```bash
+python -m run_retrieval --strategies ST01,ST02 --debug True --report False --run_cnt 1
+python -m run_retrieval --strategies ST01,ST02 --debug False --report True --run_cnt 3
+```
+
+- **reader, retriver train**
+
+```bash
+python -m run --strategies ST01,ST02 --debug True --report False --run_cnt 1
+python -m run--strategies ST01,ST02 --debug False --report True --run_cnt 3
+```
+
+- **make dataset**
+
+```bash
+python -m make_dataset.cheat_dataset
+python -m make_dataset.kor_sample_dataset
+```
+
 ## File Structure  
+
 ### input
   
 ```
@@ -110,6 +142,8 @@ ST00.json 하이퍼파라미터는 아래 파일들을 참고해서 수정할 �
     },
     "data": {
         "dataset_name": "train_dataset",
+        "sub_datasets": "kor_dataset",
+        "sub_datasets_ratio": "0.4"
         "overwrite_cache": false,
         "preprocessing_num_workers": 4,
         "max_seq_length": 384,
