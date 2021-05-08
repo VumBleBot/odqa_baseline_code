@@ -53,10 +53,10 @@ class Retrieval:
         if self.args.train.do_predict is True:
             f = Features(
                 {
-                    "context_id" : Value(dtype="int32", id=None),
                     "context": Value(dtype="string", id=None),
                     "id": Value(dtype="string", id=None),
                     "question": Value(dtype="string", id=None),
+                    "context_id": Value(dtype="int32", id=None),
                 }
             )
         else:
@@ -67,11 +67,11 @@ class Retrieval:
                         length=-1,
                         id=None,
                     ),
-                    "context_id": Value(dtype="int32", id=None),
                     "context": Value(dtype="string", id=None),
                     "id": Value(dtype="string", id=None),
                     "question": Value(dtype="string", id=None),
                     "original_context": Value(dtype="string", id=None),
+                    "context_id": Value(dtype="int32", id=None),
                 }
             )
 
