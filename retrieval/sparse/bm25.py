@@ -55,7 +55,7 @@ class BM25Retrieval(SparseRetrieval):
         self.p_embedding = self.encoder.transform(self.contexts)
         return self.p_embedding, self.encoder
 
-    def get_relevant_doc_bulk(self, queries, k=1):
+    def get_relevant_doc_bulk(self, queries, topk):
         query_vecs = self.encoder.transform(queries)
 
         b, k1, avdl = self.b, self.k1, self.avdl
@@ -81,9 +81,8 @@ class BM25Retrieval(SparseRetrieval):
                 result = result.toarray()
 
             sorted_result_idx = np.argsort(result)[::-1]
-            doc_score, doc_indice = result[sorted_result_idx].tolist()[:k], sorted_result_idx.tolist()[:k]
+            doc_score, doc_indice = result[sorted_result_idx].tolist()[:topk], sorted_result_idx.tolist()[:topk]
             doc_scores.append(doc_score)
             doc_indices.append(doc_indice)
 
         return doc_scores, doc_indices
-

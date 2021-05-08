@@ -25,7 +25,8 @@ class Retrieval:
     def get_embedding(self):
         raise NotImplementedError
 
-    def get_relevant_doc_bulk(self, queries, k=1):
+    def get_relevant_doc_bulk(self, queries, topk):
+        """topk개 만큼의 doc scores, doc indices를 반환합니다."""
         raise NotImplementedError
 
     def retrieve(self, query_or_dataset, topk=1):
