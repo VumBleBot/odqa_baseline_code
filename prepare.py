@@ -5,7 +5,7 @@ from datasets import load_from_disk, load_dataset, load_metric, concatenate_data
 from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoTokenizer
 
 from reader import DprReader
-from retrieval.hybrid import HybridRetrieval
+from retrieval.hybrid import Bm25DprKobert, TfidfDprKobert
 from retrieval.sparse import TfidfRetrieval, BM25Retrieval
 from retrieval.dense import DprRetrieval, DprKobertRetrieval, DprKorquadBertRetrieval
 
@@ -14,12 +14,16 @@ metric = load_metric("squad")
 
 
 RETRIEVER = {
-    "DPR": DprRetrieval,
+    # Sparse
     "BM25": BM25Retrieval,
     "TFIDF": TfidfRetrieval,
+    # Dense
+    "DPR": DprRetrieval,
     "DPRKOBERT": DprKobertRetrieval,
     "DPRKORQUAD": DprKorquadBertRetrieval,
-    "HYBRID": HybridRetrieval,
+    # Hybrid
+    "BM25_DPRKOBERT": Bm25DprKobert,
+    "TFIDF_DPRKOBERT": TfidfDprKobert,
 }
 
 READER = {"DPR": DprReader}

@@ -1,6 +1,3 @@
-import os
-import os.path as p
-from prepare import get_retriever
 from retrieval.base_retrieval import Retrieval
 
 
@@ -8,18 +5,10 @@ class HybridRetrieval(Retrieval):
     """ 이미 학습된 Sparse, Dense Retriever를 사용한다."""
 
     def __init__(self, args):
-        super().__init__(args)
-        self.name = args.model.retriever_name
-        save_dir = p.join(args.path.embed, self.name)
+        """super().__init__(args) 생략, wiki를 가지고 있을 필요가 없음"""
 
-        if not p.exists(save_dir):
-            os.mkdir(save_dir)
-
-        args.model.retriever_name = args.retriever.sparse_retriever_name
-        self.sparse_retriever = get_retriever(args)
-
-        self.model.retriever_name = args.retriever.dense_retriever_name
-        self.dense_retriever = get_retriever(args)
+        self.sparse_retriever = None
+        self.dense_retriever = None
 
     def get_embedding(self):
         self.sparse_retriever.get_embedding()
