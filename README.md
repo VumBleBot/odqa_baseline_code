@@ -140,7 +140,7 @@ ST00.json 하이퍼파라미터는 아래 파일들을 참고해서 수정할 �
     "model": {
         "model_name_or_path": "monologg/koelectra-small-v3-discriminator",
         "retriever_name": "BM25_DPRKOBERT",
-        "reader_name": "DPR"
+        "reader_name": "DPR",
         "config_name": "",
         "tokenizer_name": ""
     },
