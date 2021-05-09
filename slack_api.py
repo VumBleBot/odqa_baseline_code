@@ -1,18 +1,26 @@
 import os
+from pathlib import Path
+import json
 import datetime
 
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
 # TODO: 토큰을 GitHub에 올리면 토큰이 자동으로 재생성되므로 Github에 올리면 안됩니다.
-token = None
+# input 폴더 아래에 keys 폴더를 생성하고, secrets.json 파일을 넣어 token값을 저장해주세요.
+PROJECT_DIR = Path(__file__).resolve().parent.parent
+_secret_file_path = os.path.join(PROJECT_DIR, 'input/keys/secrets.json')
+with open(_secret_file_path, 'r') as secret_file:
+    secrets = json.loads(secret_file.read())
+
+token = secrets["SLACK"]["TOKEN"]
 channel_id = "C0211LZ9PHU"
 client = WebClient(token)
 
 # TODO: 수정 해주시면 됩니다!
-USER_NAME = "건모"
-COLOR = "#2eb886"
-IMOGI = ":letsparty:"
+USER_NAME = "성익"
+COLOR = "#9fe6a0"
+IMOGI = ":whale:"
 # TODO: END
 
 
@@ -91,6 +99,6 @@ if __name__ == "__main__":
     args = Namespace()
     args.strategy = "ST01"
     args.reader_name = "DPR"
-    args.alias = "테스트 중입니다!"
+    args.alias = "버그픽스중"
 
     report_reader_to_slack(args, "run.py", eval_results)
