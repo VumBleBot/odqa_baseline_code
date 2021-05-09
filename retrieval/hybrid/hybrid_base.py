@@ -14,7 +14,7 @@ class HybridRetrieval(Retrieval):
         self.sparse_retriever.get_embedding()
         self.dense_retriever.get_embedding()
 
-        self.p_embedding = 1  # fake for super().retrieve
+        self.p_embedding = 1  # fake for super().retrieve's, assert line
 
     def _rank_fusion_by_hybrid(self, dense_hits, sparse_hits):
         ranks = []
