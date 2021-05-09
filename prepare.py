@@ -46,7 +46,6 @@ def get_retriever(args):
         - model.retriever_name : [TFIDF, DPR, BM25]
     :return: Retriever which contains embedded vector(+indexer if faiss is built).
     """
-
     retriever = RETRIEVER[args.model.retriever_name](args)
     retriever.get_embedding()
 
