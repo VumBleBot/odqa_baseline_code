@@ -89,13 +89,18 @@ def train_retriever(args):
         cur_cnt, tot_cnt = 0, len(datasets["validation"])
 
         indexes = np.array(range(tot_cnt * topk))
+        print("total_cnt:", tot_cnt)
+        print("valid_datasets:", valid_datasets)
+
+        qc_dict = defaultdict(bool)
 
         for idx, fancy_index in enumerate(zip([indexes[i::topk] for i in range(topk)])):
             topk_dataset = valid_datasets["validation"][fancy_index[0]]
 
-            for real, pred in zip(topk_dataset["original_context"], topk_dataset["context"]):
+            for question, real, pred in zip(topk_dataset["question"], topk_dataset["original_context"], topk_dataset["context"]):
                 # if two texts overlaps more than 95%,
-                if fuzz.ratio(real, pred) > 95:
+                if fuzz.ratio(real, pred) > 95 and not qc_dict[question]:
+                    qc_dict[question] = True
                     cur_cnt += 1
 
             topk_acc = cur_cnt / tot_cnt
