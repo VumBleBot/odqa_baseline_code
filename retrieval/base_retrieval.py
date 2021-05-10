@@ -25,14 +25,15 @@ class Retrieval:
     def get_embedding(self):
         raise NotImplementedError
 
-    def get_relevant_doc_bulk(self, queries, k=1):
+    def get_relevant_doc_bulk(self, queries, topk):
+        """topk개 만큼의 doc scores, doc indices를 반환합니다."""
         raise NotImplementedError
 
     def retrieve(self, query_or_dataset, topk=1):
         assert self.p_embedding is not None, "get_embedding()을 먼저 수행한 후에 retrieve()를 작동시켜 주세요. "
 
         total = []
-        doc_scores, doc_indices = self.get_relevant_doc_bulk(query_or_dataset["question"], k=topk)
+        doc_scores, doc_indices = self.get_relevant_doc_bulk(query_or_dataset["question"], topk)
 
         for idx, example in enumerate(tqdm(query_or_dataset, desc="Retrieval: ")):
 
@@ -53,10 +54,10 @@ class Retrieval:
         if self.args.train.do_predict is True:
             f = Features(
                 {
-                    "context_id" : Value(dtype="int32", id=None),
                     "context": Value(dtype="string", id=None),
                     "id": Value(dtype="string", id=None),
                     "question": Value(dtype="string", id=None),
+                    "context_id": Value(dtype="int32", id=None),
                 }
             )
         else:
@@ -67,11 +68,11 @@ class Retrieval:
                         length=-1,
                         id=None,
                     ),
-                    "context_id": Value(dtype="int32", id=None),
                     "context": Value(dtype="string", id=None),
                     "id": Value(dtype="string", id=None),
                     "question": Value(dtype="string", id=None),
                     "original_context": Value(dtype="string", id=None),
+                    "context_id": Value(dtype="int32", id=None),
                 }
             )
 

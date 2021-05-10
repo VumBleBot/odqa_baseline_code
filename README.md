@@ -139,6 +139,8 @@ ST00.json 하이퍼파라미터는 아래 파일들을 참고해서 수정할 �
     "alias": "base",
     "model": {
         "model_name_or_path": "monologg/koelectra-small-v3-discriminator",
+        "retriever_name": "BM25_DPRKOBERT",
+        "reader_name": "DPR",
         "config_name": "",
         "tokenizer_name": ""
     },
@@ -147,7 +149,7 @@ ST00.json 하이퍼파라미터는 아래 파일들을 참고해서 수정할 �
         "sub_datasets": "kor_dataset",
         "sub_datasets_ratio": "0.4"
         "overwrite_cache": false,
-        "preprocessing_num_workers": 4,
+        "preprocessing_num_workers": 2,
         "max_seq_length": 384,
         "pad_to_max_length": false,
         "doc_stride": 128,
@@ -168,8 +170,6 @@ ST00.json 하이퍼파라미터는 아래 파일들을 참고해서 수정할 �
         "retrain": false,
         "dense_train_dataset": "train_dataset",
         "topk": 30,
-        "dense_retriever_name": "DPR",
-        "sparse_retriever_name": "BM25"
     }
 }
 ```
