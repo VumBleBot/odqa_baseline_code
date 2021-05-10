@@ -16,11 +16,11 @@ def predict(args):
         args.train.do_predict = True
 
         datasets = get_dataset(args, is_train=False)
+        reader = get_reader(args, eval_answers=datasets["validation"])
         retriever = get_retriever(args)
-        reader = get_reader(args, datasets)
-
-        datasets = retriever.retrieve(datasets["validation"], topk=args.retriever.topk)
-        reader.set_dataset(datasets, is_run=False)
+        
+        datasets["validation"] = retriever.retrieve(datasets["validation"], topk=args.retriever.topk)["validation"]
+        reader.set_dataset(eval_dataset=datasets["validation"])
 
         trainer = reader.get_trainer()
 
@@ -33,3 +33,4 @@ if __name__ == "__main__":
     args = get_args()
 
     predict(args)
+    print('Prediction finished.')

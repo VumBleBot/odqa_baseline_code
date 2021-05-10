@@ -53,7 +53,7 @@ def get_retriever(args):
     return retriever
 
 
-def get_reader(args, datasets):
+def get_reader(args, eval_answers):
     """
     Get pretrained MRC-Reader model and tokenizer.
     If model setting is KoBERT, then load tokenizer from public KoBERT Tokenizer.
@@ -84,7 +84,7 @@ def get_reader(args, datasets):
         args.model.model_name_or_path, from_tf=bool(".ckpt" in args.model.model_name_or_path), config=config
     )
 
-    reader = READER[args.model.reader_name](args, model, tokenizer, datasets)
+    reader = READER[args.model.reader_name](args, model, tokenizer, eval_answers)
 
     return reader
 

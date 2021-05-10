@@ -201,8 +201,10 @@ def postprocess_qa_predictions(
             for prob, pred in zip(probs, predictions):
                 pred["probability"] = prob
                 # prediction 결과분석용
-                # pred["context_id"] = example['context_id']
-                # pred["context"] = example['context']
+                # run_mrc의 경우 retrieve가 되지 않으므로 document_id(정답 문서 id)만 존재
+                # run의 경우 retrieve 과정에서 predict source document를 context_id로 가공하여 전달
+                pred["context_id"] = example['context_id'] if 'context_id' in example.keys() else example['document_id']
+                pred["context"] = example['context']
 
 
             topk_merged_predictions.extend(predictions)

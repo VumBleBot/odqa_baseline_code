@@ -1,4 +1,5 @@
 import tqdm
+import time
 import os.path as p
 
 import torch
@@ -24,16 +25,25 @@ from retrieval.dense import DenseRetrieval
 from tokenization_kobert import KoBertTokenizer
 
 
+def epoch_time(start_time, end_time):
+    elapsed_time = end_time - start_time
+    elapsed_mins = int(elapsed_time / 60)
+    elapsed_secs = int(elapsed_time - (elapsed_mins * 60))
+    return elapsed_mins, elapsed_secs
+
+
 class BertEncoder(BertPreTrainedModel):
     def __init__(self, config):
         super(BertEncoder, self).__init__(config)
 
         self.bert = BertModel(config)
+        self.bert_proj = nn.Linear(config.hidden_size, 512)
         self.init_weights()
 
     def forward(self, input_ids, attention_mask=None, token_type_ids=None):
         outputs = self.bert(input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
         pooled_output = outputs[1]  # embedding 가져오기
+        pooled_output = self.bert_proj(pooled_output)
         return pooled_output
 
 
@@ -41,10 +51,26 @@ class AutoEncoder(nn.Module):
     def __init__(self, model_name, config):
         super().__init__()
         self.backbone = AutoModel.from_pretrained(model_name, config=config)
+        self.backbone_proj = nn.Linear(config.hidden_size, 512)
+        self.init_weights()
 
     def forward(self, input_ids, attention_mask=None, token_type_ids=None):
         outputs = self.backbone(input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
         pooled_output = outputs[1]  # embedding 가져오기
+        pooled_output = self.backbone_proj(pooled_output)
+        return pooled_output
+
+
+class KoelectraEncoder(nn.Module):
+    def __init__(self, model_name, config):
+        self.backbone = AutoModel.from_pretrained(model_name, config=config)
+        self.backbone_proj = nn.Linear(config.hidden_size, 512)
+        self.init_weights()
+
+    def forward(self, input_ids, attention_mask=None, token_type_ids=None):
+        outputs = self.backbone(input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
+        pooled_output = outputs[1]  # 0번째 값이 [CLS] Token
+        pooled_output = self.backbone_proj(pooled_output)
         return pooled_output
 
 
@@ -102,7 +128,8 @@ class DprRetrieval(DenseRetrieval):
         torch.cuda.empty_cache()
 
         for epoch in range(training_args.num_train_epochs):
-            total_loss = 0.0
+            train_loss = 0.0
+            start_time = time.time()
 
             for step, batch in enumerate(train_dataloader):
 
@@ -125,7 +152,7 @@ class DprRetrieval(DenseRetrieval):
                 loss = F.nll_loss(sim_scores, targets)
 
                 print(f"epoch: {epoch:02} step: {step:02} loss: {loss}", end="\r")
-                total_loss += loss.item()
+                train_loss += loss.item()
 
                 loss.backward()
                 optimizer.step()
@@ -136,7 +163,11 @@ class DprRetrieval(DenseRetrieval):
 
                 torch.cuda.empty_cache()
 
-            print(f"epoch: {epoch:02} step: {step:02} loss: {total_loss / len(train_dataloader)}")
+            end_time = time.time()
+            epoch_mins, epoch_secs = epoch_time(start_time, end_time)
+
+            print(f"Epoch: {epoch + 1:02} | Time: {epoch_mins}m {epoch_secs}s")
+            print(f"\tTrain Loss: {train_loss / len(train_dataloader):.4f}")
 
         return p_model, q_model
 
