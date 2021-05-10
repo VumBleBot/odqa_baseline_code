@@ -201,8 +201,8 @@ def postprocess_qa_predictions(
             for prob, pred in zip(probs, predictions):
                 pred["probability"] = prob
                 # prediction 결과분석용
-                pred["context_id"] = example['context_id']
-                pred["context"] = example['context']
+                # pred["context_id"] = example['context_id']
+                # pred["context"] = example['context']
 
 
             topk_merged_predictions.extend(predictions)

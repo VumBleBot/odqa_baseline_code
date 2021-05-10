@@ -7,7 +7,7 @@ from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoTokenize
 from reader import DprReader
 from retrieval.hybrid import Bm25DprKobert, TfidfDprKobert
 from retrieval.sparse import TfidfRetrieval, BM25Retrieval
-from retrieval.dense import DprRetrieval, DprKobertRetrieval, DprKorquadBertRetrieval
+from retrieval.dense import DprRetrieval, DprKobertRetrieval, DprKorquadBertRetrieval, DprKoelectraRetrieval
 
 
 metric = load_metric("squad")
@@ -21,6 +21,7 @@ RETRIEVER = {
     "DPR": DprRetrieval,
     "DPRKOBERT": DprKobertRetrieval,
     "DPRKORQUAD": DprKorquadBertRetrieval,
+    "DPRKOELECTRA": DprKoelectraRetrieval,
     # Hybrid
     "BM25_DPRKOBERT": Bm25DprKobert,
     "TFIDF_DPRKOBERT": TfidfDprKobert,

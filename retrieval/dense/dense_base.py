@@ -67,7 +67,7 @@ class DenseRetrieval(Retrieval):
         self.encoder.cuda()
 
         with torch.no_grad():
-            q_seqs_val = self.tokenizer(queries, padding="max_length", truncation=True, return_tensors="pt").to("cuda")
+            q_seqs_val = self.tokenizer(queries, padding="max_length", truncation=True, max_length=512,return_tensors="pt").to("cuda")
             q_embedding = self.encoder(**q_seqs_val)
             q_embedding.squeeze_()  # in-place
             q_embedding = q_embedding.cpu().detach().numpy()
