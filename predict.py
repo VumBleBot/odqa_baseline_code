@@ -33,3 +33,4 @@ if __name__ == "__main__":
     args.train.do_predict = True
 
     predict(args)
+    print('Prediction finished.')
