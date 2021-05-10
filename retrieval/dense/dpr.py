@@ -5,7 +5,7 @@ import torch
 import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
-from datasets import load_from_disk
+from datasets import load_from_disk, concatenate_datasets
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler
 from transformers import (
     AutoModel,
@@ -66,6 +66,8 @@ class DprRetrieval(DenseRetrieval):
         return q_encoder
 
     def train(self, training_args, dataset, p_model, q_model):
+        """ Sampling된 데이터 셋으로 학습 """
+
         train_sampler = RandomSampler(dataset)
         train_dataloader = DataLoader(
             dataset, sampler=train_sampler, batch_size=training_args.per_device_train_batch_size
@@ -136,6 +138,25 @@ class DprRetrieval(DenseRetrieval):
         print("tokenizer:", self.tokenizer.convert_ids_to_tokens(tokenizer_input["input_ids"]))
 
         train_dataset = datasets["train"]
+
+        # (1) Train, Valid 데이터 셋 합쳐서 학습
+
+        #  train_dataset = concatenate_datasets(
+        #      [datasets["train"].flatten_indices(), datasets["validation"].flatten_indices()]
+        #  )
+
+        # (2) Train, Valid, KorQuad 데이터 셋 합쳐서 학습
+
+        #  kor_datasets = load_from_disk(p.join(self.args.path.train_data_dir, "kor_dataset"))
+        #
+        #  train_dataset = concatenate_datasets(
+        #      [
+        #          datasets["train"].flatten_indices(),
+        #          datasets["validation"].flatten_indices(),
+        #          kor_datasets["train"].flatten_indices(),
+        #          kor_datasets["validation"].flatten_indices(),
+        #      ]
+        #  )
 
         q_seqs = self.tokenizer(train_dataset["question"], padding="max_length", truncation=True, return_tensors="pt")
         p_seqs = self.tokenizer(train_dataset["context"], padding="max_length", truncation=True, return_tensors="pt")

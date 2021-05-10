@@ -17,7 +17,7 @@ class TfidfRetrieval(SparseRetrieval):
         p_embedding = self.encoder.fit_transform(self.contexts)
         return p_embedding, self.encoder
 
-    def get_relevant_doc_bulk(self, queries, k=1):
+    def get_relevant_doc_bulk(self, queries, topk):
         query_vec = self.encoder.transform(queries)
         assert np.sum(query_vec) != 0, "오류가 발생했습니다. 이 오류는 보통 query에 vectorizer의 vocab에 없는 단어만 존재하는 경우 발생합니다."
 
@@ -30,7 +30,7 @@ class TfidfRetrieval(SparseRetrieval):
 
         for i in range(result.shape[0]):
             sorted_result = np.argsort(result[i, :])[::-1]
-            doc_scores.append(result[i, :][sorted_result].tolist()[:k])
-            doc_indices.append(sorted_result.tolist()[:k])
+            doc_scores.append(result[i, :][sorted_result].tolist()[:topk])
+            doc_indices.append(sorted_result.tolist()[:topk])
 
         return doc_scores, doc_indices
