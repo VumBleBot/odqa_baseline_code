@@ -35,9 +35,9 @@ def train_reader(args):
         args.retriever.topk = 1
 
         datasets = get_dataset(args, is_train=True)
-        reader = get_reader(args, datasets)
-
-        reader.set_dataset(datasets, is_run=True)
+        reader = get_reader(args, eval_answers=datasets["validation"])
+        
+        reader.set_dataset(train_dataset=datasets["train"], eval_dataset=datasets["validation"])
 
         trainer = reader.get_trainer()
 
