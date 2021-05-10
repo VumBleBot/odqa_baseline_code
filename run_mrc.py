@@ -18,7 +18,6 @@ def train_reader(args):
         wandb.init(project="p-stage-3", reinit=True)
         args = update_args(args, strategy)  # auto add args.save_path, args.base_path
         args.strategy, args.seed = strategy, seed
-        args.retriever.topk = 1 # for run_mrc
         args.info = Namespace()
         set_seed(seed)
 
