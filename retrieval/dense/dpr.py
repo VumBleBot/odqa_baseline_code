@@ -69,19 +69,8 @@ class KoelectraEncoder(nn.Module):
 
     def forward(self, input_ids, attention_mask=None, token_type_ids=None):
         outputs = self.backbone(input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
-        pooled_output = outputs[1]  # 0번째 값이 [CLS] Token
-        pooled_output = self.backbone_proj(pooled_output)
-        return pooled_output
-
-
-class KoelectraEncoder(nn.Module):
-    def __init__(self, model_name, config):
-        super().__init__()
-        self.backbone = AutoModel.from_pretrained(model_name, config=config)
-
-    def forward(self, input_ids, attention_mask=None, token_type_ids=None):
-        outputs = self.backbone(input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
         pooled_output = outputs[0][:, 0]  # 0번째 값이 [CLS] Token
+        pooled_output = self.backbone_proj(pooled_output)
         return pooled_output
 
 
