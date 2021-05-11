@@ -132,9 +132,9 @@ def get_retriever_dataset(args):
 
     if args.data.dataset_name == "train_dataset":
         datasets = load_from_disk(p.join(args.path.train_data_dir, args.data.dataset_name))
-    elif args.data.dataset_name == "bm25_question_documents_dataset":
+    elif args.data.dataset_name == "bm25_question_documents":
         datasets = load_from_disk(args.data.dataset_name)
-    elif args.data.dataset_name == "bm25_document_questions_dataset":
+    elif args.data.dataset_name == "bm25_document_questions":
         datasets = load_from_disk(args.data.dataset_name)
 
     if datasets is None:
