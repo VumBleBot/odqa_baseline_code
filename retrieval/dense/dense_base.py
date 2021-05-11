@@ -25,13 +25,26 @@ class DenseRetrieval(Retrieval):
         self.p_embedding = None
 
     def _load_model(self):
+        """학습 때 사용할 모델을 가져옵니다.
+        Returns:
+            p_encoder: passage encoder, passage to embedding vector
+            q_encoder: question encoder, question to embedding vector
+        """
         raise NotImplementedError
 
     def _get_encoder(self):
-        """ 모델 구조 가져오기 """
+        """추론 때 사용할 q_encoder 모델의 구조를 가져옵니다.
+        Returns:
+            q_encoder: question encoder, question to embedding vector
+        """
         raise NotImplementedError
 
     def _exec_embedding(self):
+        """학습을 진행합니다.
+        Returns:
+            p_encoder: trained passage encoder
+            q_encoder: trained question encoder
+        """
         raise NotImplementedError
 
     def get_embedding(self):
@@ -62,7 +75,7 @@ class DenseRetrieval(Retrieval):
         # p_embedding: numpy, q_embedding: numpy
         result = np.matmul(q_embedding, self.p_embedding.T)
         doc_indices = np.argsort(result, axis=1)[:, -k:][:, ::-1]
-        doc_scores=[]
+        doc_scores = []
         for i in range(len(doc_indices)):
             doc_scores.append(result[i][[doc_indices[i].tolist()]])
         return doc_scores, doc_indices

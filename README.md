@@ -24,25 +24,25 @@
 
 > 학습 후 메모리 해제가 완벽하게 안 되는 이슈가 있습니다! 한 번에 너무 많이 돌리는 것만 지양하면 괜찮을 것 같습니다!
 
-- **reader train**
+- **reader train/validation**
 
 ```bash
 python -m run_mrc --strategies ST01,ST02 --debug True --report False --run_cnt 1
 python -m run_mrc --strategies ST01,ST02 --debug False --report True --run_cnt 3
 ```
 
-- **retriver train**
+- **retriver train/validation**
 
 ```bash
 python -m run_retrieval --strategies ST01,ST02 --debug True --report False --run_cnt 1
 python -m run_retrieval --strategies ST01,ST02 --debug False --report True --run_cnt 3
 ```
 
-- **reader, retriever train**
+- **reader, retriver validation**
 
 ```bash
 python -m run --strategies ST01,ST02 --debug True --report False --run_cnt 1
-python -m run--strategies ST01,ST02 --debug False --report True --run_cnt 3
+python -m run --strategies ST01,ST02 --debug False --report True --run_cnt 3
 ```
 
 - **make dataset**
@@ -82,11 +82,14 @@ input/
 │
 ├── info/ - logging (for visualization)
 │   └── NOT IMPLEMENTED YET
+│
+├── config/ - arguments
+│    ├── data_args.py
+│    ├── model_args.py
+│    └── train_args.py
 │ 
-└── config/ - arguments
-    ├── data_args.py
-    ├── model_args.py
-    └── train_args.py
+└── keys/ - secret keys or tokens
+    └── secrets.json
 ```
     
 ### baseline_code
@@ -139,23 +142,23 @@ ST00.json 하이퍼파라미터는 아래 파일들을 참고해서 수정할 �
     "alias": "base",
     "model": {
         "model_name_or_path": "monologg/koelectra-small-v3-discriminator",
+        "retriever_name": "BM25_DPRKOBERT",
+        "reader_name": "DPR",
         "config_name": "",
-        "tokenizer_name": "",
-        "retriever_name": "BM25"
+        "tokenizer_name": ""
     },
     "data": {
         "dataset_name": "train_dataset",
         "sub_datasets": "kor_dataset",
         "sub_datasets_ratio": "0.4"
         "overwrite_cache": false,
-        "preprocessing_num_workers": 4,
+        "preprocessing_num_workers": 2,
         "max_seq_length": 384,
         "pad_to_max_length": false,
         "doc_stride": 128,
         "max_answer_length": 30,
         "train_retrieval": true,
-        "eval_retrieval": true,
-        "wiki_agg": false
+        "eval_retrieval": true
     },
     "train": {
         "do_train": true,
@@ -170,11 +173,6 @@ ST00.json 하이퍼파라미터는 아래 파일들을 참고해서 수정할 �
         "retrain": false,
         "dense_train_dataset": "train_dataset",
         "topk": 30,
-        "b": 0.01,
-        "k1": 0.1,
-        "dense_retriever_name": "DPR",
-        "sparse_retriever_name": "BM25",
-        "alpha": 0.1,
     }
 }
 ```

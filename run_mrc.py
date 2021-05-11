@@ -29,12 +29,15 @@ def train_reader(args):
 
         print("checkpoint_dir: ", args.train.output_dir)
 
-        datasets = get_dataset(args, is_train=True)
-        reader = get_reader(args, datasets)
-
-        # TODO: 아래 주석 아직도 유효한지 확인
         # retrieve 과정이 없어 top-k를 반환할 수 없음. 무조건 top-1만 반환
-        reader.set_dataset(datasets, is_run=True)
+        # run_mrc.py DOES NOT execute retrieve, so args.retriever.topk cannot be n(>1).
+        # If topk > 1, post processing function returns mis-bundled predictions.
+        args.retriever.topk = 1
+
+        datasets = get_dataset(args, is_train=True)
+        reader = get_reader(args, eval_answers=datasets["validation"])
+        
+        reader.set_dataset(train_dataset=datasets["train"], eval_dataset=datasets["validation"])
 
         trainer = reader.get_trainer()
 

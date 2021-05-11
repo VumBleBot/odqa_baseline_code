@@ -1,23 +1,29 @@
 import os.path as p
 
-from reader import DprReader
-from retrieval.dense import DprRetrieval, DprKobertRetrieval, DprKorquadBertRetrieval, HybridRetrieval
-from retrieval.sparse import TfidfRetrieval, BM25Retrieval
 from tokenization_kobert import KoBertTokenizer
 from datasets import load_from_disk, load_dataset, load_metric, concatenate_datasets, Dataset
 from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoTokenizer
+
+from reader import DprReader
+from retrieval.hybrid import Bm25DprKobert, TfidfDprKobert
+from retrieval.sparse import TfidfRetrieval, BM25Retrieval
+from retrieval.dense import DprRetrieval, DprKobertRetrieval, DprKorquadBertRetrieval
 
 
 metric = load_metric("squad")
 
 
 RETRIEVER = {
-    "DPR": DprRetrieval,
+    # Sparse
     "BM25": BM25Retrieval,
     "TFIDF": TfidfRetrieval,
+    # Dense
+    "DPR": DprRetrieval,
     "DPRKOBERT": DprKobertRetrieval,
     "DPRKORQUAD": DprKorquadBertRetrieval,
-    "HYBRID": HybridRetrieval,
+    # Hybrid
+    "BM25_DPRKOBERT": Bm25DprKobert,
+    "TFIDF_DPRKOBERT": TfidfDprKobert,
 }
 
 READER = {"DPR": DprReader}
@@ -46,7 +52,7 @@ def get_retriever(args):
     return retriever
 
 
-def get_reader(args, datasets):
+def get_reader(args, eval_answers):
     """
     Get pretrained MRC-Reader model and tokenizer.
     If model setting is KoBERT, then load tokenizer from public KoBERT Tokenizer.
@@ -77,7 +83,7 @@ def get_reader(args, datasets):
         args.model.model_name_or_path, from_tf=bool(".ckpt" in args.model.model_name_or_path), config=config
     )
 
-    reader = READER[args.model.reader_name](args, model, tokenizer, datasets)
+    reader = READER[args.model.reader_name](args, model, tokenizer, eval_answers)
 
     return reader
 
@@ -106,14 +112,15 @@ def get_dataset(args, is_train=True):
     if datasets is None:
         raise KeyError(f"{args.data.dataset_name}데이터는 존재하지 않습니다.")
 
-    if args.data.sub_datasets != "":
+    if args.data.sub_datasets != "" and is_train:
         datasets["train"] = concatenate_datasets_with_ratio(args, datasets["train"])
 
     if args.debug:
         args.train.num_train_epochs = 1.0
         datasets["train"] = datasets["train"].select(range(100))
 
-    print(f"TRAIN DATASET 길이: {len(datasets['train'])}")
+    if is_train:
+        print(f"TRAIN DATASET 길이: {len(datasets['train'])}")
     print(f"VALID DATASET 길이: {len(datasets['validation'])}")
 
     return datasets

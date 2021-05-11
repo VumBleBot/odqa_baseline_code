@@ -30,17 +30,13 @@ def train_reader(args):
         print("checkpoint_dir: ", args.train.output_dir)
 
         datasets = get_dataset(args, is_train=True)
+        reader = get_reader(args, eval_answers=datasets["validation"])
         retriever = get_retriever(args)
-        reader = get_reader(args, datasets)
-
-        datasets = retriever.retrieve(datasets["validation"], topk=args.retriever.topk)
-        reader.set_dataset(datasets, is_run=True)
+        
+        datasets["validation"] = retriever.retrieve(datasets["validation"], topk=args.retriever.topk)["validation"]
+        reader.set_dataset(eval_dataset=datasets["validation"])
 
         trainer = reader.get_trainer()
-
-        if args.train.do_train:
-            train_results = trainer.train()
-            print(train_results)
 
         if args.train.do_eval:
             eval_results = trainer.evaluate()
