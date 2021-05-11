@@ -1,23 +1,31 @@
 import os
+import json
 import datetime
+from pathlib import Path
 
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
 # TODO: 토큰을 GitHub에 올리면 토큰이 자동으로 재생성되므로 Github에 올리면 안됩니다.
-token = None
-channel_id = "C0211LZ9PHU"
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+# TODO : input아래에 keys 디렉토리를 만들고, secrets.json 파일을 생성하세요.
+# TODO : json 파일 내에서 세팅을 설정하세요.
+_secret_file_path = os.path.join(BASE_DIR, 'input/keys/secrets.json')
+with open(_secret_file_path, 'r') as secret_file:
+    secrets = json.loads(secret_file.read())
+
+token = secrets["SLACK"]["TOKEN"]
+channel_id = secrets["SLACK"]["CHANNEL_ID"]
 client = WebClient(token)
 
-# TODO: 수정 해주시면 됩니다!
-USER_NAME = "건모"
-COLOR = "#2eb886"
-IMOGI = ":letsparty:"
-# TODO: END
+USER_NAME = secrets["SLACK"]["USER_NAME"]
+COLOR = secrets["SLACK"]["COLOR"]
+EMOJI = secrets["SLACK"]["EMOJI"]
 
 
 def get_format_datas(args, run_type, eval_results):
-    pretext = f"Module: {run_type} {IMOGI}"
+    pretext = f"Module: {run_type} {EMOJI}"
     author_name = f"전략: {args.strategy} 모델: {args.model.reader_name}"
     title = f"별칭: {args.alias}"
     text = f"*EM*: {eval_results['exact_match']}\n *F1*: {eval_results['f1']}"

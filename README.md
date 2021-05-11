@@ -82,11 +82,14 @@ input/
 │
 ├── info/ - logging (for visualization)
 │   └── NOT IMPLEMENTED YET
+│
+├── config/ - arguments
+│    ├── data_args.py
+│    ├── model_args.py
+│    └── train_args.py
 │ 
-└── config/ - arguments
-    ├── data_args.py
-    ├── model_args.py
-    └── train_args.py
+└── keys/ - secret keys or tokens
+    └── secrets.json
 ```
     
 ### baseline_code
