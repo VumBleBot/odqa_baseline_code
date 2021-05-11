@@ -127,6 +127,22 @@ def get_dataset(args, is_train=True):
     return datasets
 
 
+def get_retriever_dataset(args):
+    datasets = None
+
+    if args.data.dataset_name == "train_dataset":
+        datasets = load_from_disk(p.join(args.path.train_data_dir, args.data.dataset_name))
+    elif args.data.dataset_name == "bm25_question_documents_dataset":
+        datasets = load_from_disk(args.data.dataset_name)
+    elif args.data.dataset_name == "bm25_document_questions_dataset":
+        datasets = load_from_disk(args.data.dataset_name)
+
+    if datasets is None:
+        raise FileNotFoundError(f"{args.data.data.dataset_name}이 존재하지 않습니다.")
+
+    return datasets
+
+
 def concatenate_datasets_with_ratio(args, train_dataset):
     concatenate_list = []
 

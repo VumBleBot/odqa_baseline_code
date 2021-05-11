@@ -164,7 +164,9 @@ class DprRetrieval(DenseRetrieval):
         p_encoder, q_encoder = self._load_model()
 
         datasets = load_from_disk(p.join(self.args.path.train_data_dir, self.args.retriever.dense_train_dataset))
-        tokenizer_input = self.tokenizer(datasets["train"][1]["context"], padding="max_length", truncation=True, max_length=512)
+        tokenizer_input = self.tokenizer(
+            datasets["train"][1]["context"], padding="max_length", truncation=True, max_length=512
+        )
 
         print("tokenizer:", self.tokenizer.convert_ids_to_tokens(tokenizer_input["input_ids"]))
 
@@ -173,7 +175,7 @@ class DprRetrieval(DenseRetrieval):
         # (1) Train, Valid 데이터 셋 합쳐서 학습
 
         train_dataset = concatenate_datasets(
-           [datasets["train"].flatten_indices(), datasets["validation"].flatten_indices()]
+            [datasets["train"].flatten_indices(), datasets["validation"].flatten_indices()]
         )
 
         # (2) Train, Valid, KorQuad 데이터 셋 합쳐서 학습
@@ -181,16 +183,20 @@ class DprRetrieval(DenseRetrieval):
         kor_datasets = load_from_disk(p.join(self.args.path.train_data_dir, "kor_dataset"))
 
         features = kor_datasets["train"].features
-        new_dataset = Dataset.from_pandas(kor_datasets['train'].to_pandas(), features=features)
+        new_dataset = Dataset.from_pandas(kor_datasets["train"].to_pandas(), features=features)
 
         concatenate_list = [new_dataset.flatten_indices()]
 
         train_dataset = Dataset.from_pandas(train_dataset.to_pandas(), features=features)
         train_dataset = concatenate_datasets([train_dataset.flatten_indices()] + concatenate_list)
-        
+
         # TODO: 코드 수정해야 함, PR 빨리 되어라
-        q_seqs = self.tokenizer(train_dataset["question"], padding="longest", truncation=True, max_length=512, return_tensors="pt")
-        p_seqs = self.tokenizer(train_dataset["context"], padding="max_length", truncation=True, max_length=512, return_tensors="pt")
+        q_seqs = self.tokenizer(
+            train_dataset["question"], padding="longest", truncation=True, max_length=512, return_tensors="pt"
+        )
+        p_seqs = self.tokenizer(
+            train_dataset["context"], padding="max_length", truncation=True, max_length=512, return_tensors="pt"
+        )
 
         train_dataset = TensorDataset(
             p_seqs["input_ids"],
@@ -204,7 +210,7 @@ class DprRetrieval(DenseRetrieval):
         args = TrainingArguments(
             output_dir="dense_retrieval",
             evaluation_strategy="epoch",
-            learning_rate=1e-4,
+            learning_rate=5e-5,
             per_device_train_batch_size=16,
             per_device_eval_batch_size=4,
             num_train_epochs=10,
@@ -216,7 +222,9 @@ class DprRetrieval(DenseRetrieval):
         p_embedding = []
 
         for passage in tqdm.tqdm(self.contexts):  # wiki
-            passage = self.tokenizer(passage, padding="max_length", truncation=True, max_length=512, return_tensors="pt").to("cuda")
+            passage = self.tokenizer(
+                passage, padding="max_length", truncation=True, max_length=512, return_tensors="pt"
+            ).to("cuda")
             p_emb = p_encoder(**passage).to("cpu").detach().numpy()
             p_embedding.append(p_emb)
 
