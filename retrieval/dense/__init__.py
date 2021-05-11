@@ -1,2 +1,3 @@
+from retrieval.dense.dpr_base import DprRetrieval
 from retrieval.dense.dense_base import DenseRetrieval
-from retrieval.dense.dpr import DprRetrieval, DprKobertRetrieval, DprKorquadBertRetrieval, DprKoelectraRetrieval
+from retrieval.dense.dpr import DprKobertRetrieval, DprKorquadBertRetrieval, DprKoelectraRetrieval

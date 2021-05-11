@@ -18,7 +18,7 @@ RETRIEVER = {
     "BM25": BM25Retrieval,
     "TFIDF": TfidfRetrieval,
     # Dense
-    "DPR": DprRetrieval,
+    "DPR_BERT": DprRetrieval,
     "DPRKOBERT": DprKobertRetrieval,
     "DPRKORQUAD": DprKorquadBertRetrieval,
     "DPRKOELECTRA": DprKoelectraRetrieval,
@@ -130,9 +130,9 @@ def get_dataset(args, is_train=True):
 def get_retriever_dataset(args):
     datasets = None
 
-    if args.data.dataset_name == "train_dataset":
-        datasets = load_from_disk(p.join(args.path.train_data_dir, args.data.dataset_name))
-    elif args.data.dataset_name == "bm25_question_documents":
+    #  if args.data.dataset_name == "train_dataset":
+    #      datasets = load_from_disk(p.join(args.path.train_data_dir, args.data.dataset_name))
+    if args.data.dataset_name == "bm25_question_documents":
         datasets = load_from_disk(args.data.dataset_name)
     elif args.data.dataset_name == "bm25_document_questions":
         datasets = load_from_disk(args.data.dataset_name)
