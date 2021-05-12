@@ -15,7 +15,7 @@ from retrieval.dense import DenseRetrieval
 
 
 def get_retriever_dataset(args):
-    if args.retriever.dense_train_dataset not in ["bm25_document_questions", "bm25_question_documents"]:
+    if args.retriever.dense_train_dataset not in ["train_dataset", "bm25_document_questions", "bm25_question_documents"]:
         raise FileNotFoundError(f"{args.retriever.dense_train_dataset}이 존재하지 않습니다.")
 
     train_dataset = load_from_disk(p.join(args.path.train_data_dir, args.retriever.dense_train_dataset))
@@ -69,8 +69,8 @@ class BaseTrainMixin:
 
         train_dataset = datasets["train"]
 
-        q_seqs = self.tokenizer(train_dataset["question"], padding="max_length", truncation=True, return_tensors="pt")
-        p_seqs = self.tokenizer(train_dataset["context"], padding="max_length", truncation=True, return_tensors="pt")
+        q_seqs = self.tokenizer(train_dataset["question"], padding="longest", truncation=True, return_tensors="pt")
+        p_seqs = self.tokenizer(train_dataset["context"], padding="longest", truncation=True, return_tensors="pt")
 
         train_dataset = TensorDataset(
             p_seqs["input_ids"],
@@ -236,9 +236,12 @@ class Bm25TrainMixin:
 
                 if torch.cuda.is_available():
                     batch = tuple(t.cuda() for t in batch)
-
-                p_inputs = {"input_ids": batch[0], "attention_mask": batch[1], "token_type_ids": batch[2]}
+                
+                # query
+                p_inputs = {"input_ids": batch[0].squeeze(), "attention_mask": batch[1].squeeze(), "token_type_ids": batch[2].squeeze()}
+                # context
                 q_inputs = {"input_ids": batch[3], "attention_mask": batch[4], "token_type_ids": batch[5]}
+
                 label = batch[6]
 
                 p_outputs = p_model(**p_inputs)
