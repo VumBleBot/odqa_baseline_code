@@ -54,7 +54,7 @@ class DprRetrieval(DenseRetrieval):
 
                 p_inputs = {"input_ids": batch[0], "attention_mask": batch[1], "token_type_ids": batch[2]}
                 q_inputs = {"input_ids": batch[3], "attention_mask": batch[4], "token_type_ids": batch[5]}
-                label = batch[7]
+                label = batch[6]
 
                 p_outputs = p_model(**p_inputs)
                 q_outputs = q_model(**q_inputs)

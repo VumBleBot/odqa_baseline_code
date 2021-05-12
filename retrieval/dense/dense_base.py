@@ -7,9 +7,21 @@ import torch
 import numpy as np
 from torch.utils.data import TensorDataset
 
-from prepare import get_retriever_dataset
+from datasets import load_from_disk
 from retrieval.base_retrieval import Retrieval
 
+def get_retriever_dataset(args):
+    train_dataset = None
+    train_dataset = load_from_disk(os.path.join(args.path.train_data_dir, "bm25_question_documents"))
+
+    # if args.data.dataset_name == "bm25_question_documents":
+    # elif args.data.dataset_name == "bm25_document_questions":
+        # datasets = load_from_disk(os.path.join(args.path.train_data_dir, args.data.dataset_name))
+
+    # if datasets is None:
+        # raise FileNotFoundError(f"{args.data.data.dataset_name}이 존재하지 않습니다.")
+
+    return train_dataset
 
 class DenseRetrieval(Retrieval):
     def __init__(self, args):
@@ -53,7 +65,7 @@ class DenseRetrieval(Retrieval):
             return_tensors="pt",
         )
 
-        embedding_size = p_seqs.shape[-1]
+        embedding_size = p_seqs['input_ids'].shape[-1]
 
         for k in p_seqs.keys():
             p_seqs[k] = p_seqs[k].reshape(-1, corpus_size, embedding_size)
