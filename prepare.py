@@ -5,7 +5,7 @@ from datasets import load_from_disk, load_dataset, concatenate_datasets, Dataset
 from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoTokenizer
 
 from reader import DprReader
-from retrieval.hybrid import Bm25DprKobert, TfidfDprKobert
+from retrieval.hybrid import Bm25DprBert, TfidfDprBert
 from retrieval.sparse import TfidfRetrieval, BM25Retrieval
 from retrieval.dense import DprBert, BaseTrainMixin, Bm25TrainMixin
 
@@ -17,8 +17,8 @@ RETRIEVER = {
     # Dense
     "DPRBERT": DprBert,
     # Hybrid
-    "BM25_DPRKOBERT": Bm25DprKobert,
-    "TFIDF_DPRKOBERT": TfidfDprKobert,
+    "BM25_DPRBERT": Bm25DprBert,
+    "TFIDF_DPRBERT": TfidfDprBert,
 }
 
 READER = {"DPR": DprReader}
