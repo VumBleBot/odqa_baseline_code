@@ -40,5 +40,5 @@ class SparseRetrieval(Retrieval):
             with open(self.encoder_path, "wb") as f:
                 pickle.dump(self.encoder, f)
 
-    def get_relevant_doc_bulk(self, queries, topk):
+    def get_relevant_doc_bulk(self, queries):
         raise NotImplementedError
