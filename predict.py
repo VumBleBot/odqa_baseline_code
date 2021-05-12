@@ -13,6 +13,7 @@ def predict(args):
         args = update_args(args, strategy)  # auto add args.save_path, args.base_path
         args.strategy = strategy
         args.train.output_dir = p.join(args.path.checkpoint, strategy)
+        args.train.do_predict = True
 
         datasets = get_dataset(args, is_train=False)
         reader = get_reader(args, eval_answers=datasets["validation"])
@@ -30,7 +31,6 @@ if __name__ == "__main__":
     from tools import get_args
 
     args = get_args()
-    args.train.do_predict = True
 
     predict(args)
     print('Prediction finished.')
