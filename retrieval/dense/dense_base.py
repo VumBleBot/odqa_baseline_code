@@ -1,27 +1,12 @@
 import os
 import pickle
 import os.path as p
-from itertools import chain
 
 import torch
 import numpy as np
-from torch.utils.data import TensorDataset
 
-from datasets import load_from_disk
 from retrieval.base_retrieval import Retrieval
 
-def get_retriever_dataset(args):
-    train_dataset = None
-    train_dataset = load_from_disk(os.path.join(args.path.train_data_dir, "bm25_question_documents"))
-
-    # if args.data.dataset_name == "bm25_question_documents":
-    # elif args.data.dataset_name == "bm25_document_questions":
-        # datasets = load_from_disk(os.path.join(args.path.train_data_dir, args.data.dataset_name))
-
-    # if datasets is None:
-        # raise FileNotFoundError(f"{args.data.data.dataset_name}이 존재하지 않습니다.")
-
-    return train_dataset
 
 class DenseRetrieval(Retrieval):
     def __init__(self, args):
@@ -40,48 +25,6 @@ class DenseRetrieval(Retrieval):
         self.tokenizer = None
         self.p_embedding = None
 
-    def _load_dataset(self):
-        # dataset.features : ['query', 'negative_samples', 'label']
-        dataset = get_retriever_dataset(self.args)
-
-        corpus_size = len(dataset["negative_samples"][0])
-        negative_samples = list(chain(*dataset["negative_samples"]))
-
-        # query
-        q_seqs = self.tokenizer(
-            dataset["query"],
-            padding="longest",
-            truncation=True,
-            max_length=self.tokenizer.model_max_length,
-            return_tensors="pt",
-        )
-
-        # negative_samples
-        p_seqs = self.tokenizer(
-            negative_samples,
-            padding="longest",
-            truncation=True,
-            max_length=self.tokenizer.model_max_length,
-            return_tensors="pt",
-        )
-
-        embedding_size = p_seqs['input_ids'].shape[-1]
-
-        for k in p_seqs.keys():
-            p_seqs[k] = p_seqs[k].reshape(-1, corpus_size, embedding_size)
-
-        train_dataset = TensorDataset(
-            p_seqs["input_ids"],
-            p_seqs["attention_mask"],
-            p_seqs["token_type_ids"],
-            q_seqs["input_ids"],
-            q_seqs["attention_mask"],
-            q_seqs["token_type_ids"],
-            torch.tensor(dataset["label"]),
-        )
-
-        return train_dataset
-
     def _load_model(self):
         """학습 때 사용할 모델을 가져옵니다.
         Returns:
@@ -97,7 +40,22 @@ class DenseRetrieval(Retrieval):
         """
         raise NotImplementedError
 
+    def _load_dataset(self):
+        """학습에 필요한 데이터를 불러옵니다. 데이터셋에 따라서 전처리가 달라집니다.
+        Returns:
+            train_dataset: TensorDataset of ['train_dataset', 'bm25_document_questions', 'bm25_question_documents']
+        """
+        raise NotImplementedError
+
     def _exec_embedding(self):
+        """Training Argument를 지정한 후 학습을 진행합니다.
+        Returns:
+            p_encoder: trained passage encoder
+            q_encoder: trained question encoder
+        """
+        raise NotImplementedError
+
+    def _train(self):
         """학습을 진행합니다.
         Returns:
             p_encoder: trained passage encoder
@@ -136,6 +94,8 @@ class DenseRetrieval(Retrieval):
         result = np.matmul(q_embedding, self.p_embedding.T)
         doc_indices = np.argsort(result, axis=1)[:, -k:][:, ::-1]
         doc_scores = []
+
         for i in range(len(doc_indices)):
             doc_scores.append(result[i][[doc_indices[i].tolist()]])
+
         return doc_scores, doc_indices
