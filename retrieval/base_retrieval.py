@@ -35,8 +35,8 @@ class Retrieval:
         assert self.p_embedding is not None, "get_embedding()을 먼저 수행한 후에 retrieve()를 작동시켜 주세요. "
 
         total = []
-        # 중복을 걸러내기 위해 40 + topk (확인된 최대 중복 개수 40 + topk개)으로 최소값을 설정하고, topk의 3배수로 뽑습니다.
-        alpha = 3
+        # 중복을 걸러내기 위해 40 + topk (확인된 최대 중복 개수 40 + topk개)으로 최소값을 설정하고, topk의 alpha 배수로 뽑습니다.
+        alpha = 2
         doc_scores, doc_indices = self.get_relevant_doc_bulk(query_or_dataset["question"], topk=max(40+topk,alpha*topk))
 
         for idx, example in enumerate(tqdm(query_or_dataset, desc="Retrieval: ")):
