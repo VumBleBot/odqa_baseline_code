@@ -15,7 +15,11 @@ from retrieval.dense import DenseRetrieval
 
 
 def get_retriever_dataset(args):
-    if args.retriever.dense_train_dataset not in ["train_dataset", "bm25_document_questions", "bm25_question_documents"]:
+    if args.retriever.dense_train_dataset not in [
+        "train_dataset",
+        "bm25_document_questions",
+        "bm25_question_documents",
+    ]:
         raise FileNotFoundError(f"{args.retriever.dense_train_dataset}이 존재하지 않습니다.")
 
     train_dataset = load_from_disk(p.join(args.path.train_data_dir, args.retriever.dense_train_dataset))
@@ -43,6 +47,7 @@ class DprRetrieval(DenseRetrieval):
             per_device_eval_batch_size=self.args.retriever.per_device_eval_batch_size,
             num_train_epochs=self.args.retriever.num_train_epochs,
             weight_decay=self.args.retriever.weight_decay,
+            gradient_accumulation_steps=self.args.retriever.gradient_accumulation_steps,
         )
 
         p_encoder, q_encoder = self._train(args, train_dataset, p_encoder, q_encoder)
@@ -137,12 +142,15 @@ class BaseTrainMixin:
                 train_loss += loss.item()
 
                 loss.backward()
-                optimizer.step()
-                scheduler.step()
-                p_model.zero_grad()
-                q_model.zero_grad()
-                global_step += 1
 
+                if ((step + 1) % training_args.gradient_accumulation_steps) == 0:
+                    optimizer.step()
+                    scheduler.step()
+
+                    p_model.zero_grad()
+                    q_model.zero_grad()
+
+                global_step += 1
                 torch.cuda.empty_cache()
 
             end_time = time.time()
@@ -236,9 +244,13 @@ class Bm25TrainMixin:
 
                 if torch.cuda.is_available():
                     batch = tuple(t.cuda() for t in batch)
-                
+
                 # query
-                p_inputs = {"input_ids": batch[0].squeeze(), "attention_mask": batch[1].squeeze(), "token_type_ids": batch[2].squeeze()}
+                p_inputs = {
+                    "input_ids": batch[0].squeeze(),
+                    "attention_mask": batch[1].squeeze(),
+                    "token_type_ids": batch[2].squeeze(),
+                }
                 # context
                 q_inputs = {"input_ids": batch[3], "attention_mask": batch[4], "token_type_ids": batch[5]}
 
@@ -256,10 +268,14 @@ class Bm25TrainMixin:
                 train_loss += loss.item()
 
                 loss.backward()
-                optimizer.step()
-                scheduler.step()
-                p_model.zero_grad()
-                q_model.zero_grad()
+
+                if ((step + 1) % training_args.gradient_accumulation_steps) == 0:
+                    optimizer.step()
+                    scheduler.step()
+
+                    p_model.zero_grad()
+                    q_model.zero_grad()
+
                 global_step += 1
 
                 torch.cuda.empty_cache()
