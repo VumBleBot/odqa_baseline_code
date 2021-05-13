@@ -78,7 +78,7 @@ class DenseRetrieval(Retrieval):
 
             torch.save(self.encoder.state_dict(), self.encoder_path)
 
-    def get_relevant_doc_bulk(self, queries):
+    def get_relevant_doc_bulk(self, queries, topk=1):
         self.encoder.eval()  # question encoder
         self.encoder.cuda()
 
@@ -92,7 +92,7 @@ class DenseRetrieval(Retrieval):
 
         # p_embedding: numpy, q_embedding: numpy
         result = np.matmul(q_embedding, self.p_embedding.T)
-        doc_indices = np.argsort(result, axis=1)[:,:][:, ::-1]
+        doc_indices = np.argsort(result, axis=1)[:,-topk:][:, ::-1]
         doc_scores = []
 
         for i in range(len(doc_indices)):

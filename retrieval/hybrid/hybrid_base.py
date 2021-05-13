@@ -37,18 +37,18 @@ class HybridRetrieval(Retrieval):
 
         return doc_score, doc_index
 
-    def get_relevant_doc_bulk(self, queries):
-        dense_scores, dense_indices = self.dense_retriever.get_relevant_doc_bulk(queries)
-        sparse_scores, sparse_indices = self.sparse_retriever.get_relevant_doc_bulk(queries)
+    def get_relevant_doc_bulk(self, queries, topk):
+        dense_scores, dense_indices = self.dense_retriever.get_relevant_doc_bulk(queries, topk)
+        sparse_scores, sparse_indices = self.sparse_retriever.get_relevant_doc_bulk(queries, topk)
 
         doc_scores, doc_indices = [], []
 
         for idx, _ in enumerate(queries):
             d_scores, d_indices = dense_scores[idx], dense_indices[idx]
-            dense_hits = {d_indices[k]: d_scores[k] for k in range(len(d_indices))}
+            dense_hits = {d_indices[k]: d_scores[k] for k in range(topk)}
 
             s_scores, s_indices = sparse_scores[idx], sparse_indices[idx]
-            sparse_hits = {s_indices[k]: s_scores[k] for k in range(len(s_indices))}
+            sparse_hits = {s_indices[k]: s_scores[k] for k in range(len(topk))}
 
             doc_score, doc_index = self._rank_fusion_by_hybrid(dense_hits, sparse_hits)
 

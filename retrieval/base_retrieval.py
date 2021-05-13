@@ -27,7 +27,7 @@ class Retrieval:
     def get_embedding(self):
         raise NotImplementedError
 
-    def get_relevant_doc_bulk(self, queries):
+    def get_relevant_doc_bulk(self, queries, topk):
         """전체 doc scores, doc indices를 반환합니다."""
         raise NotImplementedError
 
@@ -35,7 +35,8 @@ class Retrieval:
         assert self.p_embedding is not None, "get_embedding()을 먼저 수행한 후에 retrieve()를 작동시켜 주세요. "
 
         total = []
-        doc_scores, doc_indices = self.get_relevant_doc_bulk(query_or_dataset["question"])
+        # 중복을 걸러내기 위해 topk를 2배수로 뽑습니다.
+        doc_scores, doc_indices = self.get_relevant_doc_bulk(query_or_dataset["question"], topk=2*topk)
 
         for idx, example in enumerate(tqdm(query_or_dataset, desc="Retrieval: ")):
 
