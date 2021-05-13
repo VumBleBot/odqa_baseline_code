@@ -15,7 +15,7 @@ class Retrieval:
         self.encoder = None
         self.p_embedding = None
 
-        with open(os.path.join(self.args.data_path, "data", "wikipedia_documents_processed.json"), "r") as f:
+        with open(os.path.join(self.args.data_path, "data", "wikipedia_documents.json"), "r") as f:
             wiki = json.load(f)
 
         self.contexts = list(dict.fromkeys([v["text"] for v in wiki.values()]))
