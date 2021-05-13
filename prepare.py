@@ -1,16 +1,13 @@
 import os.path as p
 
 from tokenization_kobert import KoBertTokenizer
-from datasets import load_from_disk, load_dataset, load_metric, concatenate_datasets, Dataset
+from datasets import load_from_disk, load_dataset, concatenate_datasets, Dataset
 from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoTokenizer
 
 from reader import DprReader
-from retrieval.hybrid import Bm25DprKobert, TfidfDprKobert
+from retrieval.hybrid import Bm25DprBert, TfidfDprBert
 from retrieval.sparse import TfidfRetrieval, BM25Retrieval
-from retrieval.dense import DprRetrieval, DprKobertRetrieval, DprKorquadBertRetrieval
-
-
-metric = load_metric("squad")
+from retrieval.dense import DprBert, BaseTrainMixin, Bm25TrainMixin
 
 
 RETRIEVER = {
@@ -18,15 +15,18 @@ RETRIEVER = {
     "BM25": BM25Retrieval,
     "TFIDF": TfidfRetrieval,
     # Dense
-    "DPR": DprRetrieval,
-    "DPRKOBERT": DprKobertRetrieval,
-    "DPRKORQUAD": DprKorquadBertRetrieval,
+    "DPRBERT": DprBert,
     # Hybrid
-    "BM25_DPRKOBERT": Bm25DprKobert,
-    "TFIDF_DPRKOBERT": TfidfDprKobert,
+    "BM25_DPRBERT": Bm25DprBert,
+    "TFIDF_DPRBERT": TfidfDprBert,
 }
 
 READER = {"DPR": DprReader}
+
+
+def retriever_mixin_factory(name, base, mixin):
+    """ mixin class의 method를 overwriting."""
+    return base.__class__(name, (mixin, base), {})
 
 
 def get_retriever(args):
@@ -46,7 +46,16 @@ def get_retriever(args):
         - model.retriever_name : [TFIDF, DPR, BM25]
     :return: Retriever which contains embedded vector(+indexer if faiss is built).
     """
-    retriever = RETRIEVER[args.model.retriever_name](args)
+
+    retriever_class = RETRIEVER[args.model.retriever_name]
+
+    # Dataset에 따라서 학습 방법이 달라진다. # retriever/dense/dense_train_mixin.py
+    if args.retriever.dense_train_dataset.startswith("bm25"):
+        retriever_class = retriever_mixin_factory("bm25_mixin_class", retriever_class, Bm25TrainMixin)
+    elif args.retriever.dense_train_dataset == "train_dataset":
+        retriever_class = retriever_mixin_factory("base_mixin_class", retriever_class, BaseTrainMixin)
+
+    retriever = retriever_class(args)
     retriever.get_embedding()
 
     return retriever
