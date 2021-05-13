@@ -35,8 +35,9 @@ class Retrieval:
         assert self.p_embedding is not None, "get_embedding()을 먼저 수행한 후에 retrieve()를 작동시켜 주세요. "
 
         total = []
-        # 중복을 걸러내기 위해 topk를 2배수로 뽑습니다.
-        doc_scores, doc_indices = self.get_relevant_doc_bulk(query_or_dataset["question"], topk=2*topk)
+        # 중복을 걸러내기 위해 40 + topk (확인된 최대 중복 개수 40 + topk개)으로 최소값을 설정하고, topk의 3배수로 뽑습니다.
+        alpha = 3
+        doc_scores, doc_indices = self.get_relevant_doc_bulk(query_or_dataset["question"], topk=max(40+topk,alpha*topk))
 
         for idx, example in enumerate(tqdm(query_or_dataset, desc="Retrieval: ")):
 
@@ -45,12 +46,12 @@ class Retrieval:
 
             pointer = 1
 
-            while len(doc_indices_topk) != topk:
+            while len(doc_indices_topk) != topk or pointer < max(40+topk,alpha*topk):
                 is_non_duplicate = True
                 new_text_idx = doc_indices[idx][pointer]
                 new_text = self.contexts[new_text_idx]
                 for d_id in doc_indices_topk:
-                    if fuzz.ratio(self.contexts[d_id], new_text) > 50:
+                    if fuzz.ratio(self.contexts[d_id], new_text) > 65:
                         is_non_duplicate = False
                         break
 
@@ -58,6 +59,8 @@ class Retrieval:
                     doc_scores_topk.append(doc_scores[idx][pointer])
                     doc_indices_topk.append(new_text_idx)
                 pointer += 1
+
+            assert len(doc_indices_topk) == topk, "중복 없는 topk 추출을 위해 alpha 값을 증가시켜 주세요."
 
             for doc_id in range(topk):
                 doc_idx = doc_indices_topk[doc_id]

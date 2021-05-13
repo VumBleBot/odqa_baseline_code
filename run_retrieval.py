@@ -98,8 +98,8 @@ def train_retriever(args):
             topk_dataset = valid_datasets["validation"][fancy_index[0]]
 
             for question, real, pred in zip(topk_dataset["question"], topk_dataset["original_context"], topk_dataset["context"]):
-                # if two texts overlaps more than 50%,
-                if fuzz.ratio(real, pred) > 50 and not qc_dict[question]:
+                # if two texts overlaps more than 65%,
+                if fuzz.ratio(real, pred) > 65 and not qc_dict[question]:
                     qc_dict[question] = True
                     cur_cnt += 1
 
