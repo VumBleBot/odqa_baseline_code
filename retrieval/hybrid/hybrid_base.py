@@ -45,11 +45,11 @@ class HybridRetrieval(Retrieval):
         doc_scores, doc_indices = [], []
 
         for idx, _ in enumerate(queries):
-            scores_topk, indexs_topk = dense_scores[idx], dense_indices[idx]
-            dense_hits = {indexs_topk[k]: scores_topk[k] for k in range(topk)}
+            d_scores, d_indices = dense_scores[idx], dense_indices[idx]
+            dense_hits = {d_indices[k]: d_scores[k] for k in range(topk)}
 
-            scores_topk, indexs_topk = sparse_scores[idx], sparse_indices[idx]
-            sparse_hits = {indexs_topk[k]: scores_topk[k] for k in range(topk)}
+            s_scores, s_indices = sparse_scores[idx], sparse_indices[idx]
+            sparse_hits = {s_indices[k]: s_scores[k] for k in range(len(topk))}
 
             doc_score, doc_index = self._rank_fusion_by_hybrid(dense_hits, sparse_hits)
 

@@ -27,7 +27,7 @@ class BM25Retrieval(SparseRetrieval):
 
         self.b = self.args.retriever.b
         self.k1 = self.args.retriever.k1
-        self.encoder = TfidfVectorizer(tokenizer=self.tokenizer, ngram_range=(1, 2))
+        self.encoder = TfidfVectorizer(tokenizer=self.tokenizer, ngram_range=(1, 2), norm=None, smooth_idf=False)
 
         self.avdl = None
         self.p_embedding = None
@@ -84,5 +84,4 @@ class BM25Retrieval(SparseRetrieval):
             doc_score, doc_indice = result[sorted_result_idx].tolist()[:topk], sorted_result_idx.tolist()[:topk]
             doc_scores.append(doc_score)
             doc_indices.append(doc_indice)
-
         return doc_scores, doc_indices
