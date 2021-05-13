@@ -186,8 +186,8 @@ def make_kor_dataset_v2(args):
     # (3) KOR answer_start Weight Sampling 2배수 사용
     kor_dataset = sampling_by_ans_start_weights(kor_dataset)
 
-    # (4) KOR docs_len Weights Sampling 5000개 까지
-    kor_dataset = sampling_by_doc_lens(kor_dataset)
+    # (4) KOR docs_len Weights Sampling 4000개 까지
+    kor_dataset = sampling_by_doc_lens(kor_dataset, sample=4000)
 
     # (5) KOR_DATASET만 저장
     kor_datasets = DatasetDict({"train": kor_dataset})
@@ -229,6 +229,20 @@ def get_etr_dataset(args):
 
             cnt += 1
 
+    f = Features(
+        {
+            "answers": Sequence(
+                feature={"text": Value(dtype="string", id=None), "answer_start": Value(dtype="int32", id=None)},
+                length=-1,
+                id=None,
+            ),
+            "id": Value(dtype="string", id=None),
+            "context": Value(dtype="string", id=None),
+            "question": Value(dtype="string", id=None),
+            "title": Value(dtype="string", id=None),
+        }
+    )
+
     df = pd.DataFrame(new_dataset)
     etr_dataset = Dataset.from_pandas(df, features=f)
 
@@ -248,10 +262,6 @@ def make_etr_dataset_v1(args):
 
     etr_dataset = get_etr_dataset(args)
 
-    etr_dataset = concatenate_datasets(
-        [etr_dataset["train"].flatten_indices(), etr_dataset["validation"].flatten_indices()]
-    )
-
     # (1) 문서 길이: KLUE MRC 512가 최소 길이
     etr_dataset = filtering_by_doc_len(etr_dataset, doc_len=512)
 
@@ -270,8 +280,8 @@ def make_etr_dataset_v1(args):
 
 def main(args):
     #  make_kor_dataset_v1(args)
-    #  make_kor_dataset_v2(args)
-    make_etr_dataset_v1(args)
+    make_kor_dataset_v2(args)
+    #  make_etr_dataset_v1(args)
 
 
 if __name__ == "__main__":
