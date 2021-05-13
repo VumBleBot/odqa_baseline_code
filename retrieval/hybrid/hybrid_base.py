@@ -1,9 +1,12 @@
+import os
+import os.path as p
+import pickle
 import tqdm 
 import numpy as np
 from retrieval.base_retrieval import Retrieval
 from sklearn.linear_model import LogisticRegression
 from scipy.special import softmax
-from datasets import load_from_disk
+from datasets import load_from_disk, concatenate_datasets
 
 class HybridRetrieval(Retrieval):
     """ 이미 학습된 Sparse, Dense Retriever를 사용한다."""
@@ -64,81 +67,93 @@ class HybridLogisticRetrieval(Retrieval):
         super().__init__(args)
         self.sparse_retriever = None
         self.dense_retriever = None
-        self.logistic = None
-
+        self.logistic = None 
+        self.num_features = 3
+        self.kbound = 3
+        
     def get_embedding(self):
         self.sparse_retriever.get_embedding()
         self.dense_retriever.get_embedding()
-        self.logistic = LogisticRegression()
+        self._get_logistic_regression()
         self.p_embedding = 1  # fake for super().retrieve's, assert line
 
-    def _exec_logistic_regression(self, queries, topk, sparse_scores, sparse_indices):
-        train_dataset = load_from_disk(p.join(args.path.train_data_dir, 'train_dataset'))
+    def _exec_logistic_regression(self):
+        datasets = load_from_disk(p.join(self.args.path.train_data_dir, 'train_dataset')) 
+        
+        train_dataset = concatenate_datasets([
+            datasets['train'],
+            datasets['validation']
+        ])
+
+        queries = train_dataset['question']
+        doc_scores, doc_indices = self.sparse_retriever.get_relevant_doc_bulk(queries, topk=8)
+        doc_scores, doc_indices = np.array(doc_scores), np.array(doc_indices)
+
+        contexts = np.array(self.sparse_retriever.contexts)
+
         train_x, train_y = [], [] 
-        num_features = args.retriever.num_features
+    
 
-        sparse_scores = np.array(sparse_scores)
-        sparse_indices = np.array(sparse_indices)
-        corpus = np.array(sparse_retriever.contexts)
-
-        min_index = pow(2, num_features)
-
-        for idx in tqdm.tqdm(range(len(sparse_scores))):
-            doc_index = sparse_indices[idx]
+        for idx in tqdm.tqdm(range(len(doc_scores))):
+            doc_index = doc_indices[idx]
             org_context = train_dataset['context'][idx]
             
-            feature_vector = [sparse_scores [idx][:pow(2, i)] for i in range(1, num_features+1)]
+            feature_vector = [doc_scores[idx][:pow(2, i)] for i in range(1, self.num_features+1)]
             feature_vector = list(map(lambda x: x.mean(),feature_vector))
             feature_vector = softmax(feature_vector)
-                    
-            y = list(corpus[doc_index]).find(org_context)
 
-            class_ = 0
-            if y!=-1 and y < topk:
-                class_=1
+            label = 0
+            y = -1
+            if org_context in contexts[doc_index]:
+                y = list(contexts[doc_index]).index(org_context)
+            if y!=-1 and y < self.kbound:
+                label = 1
 
             train_x.append(feature_vector)
-            train_y.append(class_)
+            train_y.append(label)
 
-        self.logistic.fit(train_x, train_y)
+        logistic = LogisticRegression()
+        logistic.fit(train_x, train_y)
 
-        return train_x, train_y
+        return logistic
 
-    def _get_logistic_regression(self, train_x, threshold):
-        return self.logistic.predict(train_x)
-        # return self.logistic.predict_proba(train_x[:,1] >= threshold).astype(bool)
+    def _get_logistic_regression(self):
+        save_dir = p.join(self.args.path.embed, self.args.model.retriever_name)
+        logistic_path = p.join(save_dir, "classifier.bin")
+        if not p.exists(save_dir):
+            os.mkdir(save_dir)
+        if p.isfile(logistic_path):
+            with open(logistic_path, "rb") as f:
+                self.logistic = pickle.load(f)
+        else:
+            self.logistic = self._exec_logistic_regression()
+            with open(logistic_path, "wb") as f:
+                pickle.dump(self.logistic, f)
 
     def get_relevant_doc_bulk(self, queries, topk):
-        threshold = args.retriever.threshold
+        min_topk = pow(2,self.num_features)
+        
         dense_scores, dense_indices = self.dense_retriever.get_relevant_doc_bulk(queries, topk)
-        sparse_scores, sparse_indices = self.sparse_retriever.get_relevant_doc_bulk(queries, topk)
+        sparse_scores, sparse_indices = self.sparse_retriever.get_relevant_doc_bulk(queries, max(min_topk, topk))
+        sparse_scores = np.array(sparse_scores)
 
-        train_x, train_y = self._exec_logistic_regression(queries, topk, sparse_scores, sparse_indices)
-        labels = self._get_logistic_regression(train_x, threshold)
+        feature_vectors=[]
+        for sparse_score in sparse_scores:
+            feature_vector = [sparse_score[:pow(2, i)] for i in range(1, self.num_features+1)]
+            feature_vector = list(map(lambda x: x.mean(),feature_vector))
+            feature_vector = softmax(feature_vector)
+            feature_vectors.append(feature_vector)
+
+        labels = self.logistic.predict(feature_vectors)
 
         doc_scores, doc_indices = [], []
-        for i in range(len(sparse_scores)):
-            if labels[i]==1:
-                doc_scores[i],doc_indices[i] = sparse_scores[i], sparse_indices[i]
+        for k in range(topk):
+            if labels[k]==1:
+                doc_scores.append(sparse_scores[k])
+                doc_indices.append(sparse_indices[k])
             else:
-                doc_scores[i],doc_indices[i] = dense_scores[i], dense_indices[i]
+                doc_scores.append(dense_scores[k])
+                doc_indices.append(dense_indices[k])
 
         return doc_scores, doc_indices
 
-
-
-
-
-
-
-# get imbedding에서 가져오기 
-# logistic 모델 가져오기
-# threshold 가져오기 
-# 일단 sparse랑 dense 모두 가져오고, get_relevant_doc_bulk 수행한다음에 
-# 피처수랑 topk는 하이퍼파라미터. threshold까지 
-# retrieve하면 embedding까지 됨. 
-
-# # 학습
-# log_reg.fit(train_x, train_y)
-# # 예측 
-# pred_y = (self.log_reg.predict_proba(train_x)[:,1] >= threshold).astype(bool)

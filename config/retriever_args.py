@@ -26,5 +26,3 @@ class RetrievalTrainingArguments:
     )
     # Parameters for hybrid-retriever
     alpha: Optional[float] = field(default=0.1, metadata={"help": "Set weight for sparse retriever"})
-    threshold: Optional[float] = field(default=0.5, metadata={"help": "Threshold for labeling in logistic regression"})
-    num_features: Optional[int] = field(default=3, metadata={"help": "Number of features to make LogisticHybridRetriever"})

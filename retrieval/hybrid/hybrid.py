@@ -36,4 +36,5 @@ class LogisticBm25DprBert(HybridLogisticRetrieval):
         args.model.retriever_name = "DPRBERT"
         self.dense_retriever = DprBert(args)
 
-        args.model.retriever_name = 'LogisticBm25DprBert'
+        args.model.retriever_name = "LOG_BM25_DPRBERT"
+    

@@ -117,4 +117,3 @@ def train_retriever(args):
 if __name__ == "__main__":
     args = get_args()
     train_retriever(args)
-    assert False

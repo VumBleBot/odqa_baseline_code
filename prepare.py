@@ -19,7 +19,7 @@ RETRIEVER = {
     # Hybrid
     "BM25_DPRBERT": Bm25DprBert,
     "TFIDF_DPRBERT": TfidfDprBert,
-    "LOGISTIC_BM25_DPRBER" : LogisticBm25DprBert,
+    "LOG_BM25_DPRBERT" : LogisticBm25DprBert,
 }
 
 READER = {"DPR": DprReader}
