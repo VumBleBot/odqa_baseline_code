@@ -15,7 +15,7 @@ class Retrieval:
         self.encoder = None
         self.p_embedding = None
 
-        with open(os.path.join(self.args.data_path, "data", "wikipedia_documents.json"), "r") as f:
+        with open(os.path.join(self.args.data_path, "data", "wikipedia_documents_processed.json"), "r") as f:
             wiki = json.load(f)
 
         self.contexts = list(dict.fromkeys([v["text"] for v in wiki.values()]))
@@ -46,7 +46,7 @@ class Retrieval:
 
             pointer = 1
 
-            while len(doc_indices_topk) != topk or pointer < max(40+topk,alpha*topk):
+            while len(doc_indices_topk) != topk:
                 is_non_duplicate = True
                 new_text_idx = doc_indices[idx][pointer]
                 new_text = self.contexts[new_text_idx]
@@ -59,6 +59,8 @@ class Retrieval:
                     doc_scores_topk.append(doc_scores[idx][pointer])
                     doc_indices_topk.append(new_text_idx)
                 pointer += 1
+                if pointer == max(40 + topk, alpha * topk):
+                    break
 
             assert len(doc_indices_topk) == topk, "중복 없는 topk 추출을 위해 alpha 값을 증가시켜 주세요."
 
