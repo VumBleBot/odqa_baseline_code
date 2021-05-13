@@ -27,7 +27,7 @@ class BM25Retrieval(SparseRetrieval):
 
         self.b = self.args.retriever.b
         self.k1 = self.args.retriever.k1
-        self.encoder = TfidfVectorizer(tokenizer=self.tokenizer, ngram_range=(1, 2), norm=None, smooth_idf=False)
+        self.encoder = TfidfVectorizer(tokenizer=self.tokenizer, ngram_range=(1, 2))
 
         self.avdl = None
         self.p_embedding = None
