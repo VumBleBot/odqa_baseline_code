@@ -52,7 +52,7 @@ class HybridRetrieval(Retrieval):
             dense_hits = {d_indices[k]: d_scores[k] for k in range(topk)}
 
             s_scores, s_indices = sparse_scores[idx], sparse_indices[idx]
-            sparse_hits = {s_indices[k]: s_scores[k] for k in range(len(topk))}
+            sparse_hits = {s_indices[k]: s_scores[k] for k in range(topk)}
 
             doc_score, doc_index = self._rank_fusion_by_hybrid(dense_hits, sparse_hits)
 
@@ -122,7 +122,7 @@ class HybridLogisticRetrieval(Retrieval):
         logistic_path = p.join(save_dir, "classifier.bin")
         if not p.exists(save_dir):
             os.mkdir(save_dir)
-        if p.isfile(logistic_path):
+        if p.isfile(logistic_path) and self.args.retriever.retrain is False:
             with open(logistic_path, "rb") as f:
                 self.logistic = pickle.load(f)
         else:
@@ -147,13 +147,13 @@ class HybridLogisticRetrieval(Retrieval):
         labels = self.logistic.predict(feature_vectors)
 
         doc_scores, doc_indices = [], []
-        for k in range(topk):
-            if labels[k]==1:
-                doc_scores.append(sparse_scores[k])
-                doc_indices.append(sparse_indices[k])
+        for query_id in range(len(queries)):
+            if labels[query_id]==1:
+                doc_scores.append(sparse_scores[query_id])
+                doc_indices.append(sparse_indices[query_id])
             else:
-                doc_scores.append(dense_scores[k])
-                doc_indices.append(dense_indices[k])
+                doc_scores.append(dense_scores[query_id])
+                doc_indices.append(dense_indices[query_id])
 
         return doc_scores, doc_indices
 
