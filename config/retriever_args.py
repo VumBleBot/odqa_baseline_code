@@ -24,6 +24,7 @@ class RetrievalTrainingArguments:
             "help": "TF의 saturation을 결정하는 요소. 어떤 토큰이 한 번 더 등장했을 때 이전에 비해 점수를 얼마나 높여주어야 하는가를 결정. (1.2~2.0을 사용하는 것이 일반적)"
         },
     )
-
     # Parameters for hybrid-retriever
     alpha: Optional[float] = field(default=0.1, metadata={"help": "Set weight for sparse retriever"})
+    threshold: Optional[float] = field(default=0.5, metadata={"help": "Threshold for labeling in logistic regression"})
+    num_features: Optional[int] = field(default=3, metadata={"help": "Number of features to make LogisticHybridRetriever"})
