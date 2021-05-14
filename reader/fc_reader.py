@@ -1,5 +1,3 @@
-import random
-
 import numpy as np
 import torch
 from torch import nn
@@ -8,60 +6,26 @@ from trainer_qa import QuestionAnsweringTrainer
 from transformers.modeling_outputs import QuestionAnsweringModelOutput
 from reader.base_reader import BaseReader
 
-
-class CnnQAHead(nn.Module):
-    def __init__(self, in_channels):
+class FcQAHead(nn.Module):
+    def __init__(self, in_dim):
         super().__init__()
-        self.conv_1 = nn.Conv1d(in_channels=in_channels, out_channels=1, kernel_size=1, padding=0)
-        self.conv_3 = nn.Conv1d(in_channels=in_channels, out_channels=1, kernel_size=3, padding=1)
-        self.conv_5 = nn.Conv1d(in_channels=in_channels, out_channels=1, kernel_size=5, padding=2)
+        self.fc = nn.Linear(in_dim, 2)
 
-    def forward(self, x): # (B, 384, 768)
-        x = x.transpose(1, 2).contiguous()
-        conv1_out = self.conv_1(x).transpose(1, 2).contiguous().squeeze(-1)
-        conv3_out = self.conv_3(x).transpose(1, 2).contiguous().squeeze(-1)
-        conv5_out = self.conv_5(x).transpose(1, 2).contiguous().squeeze(-1)
-        x = conv1_out + conv3_out + conv5_out
+    def forward(self, x):
+        x = self.fc(x)
 
-        # return conv3_out
         return x
         
-class CnnReaderModel(nn.Module):
+class FcReaderModel(nn.Module):
     def __init__(self, backbone):
         super().__init__()
         # BERT 모델의 경우 add_pooling_layer=False 옵션 추가 필요('bert-base-multilingual-uncased')
         self.backbone = backbone
-
         head_input_size = 768 # !!추후 수정 필요!! (자동화)
         # 현재 'monologg/koelectra-base-v3-finetuned-korquad' 기준
 
-        self.start_head = CnnQAHead(in_channels=head_input_size)
-        self.end_head = CnnQAHead(in_channels=head_input_size)
+        self.head = FcQAHead(in_dim=head_input_size)
     
-    def random_masking(self, input_ids, ratio=0.05):
-        #현재 BERT 모델 일반적인 토큰 기준
-        masked_input_ids = input_ids.clone()
-        
-        PAD_TOKEN_ID = 0
-        CLS_TOKEN_ID = 2
-        SEP_TOKEN_ID = 3
-        MASK_TOKEN_ID = 4
-        except_token = [PAD_TOKEN_ID, CLS_TOKEN_ID, SEP_TOKEN_ID, MASK_TOKEN_ID]
-
-
-        for input_id in masked_input_ids:
-            masked_num = 0
-            
-            while masked_num < int(len(input_id) * ratio):
-                target_pos = random.randrange(len(input_id))
-                if input_id[target_pos] not in except_token:
-                    input_id[target_pos] = MASK_TOKEN_ID
-                    if input_id[target_pos + 1] not in except_token: #연속 단어 마스킹 가능하면 ㄱ
-                        input_id[target_pos + 1] = MASK_TOKEN_ID
-                    masked_num += 1
-        
-        return masked_input_ids
-
     def forward(
         self,
         input_ids=None,
@@ -77,9 +41,9 @@ class CnnReaderModel(nn.Module):
         return_dict=None,
     ):
         discriminator_hidden_states = self.backbone(
-            self.random_masking(input_ids) if self.training else input_ids, # input
-            attention_mask=attention_mask, # 패딩에 0, 나머지 1
-            token_type_ids=token_type_ids, # 질문에 0, 지문에 1, 다시 패딩쪽은 0
+            input_ids,
+            attention_mask=attention_mask,
+            token_type_ids=token_type_ids,
             position_ids=position_ids,
             head_mask=head_mask,
             inputs_embeds=inputs_embeds,
@@ -88,8 +52,11 @@ class CnnReaderModel(nn.Module):
         )
 
         sequence_output = discriminator_hidden_states[0]
-        start_logits = self.start_head(sequence_output)
-        end_logits = self.end_head(sequence_output)
+
+        logits = self.head(sequence_output)
+        start_logits, end_logits = logits.split(1, dim=-1)
+        start_logits = start_logits.squeeze(-1)
+        end_logits = end_logits.squeeze(-1)
 
         total_loss = None
         if start_positions is not None and end_positions is not None:
@@ -118,11 +85,12 @@ class CnnReaderModel(nn.Module):
             attentions=discriminator_hidden_states.attentions,
         )
 
-class CnnHeadReader(BaseReader):
+
+class FcHeadReader(BaseReader):
     def __init__(self, args, model, tokenizer, eval_answers):
         super().__init__(args, None, tokenizer, eval_answers)
-        self.model = CnnReaderModel(backbone=model)
-        if args.model.model_path != "":
+        self.model = FcReaderModel(backbone=model)
+        if args.model.model_path:
             self.model.load_state_dict(torch.load(args.model.model_path))
 
     def get_trainer(self):
