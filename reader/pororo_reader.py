@@ -171,8 +171,7 @@ class BrainRobertaHubInterface(RobertaHubInterface):
             ).squeeze()  # T x 2
 
             results = []
-            # log_list.append(logits) # 디버깅용
-            top_n = 1  # 수정하는 것으로 출력 개수를 달리할 수 있습니다. start logit 10개, end logit 10개로 -> 총 100개의 값을 제시합니다.
+            top_n = 1  # n*n개 return
 
             starts = logits[:, 0].argsort(descending=True)[:top_n].tolist()
 
@@ -210,9 +209,7 @@ class PororoBertMrc(PororoBiencoderBase):
     ) -> Tuple[str, Tuple[int, int]]:
         postprocess = kwargs.get("postprocess", True)
 
-        # ☆#☆#☆#☆#☆#☆#☆#☆#☆#☆#☆#☆#☆#☆#☆#☆#☆#☆#☆#☆#☆#☆#☆#☆#☆#☆#☆#☆
-        # 여기 바꿨습니다 ☆
-        # ☆#☆#☆#☆#☆#☆#☆#☆#☆#☆#☆#☆#☆#☆#☆#☆#☆#☆#☆#☆#☆#☆#☆#☆#☆#☆#☆#☆
+        ###
         pair_results = self._model.predict_span(query, context)
         returns = []
 

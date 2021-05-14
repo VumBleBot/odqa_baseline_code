@@ -24,6 +24,7 @@ def predict(args):
 
         trainer = reader.get_trainer()
 
+        # use pororo_predict WHERE args.train.pororo_predictions=True
         trainer.predict(test_dataset=reader.eval_dataset, test_examples=datasets["validation"])
 
 

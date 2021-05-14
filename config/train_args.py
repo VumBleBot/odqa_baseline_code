@@ -9,4 +9,5 @@ class TrainArguments:
     """
 
     output_dir: Optional[str] = field(default="train_checkpoint", metadata={"help": "checkpoint_dir"})
+    pororo_prediction: Optional[bool] = field(default=False, metadata={"help": "pororo mrc model voting(ensemble)"})
     # TrainArguments는 config/ST00.json 에서 수정해 주시면 됩니다.
