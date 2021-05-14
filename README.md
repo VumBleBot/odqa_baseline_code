@@ -171,7 +171,7 @@ ST00.json 하이퍼파라미터는 아래 파일들을 참고해서 수정할 �
     "data": {
         "dataset_name": "train_dataset",
         "sub_datasets": "kor_dataset",
-        "sub_datasets_ratio": "0.4"
+        "sub_datasets_ratio": "0.4",
         "overwrite_cache": false,
         "preprocessing_num_workers": 2,
         "max_seq_length": 384,
