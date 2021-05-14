@@ -27,8 +27,7 @@
 - overwrite_output_dir: bool = False,
 - do_train: bool = False,
 - do_eval: bool = None,
-- **_(added) do_predict: bool = False_**,
-- **_(added) pororo_prediction: bool = False_**
+- do_predict: bool = False,
 - evaluation_strategy: transformers.trainer_utils.IntervalStrategy = 'no',
 - prediction_loss_only: bool = False,
 - per_device_train_batch_size: int = 8,
@@ -88,3 +87,4 @@
 - dataloader_pin_memory: bool = True,
 - skip_memory_metrics: bool = False,
 - mp_parameters: str = '',
+- **_(custom) pororo_prediction: bool = False_**

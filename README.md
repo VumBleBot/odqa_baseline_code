@@ -98,6 +98,7 @@ input/
 odqa_baseline_code/
 │
 ├── reader/ - reader
+│   ├── pororo_reader.py
 │   └── base_reader.py
 │
 ├── retrieval/ - retriever
@@ -163,6 +164,7 @@ ST00.json 하이퍼파라미터는 아래 파일들을 참고해서 수정할 �
     "train": {
         "do_train": true,
         "do_eval": true,
+        "pororo_prediction": true,
         "save_total_limit": 2,
         "save_steps": 100,
         "logging_steps": 100,
