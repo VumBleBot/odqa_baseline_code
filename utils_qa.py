@@ -30,6 +30,10 @@ from reader.pororo_reader import PororoMrcFactory
 
 mecab = Mecab()
 
+# TODO alpha를 config로 빼기
+# pororo voting 가중
+alpha = 2.0
+
 
 def tokenize(text):
     # return text.split(" ")
@@ -174,8 +178,6 @@ def postprocess_qa_predictions(
     # PORORO Reader for Voting
     my_mrc_factory = PororoMrcFactory('mrc', 'ko', "brainbert.base.ko.korquad")
     pororo_mrc = my_mrc_factory.load(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
-    # TODO alpha를 config로 빼기
-    alpha = 0.1 # pororo voting 가중
 
     all_predictions = collections.OrderedDict()
     all_nbest_json = collections.OrderedDict()
