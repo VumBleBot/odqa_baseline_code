@@ -203,7 +203,7 @@ def postprocess_qa_predictions(
 
 
             # pororo MRC top 1, score 뽑아오기
-            pororo_pred_text, _, pororo_score = pororo_mrc(example['question'], example['context'])[0]
+            pororo_pred_text, _, pororo_score = pororo_mrc(example['question'], example['context'], postprocess=False)[0]
             pororo_pred_text = remove_last_postposition(pororo_pred_text)
             pororo_prediction = {"text": pororo_pred_text, "score": pororo_score}
 
