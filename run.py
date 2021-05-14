@@ -39,15 +39,33 @@ def train_reader(args):
         trainer = reader.get_trainer()
 
         if args.train.do_eval:
-            eval_results = trainer.evaluate()
-            results = evaluation(args)
-            eval_results["exact_match"] = results["EM"]["value"]
-            eval_results["f1"] = results["F1"]["value"]
+            if args.train.pororo_prediction:
+                eval_results, pororo_eval_results = trainer.evaluate()
+                results, pororo_results = evaluation(args), evaluation(args, prefix="pororo_")
 
-            print(eval_results)
+                for res, eval_res in zip((results, pororo_results),
+                                         (eval_results, pororo_eval_results)):
+                    eval_res["exact_match"] = res["EM"]["value"]
+                    eval_res["f1"] = res["F1"]["value"]
+
+                print("EVAL RESULT")
+                print(eval_results)
+                print("PORORO_EVAL RESULT")
+                print(pororo_eval_results)
+
+            else:
+                eval_results = trainer.evaluate()
+                results = evaluation(args)
+                eval_results["exact_match"] = results["EM"]["value"]
+                eval_results["f1"] = results["F1"]["value"]
+
+                print("EVAL RESULT")
+                print(eval_results)
 
             if args.report is True:
-                report_reader_to_slack(args, p.basename(__file__), eval_results)
+                report_reader_to_slack(args, p.basename(__file__), eval_results, use_pororo=False)
+                if args.train.pororo_prediction is True:
+                    report_reader_to_slack(args, p.basename(__file__), pororo_eval_results, use_pororo=True)
 
 
 if __name__ == "__main__":

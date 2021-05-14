@@ -40,15 +40,15 @@ def get_gt_json(args):
     return gt_json
 
 
-def evaluation(args):
+def evaluation(args, prefix=""):
     """Calculate MRC metrics.
 
     Arguments:
         args: args
     """
 
-    pred_path = p.join(args.train.output_dir, "predictions_valid.json")
-    save_path = p.join(args.train.output_dir, "valid_results.json")
+    pred_path = p.join(args.train.output_dir, f"{prefix}predictions_valid.json")
+    save_path = p.join(args.train.output_dir, f"{prefix}valid_results.json")
 
     gt = get_gt_json(args)
     with open(pred_path) as pred_file:

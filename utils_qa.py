@@ -15,7 +15,7 @@
 """
 Post-processing utilities for question answering.
 """
-
+import copy
 import os
 import json
 import collections
@@ -180,7 +180,9 @@ def postprocess_qa_predictions(
     pororo_mrc = my_mrc_factory.load(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
 
     all_predictions = collections.OrderedDict()
+    all_pororo_voted_predictions = collections.OrderedDict()
     all_nbest_json = collections.OrderedDict()
+    all_pororo_voted_nbest_json = collections.OrderedDict()
 
     topk_merged_predictions = []
     topk_merged_pororo_predictions = []
@@ -247,21 +249,28 @@ def postprocess_qa_predictions(
         predictions = sorted(topk_merged_predictions, key=lambda x: x["score"], reverse=True)[:n_best_size]
         pororo_pred = max(topk_merged_pororo_predictions, key=lambda x:x["score"]) # 각 context의 top-1 중에서도 top-1만을 추출
 
-        # 2. pororo score 추가
-        for pred in predictions:
+
+        # 2. pororo score 추가한 리스트를 따로 보관
+        pororo_voted_predictions = copy.deepcopy(predictions)
+        for pred in pororo_voted_predictions:
             if pred["text"] == pororo_pred["text"]:
                 pred["score"] += pororo_pred["score"] * alpha
-
-        # 3. 한번 더 정렬
-        predictions = sorted(topk_merged_predictions, key=lambda x: x["score"], reverse=True)
+                pred["pororo_voting"] = True
+        pororo_voted_predictions = sorted(pororo_voted_predictions, key=lambda x: x["score"], reverse=True)
 
         # 정답 로깅
         all_predictions[example["id"]] = predictions[0]["text"]
+        all_pororo_voted_predictions[example["id"]] = pororo_voted_predictions[0]["text"]
         # 정답 포함 가능성 있었던 답을 로깅
         all_nbest_json[example["id"]] = [
             {k: (float(v) if isinstance(v, (np.float16, np.float32, np.float64)) else v) for k, v in
              pred.items()}
             for pred in predictions
+        ]
+        all_pororo_voted_nbest_json[example["id"]] = [
+            {k: (float(v) if isinstance(v, (np.float16, np.float32, np.float64)) else v) for k, v in
+             pred.items()}
+            for pred in pororo_voted_predictions
         ]
 
         # print(f"{bundle_start_index+topk+1}, {topk} --- FLUSH")
@@ -274,11 +283,21 @@ def postprocess_qa_predictions(
         prediction_file = os.path.join(
             output_dir, "predictions.json" if prefix is None else f"predictions_{prefix}.json"
         )
+        pororo_voted_prediction_file = os.path.join(
+            output_dir, "pororo_predictions.json" if prefix is None else f"pororo_predictions_{prefix}.json"
+        )
         nbest_file = os.path.join(
             output_dir, "nbest_predictions.json" if prefix is None else f"nbest_predictions_{prefix}.json"
         )
+        pororo_voted_nbest_file = os.path.join(
+            output_dir, "nbest_pororo_predictions.json" if prefix is None else f"nbest_pororo_predictions_{prefix}.json"
+        )
         with open(prediction_file, "w") as writer:
             writer.write(json.dumps(all_predictions, indent=4, ensure_ascii=False) + "\n")
+        with open(pororo_voted_prediction_file, "w") as writer:
+            writer.write(json.dumps(all_pororo_voted_predictions, indent=4, ensure_ascii=False) + "\n")
         with open(nbest_file, "w") as writer:
             writer.write(json.dumps(all_nbest_json, indent=4, ensure_ascii=False) + "\n")
-    return all_predictions
+        with open(pororo_voted_nbest_file, "w") as writer:
+            writer.write(json.dumps(all_pororo_voted_nbest_json, indent=4, ensure_ascii=False) + "\n")
+    return all_predictions, all_pororo_voted_predictions
