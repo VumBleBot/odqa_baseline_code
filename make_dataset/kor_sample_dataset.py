@@ -128,7 +128,7 @@ def sampling_by_doc_lens(kor_dataset, sample):
 def make_kor_dataset_v1(args):
     """KorQuad Dataset V1
     1. 문서 길이 512이하 Filtering
-    2. 중복 Context 제거, Question 최대 4개
+    2. Context당 Question 최대 4개
     3. ans_start 위치로 8000개 샘플링
     """
 
@@ -162,7 +162,7 @@ def make_kor_dataset_v1(args):
 def make_kor_dataset_v2(args):
     """KorQuad Dataset V1
     1. 문서 길이 512이하 Filtering
-    2. 중복 Context 제거, Question 최대 4개
+    2. Context당 Question 최대 4개
     3. ans_start 위치로 8000개 샘플링
     4. doc_len 길이로  4000개 필터링
     """
