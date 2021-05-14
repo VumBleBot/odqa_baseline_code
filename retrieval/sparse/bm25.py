@@ -84,5 +84,4 @@ class BM25Retrieval(SparseRetrieval):
             doc_score, doc_indice = result[sorted_result_idx].tolist()[:topk], sorted_result_idx.tolist()[:topk]
             doc_scores.append(doc_score)
             doc_indices.append(doc_indice)
-
         return doc_scores, doc_indices

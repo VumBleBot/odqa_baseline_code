@@ -22,6 +22,7 @@ class DenseRetrieval(Retrieval):
         self.encoder_path = p.join(save_dir, f"{self.name}.pth")
 
         self.encoder = None
+        self.tokenizer = None
         self.p_embedding = None
 
     def _load_model(self):
@@ -39,7 +40,22 @@ class DenseRetrieval(Retrieval):
         """
         raise NotImplementedError
 
+    def _load_dataset(self):
+        """학습에 필요한 데이터를 불러옵니다. 데이터셋에 따라서 전처리가 달라집니다.
+        Returns:
+            train_dataset: TensorDataset of ['train_dataset', 'bm25_document_questions', 'bm25_question_documents']
+        """
+        raise NotImplementedError
+
     def _exec_embedding(self):
+        """Training Argument를 지정한 후 학습을 진행합니다.
+        Returns:
+            p_encoder: trained passage encoder
+            q_encoder: trained question encoder
+        """
+        raise NotImplementedError
+
+    def _train(self):
         """학습을 진행합니다.
         Returns:
             p_encoder: trained passage encoder
@@ -62,20 +78,24 @@ class DenseRetrieval(Retrieval):
 
             torch.save(self.encoder.state_dict(), self.encoder_path)
 
-    def get_relevant_doc_bulk(self, queries, k=1):
+    def get_relevant_doc_bulk(self, queries, topk=1):
         self.encoder.eval()  # question encoder
         self.encoder.cuda()
 
         with torch.no_grad():
-            q_seqs_val = self.tokenizer(queries, padding="max_length", truncation=True, return_tensors="pt").to("cuda")
+            q_seqs_val = self.tokenizer(
+                queries, padding="max_length", truncation=True, max_length=512, return_tensors="pt"
+            ).to("cuda")
             q_embedding = self.encoder(**q_seqs_val)
             q_embedding.squeeze_()  # in-place
             q_embedding = q_embedding.cpu().detach().numpy()
 
         # p_embedding: numpy, q_embedding: numpy
         result = np.matmul(q_embedding, self.p_embedding.T)
-        doc_indices = np.argsort(result, axis=1)[:, -k:][:, ::-1]
+        doc_indices = np.argsort(result, axis=1)[:,-topk:][:, ::-1]
         doc_scores = []
+
         for i in range(len(doc_indices)):
             doc_scores.append(result[i][[doc_indices[i].tolist()]])
+
         return doc_scores, doc_indices
