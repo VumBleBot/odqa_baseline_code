@@ -25,5 +25,16 @@ class RetrievalTrainingArguments:
         },
     )
 
+    learning_rate: Optional[float] = field(default=3e-5, metadata={"help": "Learning Rate"})
+    per_device_train_batch_size: Optional[float] = field(
+        default=1, metadata={"help": "bm25 데이터 셋을 사용한다면 batch_size를 1로 사용하셔야 합니다!"}
+    )
+    per_device_eval_batch_size: Optional[float] = field(default=4, metadata={"help": "학습시에 evaluation을 사용하지는 않습니다..."})
+    num_train_epochs: Optional[int] = field(default=2, metadata={"help": "Num Epoch"})
+    weight_decay: Optional[float] = field(default=0.01, metadata={"help": "Model Weight Decay"})
+    gradient_accumulation_steps: Optional[int] = field(
+        default=1, metadata={"help": "덴스 리트리버에서 사용되는 Gradient Accumulation 스텝입니다."}
+    )
+
     # Parameters for hybrid-retriever
     alpha: Optional[float] = field(default=0.1, metadata={"help": "Set weight for sparse retriever"})
