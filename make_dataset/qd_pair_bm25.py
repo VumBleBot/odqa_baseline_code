@@ -34,7 +34,7 @@ def make_dataset(args):
     bm25._exec_embedding()  # Not Save, Just fit_transform
 
     # context, questions 형태의 데이터 셋을 생성
-    make_negative_dataset(args, bm25, answers, questions, questions, "bm25_document_questions", num=128)
+    make_negative_dataset(args, bm25, answers, questions, questions, "bm25_document_questions", num=32)
 
 
 def make_negative_dataset(args, bm25, queries, answers, contexts, name, num=16):
