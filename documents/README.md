@@ -76,6 +76,7 @@ run_mrc를 사용하기 위해서 참고해야 하는 Args들을 알아봅시다
     - model_name_or_path: backbone 모델을 선택합니다.
     - reader_name: READER 모델을 선택합니다.
     > DPR 구조의 Reader모델에 backbone 모델로는 koelectra를 선택한 것
+
 - data
     - dataset_name: 학습으로 사용하는 DATASET입니다. Default는 `train_dataset`이고 `squad_kor_v1`을 선택할 수 있습니다.
     - sub_datasets: 샘플링 된 데이터셋을 추가로 사용합니다. Default는 ''이고 빈 문자열일 경우에 추가하지 않습니다.
@@ -90,7 +91,7 @@ run_mrc를 사용하기 위해서 참고해야 하는 Args들을 알아봅시다
     "alias": "RUN_RETRIEVAL_BASE_CONFIG",
     "model": {
         "retriever_name": "DPRBERT",
-        "tokenizer_name": 'xlm-roberta-large'
+        "tokenizer_name": 'xlm-roberta-large',
     },
     "data": {
         "dataset_name": "train_dataset",
