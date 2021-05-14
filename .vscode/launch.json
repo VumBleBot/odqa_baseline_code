@@ -1,0 +1,24 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "cwd": "${workspaceRoot}",
+            "env": {"PYTHONPATH": "${workspaceRoot}"},
+            "console": "integratedTerminal",
+            // "args": ["--output_dir", "./output_test/train", "--model_name_or_path", "./outputs/train_dataset/", "--do_eval"]
+            // "args": ["--output_dir", "./output_test/train", "--do_train", "--do_eval"]
+            // "args": ["--strategies", "ST01"]
+            // "args": ["--strategies", "ST01", "--run_cnt", "1"]
+            // "args": ["--strategies", "ST01", "--debug", "True", "--report", "False", "--run_cnt", "1"],
+            // "args": ["--strategies", "ST11", "--debug", "True", "--report", "False", "--run_cnt", "1"]
+            "args": ["--strategies", "ST13", "--debug", "True", "--report", "False", "--run_cnt", "1"]
+        }
+    ]
+}

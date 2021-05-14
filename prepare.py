@@ -2,9 +2,9 @@ import os.path as p
 
 from tokenization_kobert import KoBertTokenizer
 from datasets import load_from_disk, load_dataset, load_metric, concatenate_datasets, Dataset
-from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoTokenizer
+from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoModel, AutoTokenizer
 
-from reader import DprReader
+from reader import DprReader, LstmHeadReader
 from retrieval.hybrid import Bm25DprKobert, TfidfDprKobert
 from retrieval.sparse import TfidfRetrieval, BM25Retrieval
 from retrieval.dense import DprRetrieval, DprKobertRetrieval, DprKorquadBertRetrieval
@@ -26,7 +26,7 @@ RETRIEVER = {
     "TFIDF_DPRKOBERT": TfidfDprKobert,
 }
 
-READER = {"DPR": DprReader}
+READER = {"DPR": DprReader, "LstmHead": LstmHeadReader}
 
 
 def get_retriever(args):
@@ -79,9 +79,14 @@ def get_reader(args, eval_answers):
             args.model.tokenizer_name if args.model.tokenizer_name else args.model.model_name_or_path, use_fast=True
         )
 
-    model = AutoModelForQuestionAnswering.from_pretrained(
-        args.model.model_name_or_path, from_tf=bool(".ckpt" in args.model.model_name_or_path), config=config
-    )
+    if args.model.reader_name == 'LstmHead':
+        model = AutoModel.from_pretrained(
+            args.model.model_name_or_path, from_tf=bool(".ckpt" in args.model.model_name_or_path), config=config
+        )
+    else:
+        model = AutoModelForQuestionAnswering.from_pretrained(
+            args.model.model_name_or_path, from_tf=bool(".ckpt" in args.model.model_name_or_path), config=config
+        )
 
     reader = READER[args.model.reader_name](args, model, tokenizer, eval_answers)
 
