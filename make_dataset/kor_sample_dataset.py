@@ -279,9 +279,9 @@ def make_etr_dataset_v1(args):
 
 
 def main(args):
-    #  make_kor_dataset_v1(args)
+    make_kor_dataset_v1(args)
     make_kor_dataset_v2(args)
-    #  make_etr_dataset_v1(args)
+    make_etr_dataset_v1(args)
 
 
 if __name__ == "__main__":
