@@ -64,11 +64,14 @@ def make_negative_ctx_dataset(bm25, train_dataset, wiki_json):
 
     for idx, question in enumerate(train_dataset["question"]):
         answers = train_dataset[idx]["answers"]["text"]  # EX) ['하원']
+        text = train_dataset[idx]["context"]
+
+        bm25_context_score = bm25.encoder.transform([text]).todense().sum()
         positive_ctxs = [
             {
-                "text": train_dataset[idx]["context"],  # EX) "미국.. 것이다."
+                "text": text,  # EX) "미국.. 것이다."
                 "title": train_dataset[idx]["title"],
-                "score": 0,  # bm25 점수
+                "score": bm25_context_score,  # bm25 점수
                 "title_score": 0,
                 "psg_id": train_dataset[idx]["document_id"],
             }
@@ -115,6 +118,7 @@ def make_negative_ctx_dataset(bm25, train_dataset, wiki_json):
 
         if idx == 0:
             pprint.pprint(ctx_dataset[0])
+            break
 
     return ctx_dataset
 
