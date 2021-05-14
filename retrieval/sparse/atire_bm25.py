@@ -10,7 +10,7 @@ from transformers import AutoTokenizer
 from retrieval.sparse import SparseRetrieval
 
 
-class BM25ATTIRERetrieval(SparseRetrieval):
+class ATIREBM25Retrieval(SparseRetrieval):
     def __init__(self, args):
         super().__init__(args)
 
