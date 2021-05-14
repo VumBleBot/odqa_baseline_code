@@ -18,7 +18,9 @@
             // "args": ["--strategies", "ST01", "--run_cnt", "1"]
             // "args": ["--strategies", "ST01", "--debug", "True", "--report", "False", "--run_cnt", "1"],
             // "args": ["--strategies", "ST11", "--debug", "True", "--report", "False", "--run_cnt", "1"]
-            "args": ["--strategies", "ST13", "--debug", "True", "--report", "False", "--run_cnt", "1"]
+            // "args": ["--strategies", "ST13", "--debug", "True", "--report", "False", "--run_cnt", "1"]
+            // "args": ["--strategies", "ST23", "--model_path", "../input/checkpoint/ST22_cnn_epoch2.0korquad1.0_95/checkpoint-4500"]
+            "args": ["--strategies", "ST22", "--model_path", "../input/checkpoint/ST22_cnn_epoch2.0korquad1.0_95/checkpoint-4500", "--report", "False", "--debug", "True"]
         }
     ]
 }

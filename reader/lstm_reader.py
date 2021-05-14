@@ -10,15 +10,15 @@ class LstmQAHead(nn.Module):
     def __init__(self, input_size):
         super().__init__()
         self.lstm = nn.LSTM(input_size=input_size, hidden_size=input_size, num_layers=3, dropout=0.3, bidirectional=True, batch_first=True)
-        # self.pooler = nn.AdaptiveAvgPool1d(1) #linear layer ? gap ?
-        self.pooler = nn.Linear(1536, 1) # 1536 (B, L, 768) 
+        # self.pooler = nn.AdaptiveAvgPool1d(-1)
+        self.pooler = nn.Linear(1536, 1) # (B, L, 1536) -> (B, L, 1) 
 
     def forward(self, x):
         x, (_, _) = self.lstm(x) #h_n, c_n is ignored  /// 768 vector => logit
-        x = self.pooler(x)
+        x = self.pooler(x).squeezee(-1)
         return x
         
-class CustomReaderModel(nn.Module):
+class LstmReaderModel(nn.Module):
     def __init__(self, backbone):
         super().__init__()
         # BERT 모델의 경우 add_pooling_layer=False 옵션 추가 필요('bert-base-multilingual-uncased')
@@ -28,8 +28,8 @@ class CustomReaderModel(nn.Module):
 
         # self.start_token_lstm = nn.Linear(head_input_size, 1)
         # self.end_token_lstm = nn.Linear(head_input_size, 1)
-        self.start_token_lstm = LstmQAHead(input_size=head_input_size)
-        self.end_token_lstm = LstmQAHead(input_size=head_input_size)
+        self.start_head = LstmQAHead(input_size=head_input_size)
+        self.end_head = LstmQAHead(input_size=head_input_size)
     
     def forward(
         self,
@@ -57,8 +57,8 @@ class CustomReaderModel(nn.Module):
         )
 
         sequence_output = discriminator_hidden_states[0]
-        start_logits = self.start_token_lstm(sequence_output).squeeze(-1)
-        end_logits = self.end_token_lstm(sequence_output).squeeze(-1)
+        start_logits = self.start_head(sequence_output)
+        end_logits = self.end_head(sequence_output)
 
         total_loss = None
         if start_positions is not None and end_positions is not None:

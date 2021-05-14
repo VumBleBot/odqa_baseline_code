@@ -136,10 +136,12 @@ def postprocess_qa_predictions(
     prev_doc_offset = (-1, -1)[0]
     doc_id_postfix = 0
     for i, feature in enumerate(features):
-        # token_type_ids로 query sequence 구한 뒤, 거기서부터 뒤로 일정부분 슬라이싱해 docs 구분하기
-        tti = feature['token_type_ids']
-        query_sequence_length = len(tti) - sum(tti)  # query sequence length
-        doc_offset = feature['offset_mapping'][query_sequence_length][0]  # 해당 context sequence의 첫번째 offset
+
+        # query sequence를 지나 document의 첫번째 offset을 가리키는 doc_pointer
+        doc_pointer = 0
+        while feature['offset_mapping'][doc_pointer] == None:
+            doc_pointer += 1
+        doc_offset = feature['offset_mapping'][doc_pointer][0]  # 해당 context sequence의 첫번째 offset
 
         # offset이 떨어지거나 같으면(0) --> topk묶음이 끝나면
         if doc_offset <= prev_doc_offset:

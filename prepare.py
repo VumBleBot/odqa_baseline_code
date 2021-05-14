@@ -4,24 +4,26 @@ from tokenization_kobert import KoBertTokenizer
 from datasets import load_from_disk, load_dataset, concatenate_datasets, Dataset
 from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoModel, AutoTokenizer
 
-from reader import DprReader, LstmHeadReader
-from retrieval.hybrid import Bm25DprBert, TfidfDprBert
-from retrieval.sparse import TfidfRetrieval, BM25Retrieval
+from reader import DprReader, LstmHeadReader, CnnHeadReader
+from retrieval.hybrid import Bm25DprBert, TfidfDprBert, LogisticBm25DprBert
+from retrieval.sparse import TfidfRetrieval, BM25Retrieval, ATIREBM25Retrieval
 from retrieval.dense import DprBert, BaseTrainMixin, Bm25TrainMixin
 
 
 RETRIEVER = {
     # Sparse
     "BM25": BM25Retrieval,
+    "ATIREBM25": ATIREBM25Retrieval,
     "TFIDF": TfidfRetrieval,
     # Dense
     "DPRBERT": DprBert,
     # Hybrid
     "BM25_DPRBERT": Bm25DprBert,
     "TFIDF_DPRBERT": TfidfDprBert,
+    "LOG_BM25_DPRBERT" : LogisticBm25DprBert
 }
 
-READER = {"DPR": DprReader, "LstmHead": LstmHeadReader}
+READER = {"DPR": DprReader, "LstmHead": LstmHeadReader, "CNN": CnnHeadReader}
 
 
 def retriever_mixin_factory(name, base, mixin):
@@ -85,10 +87,11 @@ def get_reader(args, eval_answers):
         tokenizer = KoBertTokenizer.from_pretrained(args.model_path or args.model.model_name_or_path)
     else:
         tokenizer = AutoTokenizer.from_pretrained(
-            args.model.tokenizer_name if args.model.tokenizer_name else args.model.model_name_or_path, use_fast=True
+            args.model.model_name_or_path, use_fast=True
+            # args.model.tokenizer_name if args.model.tokenizer_name else args.model.model_name_or_path, use_fast=True
         )
 
-    if args.model.reader_name == 'LstmHead':
+    if args.model.reader_name != "DPR":
         model = AutoModel.from_pretrained(
             args.model.model_name_or_path, from_tf=bool(".ckpt" in args.model.model_name_or_path), config=config
         )
