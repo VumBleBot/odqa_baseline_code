@@ -24,8 +24,6 @@ class RetrievalTrainingArguments:
             "help": "TF의 saturation을 결정하는 요소. 어떤 토큰이 한 번 더 등장했을 때 이전에 비해 점수를 얼마나 높여주어야 하는가를 결정. (1.2~2.0을 사용하는 것이 일반적)"
         },
     )
-<<<<<<< HEAD
-=======
 
     learning_rate: Optional[float] = field(default=3e-5, metadata={"help": "Learning Rate"})
     per_device_train_batch_size: Optional[float] = field(
@@ -38,6 +36,5 @@ class RetrievalTrainingArguments:
         default=1, metadata={"help": "덴스 리트리버에서 사용되는 Gradient Accumulation 스텝입니다."}
     )
 
->>>>>>> 96480833b4bcd8a00d9ca9b7f2a4dd80200878bc
     # Parameters for hybrid-retriever
     alpha: Optional[float] = field(default=0.1, metadata={"help": "Set weight for sparse retriever"})

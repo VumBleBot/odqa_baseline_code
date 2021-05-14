@@ -32,45 +32,77 @@ class Retrieval:
         raise NotImplementedError
         
     def retrieve(self, query_or_dataset, topk=1):
-            assert self.p_embedding is not None, "get_embedding()을 먼저 수행한 후에 retrieve()를 작동시켜 주세요. "
-            total = []
-            doc_scores, doc_indices = self.get_relevant_doc_bulk(query_or_dataset["question"], topk)
-            for idx, example in enumerate(tqdm(query_or_dataset, desc="Retrieval: ")):
-                for doc_id in range(topk):
-                    tmp = {
-                        "question": example["question"],
-                        "id": example["id"],
-                        "context_id": doc_indices[idx][doc_id],  # retrieved id
-                        "context": self.contexts[doc_indices[idx][doc_id]],  # retrieved document
-                    }
-                    if "context" in example.keys() and "answers" in example.keys():
-                        tmp["original_context"] = example["context"]  # original document
-                        tmp["answers"] = example["answers"]  # original answer
-                    total.append(tmp)
-            df = pd.DataFrame(total)
-            if self.args.train.do_predict is True:
-                f = Features(
-                    {
-                        "context": Value(dtype="string", id=None),
-                        "id": Value(dtype="string", id=None),
-                        "question": Value(dtype="string", id=None),
-                        "context_id": Value(dtype="int32", id=None),
-                    }
-                )
-            else:
-                f = Features(
-                    {
-                        "answers": Sequence(
-                            feature={"text": Value(dtype="string", id=None), "answer_start": Value(dtype="int32", id=None)},
-                            length=-1,
-                            id=None,
-                        ),
-                        "context": Value(dtype="string", id=None),
-                        "id": Value(dtype="string", id=None),
-                        "question": Value(dtype="string", id=None),
-                        "original_context": Value(dtype="string", id=None),
-                        "context_id": Value(dtype="int32", id=None),
-                    }
-                )
-            datasets = DatasetDict({"validation": Dataset.from_pandas(df, features=f)})
-            return datasets
+        assert self.p_embedding is not None, "get_embedding()을 먼저 수행한 후에 retrieve()를 작동시켜 주세요. "
+
+        total = []
+        # 중복을 걸러내기 위해 40 + topk (확인된 최대 중복 개수 40 + topk개)으로 최소값을 설정하고, topk의 alpha 배수로 뽑습니다.
+        alpha = 2
+        doc_scores, doc_indices = self.get_relevant_doc_bulk(query_or_dataset["question"], topk=max(40+topk,alpha*topk))
+
+        for idx, example in enumerate(tqdm(query_or_dataset, desc="Retrieval: ")):
+
+            doc_scores_topk = [doc_scores[idx][0]]
+            doc_indices_topk = [doc_indices[idx][0]]
+
+            pointer = 1
+
+            while len(doc_indices_topk) != topk:
+                is_non_duplicate = True
+                new_text_idx = doc_indices[idx][pointer]
+                new_text = self.contexts[new_text_idx]
+                for d_id in doc_indices_topk:
+                    if fuzz.ratio(self.contexts[d_id], new_text) > 65:
+                        is_non_duplicate = False
+                        break
+
+                if is_non_duplicate:
+                    doc_scores_topk.append(doc_scores[idx][pointer])
+                    doc_indices_topk.append(new_text_idx)
+                pointer += 1
+                if pointer == max(40 + topk, alpha * topk):
+                    break
+
+            assert len(doc_indices_topk) == topk, "중복 없는 topk 추출을 위해 alpha 값을 증가시켜 주세요."
+
+            for doc_id in range(topk):
+                doc_idx = doc_indices_topk[doc_id]
+                tmp = {
+                    "question": example["question"],
+                    "id": example["id"],
+                    "context_id": self.context_ids[doc_idx],  # retrieved id
+                    "context": self.contexts[doc_idx],  # retrieved document
+                }
+                if "context" in example.keys() and "answers" in example.keys():
+                    tmp["original_context"] = example["context"]  # original document
+                    tmp["answers"] = example["answers"]  # original answer
+                total.append(tmp)
+
+        df = pd.DataFrame(total)
+
+        if self.args.train.do_predict is True:
+            f = Features(
+                {
+                    "context": Value(dtype="string", id=None),
+                    "id": Value(dtype="string", id=None),
+                    "question": Value(dtype="string", id=None),
+                    "context_id": Value(dtype="int32", id=None),
+                }
+            )
+        else:
+            f = Features(
+                {
+                    "answers": Sequence(
+                        feature={"text": Value(dtype="string", id=None), "answer_start": Value(dtype="int32", id=None)},
+                        length=-1,
+                        id=None,
+                    ),
+                    "context": Value(dtype="string", id=None),
+                    "id": Value(dtype="string", id=None),
+                    "question": Value(dtype="string", id=None),
+                    "original_context": Value(dtype="string", id=None),
+                    "context_id": Value(dtype="int32", id=None),
+                }
+            )
+
+        datasets = DatasetDict({"validation": Dataset.from_pandas(df, features=f)})
+        return datasets
