@@ -94,9 +94,16 @@ def get_reader(args, eval_answers):
             args.model.model_name_or_path, from_tf=bool(".ckpt" in args.model.model_name_or_path), config=config
         )
     else: # Custom head model를 사용할 경우 backbone만 가져와서 넘겨준다.
-        model = AutoModel.from_pretrained( # BERT 기반 모델의 경우 add_pooling_layer=False 옵션 추가 필요
-            args.model.model_name_or_path, from_tf=bool(".ckpt" in args.model.model_name_or_path), config=config
-        )
+        if 'bert' in args.model.model_name_or_path:
+            model = AutoModel.from_pretrained( # BERT 기반 모델의 경우 add_pooling_layer=False 옵션 추가 필요
+                args.model.model_name_or_path, from_tf=bool(".ckpt" in args.model.model_name_or_path), config=config, add_pooling_layer=False
+            )
+        elif 'electra' in args.model.model_name_or_path:
+            model = AutoModel.from_pretrained(
+                args.model.model_name_or_path, from_tf=bool(".ckpt" in args.model.model_name_or_path), config=config
+            )
+        else:
+            raise ValueError("BERT/ELECTRA 외 모델에 대한 Custom head model 미구현")
 
     reader = READER[args.model.reader_name](args, model, tokenizer, eval_answers)
 

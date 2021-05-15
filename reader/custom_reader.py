@@ -10,13 +10,15 @@ from reader.reader_head import LstmQAHead, CnnQAHead, FcQAHead
 READER_HEAD = {"LSTM": LstmQAHead, "CNN": CnnQAHead, "FC": FcQAHead}
 
 class CustomModel(nn.Module):
-    def __init__(self, backbone, head):
+    def __init__(self, backbone, head, pooling_pos):
         super().__init__()
         self.backbone = backbone
         head_input_size = 768 # 현재 embedding 768 기준, 추후 argument로 수정 필요
 
         self.start_head = READER_HEAD[head](input_size=head_input_size)
         self.end_head = READER_HEAD[head](input_size=head_input_size)
+
+        self.pooling_pos = pooling_pos
 
     def random_masking(self, input_ids, ratio=0.05): #ratio - masking비율
         # BERT 모델의 일반적인 토큰 ID 기준
@@ -55,7 +57,7 @@ class CustomModel(nn.Module):
         output_hidden_states=None,
         return_dict=None,
     ):
-        discriminator_hidden_states = self.backbone(
+        outputs = self.backbone(
             self.random_masking(input_ids) if self.training else input_ids,
             attention_mask=attention_mask,
             token_type_ids=token_type_ids,
@@ -66,7 +68,7 @@ class CustomModel(nn.Module):
             output_hidden_states=output_hidden_states,
         )
 
-        sequence_output = discriminator_hidden_states[0]
+        sequence_output = outputs[0]
         start_logits = self.start_head(sequence_output)
         end_logits = self.end_head(sequence_output)
 
@@ -85,22 +87,27 @@ class CustomModel(nn.Module):
             output = (
                 start_logits,
                 end_logits,
-            ) + discriminator_hidden_states[1:]
+            ) + outputs[self.pooling_pos:]
             return ((total_loss,) + output) if total_loss is not None else output
 
         return QuestionAnsweringModelOutput(
             loss=total_loss,
             start_logits=start_logits,
             end_logits=end_logits,
-            hidden_states=discriminator_hidden_states.hidden_states,
-            attentions=discriminator_hidden_states.attentions,
+            hidden_states=outputs.hidden_states,
+            attentions=outputs.attentions,
         )
 
 
 class CustomHeadReader(BaseReader):
     def __init__(self, args, model, tokenizer, eval_answers):
         super().__init__(args, None, tokenizer, eval_answers)
-        self.model = CustomModel(backbone=model, head=args.model.reader_name)
+        self.model = CustomModel(
+            backbone=model, 
+            head=args.model.reader_name, 
+            pooling_pos=2 if 'bert' in args.model.model_name_or_path else 1
+        )
+
         if args.model.model_path != "": # for checkpoint loading
             self.model.load_state_dict(torch.load(args.model.model_path))
 
