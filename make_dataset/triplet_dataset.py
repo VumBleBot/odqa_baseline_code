@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from fuzzywuzzy import fuzz
 from datasets import concatenate_datasets
-from datasets import Sequence, Value, Features, Dataset, DatasetDict
+from datasets import Value, Features, Dataset
 
 from tools import get_args
 from prepare import get_dataset
@@ -34,7 +34,7 @@ def delete_duplicate(org_context, contexts):
 def make_triplet_dataset(bm25, train_dataset):
     triplet_datasets = defaultdict(list)
 
-    scores, indices = bm25.get_relevant_doc_bulk(train_dataset["question"][:5], topk=10)
+    scores, indices = bm25.get_relevant_doc_bulk(train_dataset["question"], topk=10)
     scores, indices = np.array(scores), np.array(indices)
     bm25.contexts = np.array(bm25.contexts)
 
