@@ -4,6 +4,7 @@
 **/*/__pycache__
 /wandb
 execute.sh
+.vscode/*
 
 Created by https://www.toptal.com/developers/gitignore/api/python,vscode,pycharm,jupyternotebooks,windows,macos,linux,vim
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,vscode,pycharm,jupyternotebooks,windows,macos,linux,vim
@@ -325,10 +326,10 @@ tags
 
 ### vscode ###
 .vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
+# !.vscode/settings.json
+# !.vscode/tasks.json
+# !.vscode/launch.json
+# !.vscode/extensions.json
 *.code-workspace
 
 ### Windows ###
