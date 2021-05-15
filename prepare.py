@@ -56,7 +56,7 @@ def get_retriever(args):
     # Dataset에 따라서 학습 방법이 달라진다. # retriever/dense/dense_train_mixin.py
     if args.retriever.dense_train_dataset.startswith("bm25"):
         retriever_class = retriever_mixin_factory("bm25_mixin_class", retriever_class, Bm25TrainMixin)
-    elif args.retriever.dense_train_dataset == "train_dataset":
+    elif args.retriever.dense_train_dataset == "train_dataset" and args.retriever.retriever_name != "COLBERT":
         retriever_class = retriever_mixin_factory("base_mixin_class", retriever_class, BaseTrainMixin)
 
     retriever = retriever_class(args)

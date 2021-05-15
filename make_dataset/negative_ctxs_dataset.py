@@ -25,7 +25,8 @@ def delete_duplicate(org_context, contexts):
 
     for idx, context in enumerate(contexts):
         if fuzz.ratio(org_context, context) > 65:
-            fancy_index.append(idx)
+            continue
+        fancy_index.append(idx)
 
     return fancy_index
 

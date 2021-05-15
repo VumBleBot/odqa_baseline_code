@@ -30,14 +30,16 @@ class Retrieval:
     def get_relevant_doc_bulk(self, queries, topk):
         """전체 doc scores, doc indices를 반환합니다."""
         raise NotImplementedError
-        
+
     def retrieve(self, query_or_dataset, topk=1):
         assert self.p_embedding is not None, "get_embedding()을 먼저 수행한 후에 retrieve()를 작동시켜 주세요. "
 
         total = []
         # 중복을 걸러내기 위해 40 + topk (확인된 최대 중복 개수 40 + topk개)으로 최소값을 설정하고, topk의 alpha 배수로 뽑습니다.
         alpha = 2
-        doc_scores, doc_indices = self.get_relevant_doc_bulk(query_or_dataset["question"], topk=max(40+topk,alpha*topk))
+        doc_scores, doc_indices = self.get_relevant_doc_bulk(
+            query_or_dataset["question"], topk=max(40 + topk, alpha * topk)
+        )
 
         for idx, example in enumerate(tqdm(query_or_dataset, desc="Retrieval: ")):
 
@@ -50,6 +52,7 @@ class Retrieval:
                 is_non_duplicate = True
                 new_text_idx = doc_indices[idx][pointer]
                 new_text = self.contexts[new_text_idx]
+
                 for d_id in doc_indices_topk:
                     if fuzz.ratio(self.contexts[d_id], new_text) > 65:
                         is_non_duplicate = False
@@ -58,7 +61,9 @@ class Retrieval:
                 if is_non_duplicate:
                     doc_scores_topk.append(doc_scores[idx][pointer])
                     doc_indices_topk.append(new_text_idx)
+
                 pointer += 1
+
                 if pointer == max(40 + topk, alpha * topk):
                     break
 
