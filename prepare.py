@@ -87,7 +87,6 @@ def get_reader(args, eval_answers):
     else:
         tokenizer = AutoTokenizer.from_pretrained(
             args.model.model_name_or_path, use_fast=True
-            # args.model.tokenizer_name if args.model.tokenizer_name else args.model.model_name_or_path, use_fast=True
         )
 
     if args.model.reader_name == "DPR":
