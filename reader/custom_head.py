@@ -14,7 +14,7 @@ class LstmQAHead(nn.Module):
 
     def forward(self, x):
         x, (_, _) = self.lstm(x) 
-        x = self.pooler(x).squeezee(-1)
+        x = self.pooler(x).squeeze(-1)
         return x
 
 
@@ -42,6 +42,6 @@ class FcQAHead(nn.Module):
 
     def forward(self, x):
         x = self.fc(x)
-        x = x.squeezee(-1)
+        x = x.squeeze(-1)
 
         return x
