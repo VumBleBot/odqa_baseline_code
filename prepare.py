@@ -89,7 +89,7 @@ def get_reader(args, eval_answers):
         tokenizer = KoBertTokenizer.from_pretrained(args.model_path or args.model.model_name_or_path)
     else:
         tokenizer = AutoTokenizer.from_pretrained(
-            args.model.tokenizer_name if args.model.tokenizer_name else args.model.model_name_or_path, use_fast=True
+            args.model.model_name_or_path, use_fast=True
         )
 
     model = AutoModelForQuestionAnswering.from_pretrained(
