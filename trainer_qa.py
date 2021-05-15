@@ -51,10 +51,11 @@ class QuestionAnsweringTrainer(Trainer):
             eval_dataset.set_format(type=eval_dataset.format["type"], columns=list(eval_dataset.features.keys()))
 
         if self.post_process_function is not None and self.compute_metrics is not None:
-            eval_preds = self.post_process_function(eval_examples, eval_dataset, output.predictions, self.args)
-            metrics = self.compute_metrics(eval_preds)
+            eval_preds, use_pororo = self.post_process_function(eval_examples, eval_dataset, output.predictions, self.args)
+            metrics = self.compute_metrics(eval_preds, use_pororo=use_pororo)
 
-            self.log(metrics)
+            # pororo를 사용할 경우 pororo_voted_prediction만, pororo를 사용하지 않을 경우 original prediction만을 이용하여 측정
+            self.log(metrics[-1])
         else:
             metrics = {}
 
@@ -65,7 +66,7 @@ class QuestionAnsweringTrainer(Trainer):
         test_dataloader = self.get_test_dataloader(test_dataset)
 
         # Temporarily disable metric computation, we will do it in the loop here.
-        compute_metrics = self.compute_metrics
+        compute_metrics = self.compute_metrics # tuple object
         self.compute_metrics = None
         try:
             output = self.prediction_loop(
