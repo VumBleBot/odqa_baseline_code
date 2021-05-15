@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 import torch
 from torch import nn
@@ -5,12 +7,12 @@ from trainer_qa import QuestionAnsweringTrainer
 
 from transformers.modeling_outputs import QuestionAnsweringModelOutput
 from reader.base_reader import BaseReader
-from reader.reader_head import LstmQAHead, CnnQAHead, FcQAHead
+from reader.custom_head import LstmQAHead, CnnQAHead, FcQAHead
 
 READER_HEAD = {"LSTM": LstmQAHead, "CNN": CnnQAHead, "FC": FcQAHead}
 
 class CustomModel(nn.Module):
-    def __init__(self, backbone, head, pooling_pos):
+    def __init__(self, backbone, head, pooling_pos, masking_ratio):
         super().__init__()
         self.backbone = backbone
         head_input_size = 768 # 현재 embedding 768 기준, 추후 argument로 수정 필요
@@ -19,9 +21,11 @@ class CustomModel(nn.Module):
         self.end_head = READER_HEAD[head](input_size=head_input_size)
 
         self.pooling_pos = pooling_pos
+        self.masking_ratio = masking_ratio
 
-    def random_masking(self, input_ids, ratio=0.05): #ratio - masking비율
+    def random_masking(self, input_ids): #ratio - masking비율
         # BERT 모델의 일반적인 토큰 ID 기준
+        ratio = self.masking_ratio / 2
         masked_input_ids = input_ids.clone()
         
         PAD_TOKEN_ID = 0
@@ -74,6 +78,11 @@ class CustomModel(nn.Module):
 
         total_loss = None
         if start_positions is not None and end_positions is not None:
+            if len(start_positions.size()) > 1:
+                start_positions = start_positions.squeeze(-1)
+            if len(end_positions.size()) > 1:
+                end_positions = end_positions.squeeze(-1)
+
             ignored_index = start_logits.size(1)
             start_positions.clamp_(0, ignored_index)
             end_positions.clamp_(0, ignored_index)
@@ -103,9 +112,10 @@ class CustomHeadReader(BaseReader):
     def __init__(self, args, model, tokenizer, eval_answers):
         super().__init__(args, None, tokenizer, eval_answers)
         self.model = CustomModel(
-            backbone=model, 
+            backbone=model,
             head=args.model.reader_name, 
-            pooling_pos=2 if 'bert' in args.model.model_name_or_path else 1
+            pooling_pos=2 if 'bert' in args.model.model_name_or_path else 1,
+            masking_ratio = args.train.masking_ratio
         )
 
         if args.model.model_path != "": # for checkpoint loading

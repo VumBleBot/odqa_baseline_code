@@ -3,6 +3,11 @@
 - [TIPS](#tips)
 - [Branch](#branch)
 - [Simple Use](#simple-use)
+  - [predict](#predict)
+  - [reader train/validation](#reader-trainvalidation)
+  - [retriver train/validation](#retriver-trainvalidation)
+  - [reader, retriver validation](#reader-retriver-validation)
+  - [make dataset](#make-dataset)
 - [File Structure](#file-structure)
   - [input](#input)
   - [baseline_code](#baseline_code)
@@ -183,6 +188,7 @@ ST00.json 하이퍼파라미터는 아래 파일들을 참고해서 수정할 �
         "eval_retrieval": true
     },
     "train": {
+        "masking_ratio": 0.05,
         "do_train": true,
         "do_eval": true,
         "pororo_prediction": true,

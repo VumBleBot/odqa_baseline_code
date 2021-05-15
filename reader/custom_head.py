@@ -42,5 +42,6 @@ class FcQAHead(nn.Module):
 
     def forward(self, x):
         x = self.fc(x)
+        x = x.squeezee(-1)
 
         return x
