@@ -39,7 +39,7 @@ def make_triplet_dataset(bm25, train_dataset):
     bm25.contexts = np.array(bm25.contexts)
 
     for idx, question in enumerate(train_dataset["question"]):
-        triplet_datasets["title"].append(train_dataset[idx]["title"])
+        triplet_datasets["question"].append(question)
         triplet_datasets["context"].append(train_dataset[idx]["context"])
 
         org_context = train_dataset[idx]["context"]
@@ -77,7 +77,7 @@ def main(args):
 
     f = Features(
         {
-            "title": Value(dtype="string", id=None),
+            "question": Value(dtype="string", id=None),
             "context": Value(dtype="string", id=None),
             "negative": Value(dtype="string", id=None),
         }

@@ -136,7 +136,7 @@ class BaseTrainMixin:
                     targets = targets.to("cuda")
 
                 sim_scores = F.log_softmax(sim_scores, dim=1)
-                loss = F.nll_loss(sim_scores, targets)
+                loss = F.nll_loss(sim_scores, targets) / training_args.gradient_accumulation_steps
 
                 print(f"epoch: {epoch:02} step: {step:02} loss: {loss}", end="\r")
                 train_loss += loss.item()
@@ -262,7 +262,7 @@ class Bm25TrainMixin:
                 sim_scores = torch.matmul(q_outputs, torch.transpose(p_outputs, 0, 1))
                 sim_scores = F.log_softmax(sim_scores, dim=1)
 
-                loss = F.nll_loss(sim_scores, label)
+                loss = F.nll_loss(sim_scores, label) / training_args.gradient_accumulation_steps
 
                 print(f"epoch: {epoch:02} step: {step:02} loss: {loss}", end="\r")
                 train_loss += loss.item()
