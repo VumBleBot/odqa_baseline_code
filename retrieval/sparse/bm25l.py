@@ -10,7 +10,7 @@ from transformers import AutoTokenizer
 from retrieval.sparse import SparseRetrieval
 
 
-class ATIREBM25Retrieval(SparseRetrieval):
+class BM25LRetrieval(SparseRetrieval):
     def __init__(self, args):
         super().__init__(args)
 
@@ -32,8 +32,9 @@ class ATIREBM25Retrieval(SparseRetrieval):
 
         self.b = self.args.retriever.b
         self.k1 = self.args.retriever.k1
+        self.delta = 0.6
         self.encoder = TfidfVectorizer(tokenizer=self.tokenizer, ngram_range=(1, 2), use_idf=False, norm=None)
-        self.idf_encoder = TfidfVectorizer(tokenizer=self.tokenizer, ngram_range=(1, 2), norm=None, smooth_idf=False)
+        self.idf_encoder = TfidfVectorizer(tokenizer=self.tokenizer, ngram_range=(1, 2), norm=None)
         self.dls = np.zeros(len(self.contexts))
 
         for idx, context in enumerate(self.contexts):
@@ -81,7 +82,7 @@ class ATIREBM25Retrieval(SparseRetrieval):
     def get_relevant_doc_bulk(self, queries, topk):
         query_vecs = self.encoder.transform(queries)
 
-        b, k1, avdl = self.b, self.k1, self.avdl
+        b, k1, avdl, delta = self.b, self.k1, self.avdl, self.delta
         len_p = self.dls
 
         doc_scores = []
@@ -93,18 +94,19 @@ class ATIREBM25Retrieval(SparseRetrieval):
 
         for query_vec in tqdm(query_vecs):
             p_emb_for_q = p_embedding[:, query_vec.indices]
-            denom = p_emb_for_q + (k1 * (1 - b + b * len_p / avdl))[:, None]
+            ctd = p_emb_for_q / (1 - b + b * len_p / avdl)[:, None]
+            denom = k1 + (ctd + delta)
 
             # idf(t) = log [ n / df(t) ] + 1 in sklearn, so it need to be converted
             # to idf(t) = log [ n / df(t) ] with minus 1
             idf = self.idf[None, query_vec.indices] - 1.0
 
-            numer = p_emb_for_q.multiply(np.broadcast_to(idf, p_emb_for_q.shape)) * (k1 + 1)
+            numer = np.multiply((ctd + delta),np.broadcast_to(idf, p_emb_for_q.shape)) * (k1 + 1)
 
             result = (numer / denom).sum(1).A1
 
             if not isinstance(result, np.ndarray):
-                result = result.toarray()
+                result = self.result.toarray()
 
             self.results.append(result)
             sorted_result_idx = np.argsort(result)[::-1]
