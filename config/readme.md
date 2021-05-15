@@ -87,3 +87,4 @@
 - dataloader_pin_memory: bool = True,
 - skip_memory_metrics: bool = False,
 - mp_parameters: str = '',
+- **_(custom) pororo_prediction: bool = False_**

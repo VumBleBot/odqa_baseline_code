@@ -1,5 +1,6 @@
 # VumbleBot - BaselineCode <!-- omit in toc -->
 
+- [TIPS](#tips)
 - [Branch](#branch)
 - [Simple Use](#simple-use)
 - [File Structure](#file-structure)
@@ -16,6 +17,14 @@
     - [Predict result](#predict-result)
 - [TDD](#tdd)
 
+
+## TIPS
+
+- [전체적인 내용](./documents/README.md)
+- [READER class](./documents/reader.md)
+- [RETRIVER class](./documents/retriever.md)
+
+
 ## Branch 
 
 - 코드 수정 후 main branch로 pull request
@@ -24,32 +33,44 @@
 
 > 학습 후 메모리 해제가 완벽하게 안 되는 이슈가 있습니다! 한 번에 너무 많이 돌리는 것만 지양하면 괜찮을 것 같습니다!
 
-- **reader train/validation**
+### predict
+
+**지금 방식은 비효율적이라서 곧 수정될 예정입니다!**
+    - 한 번에 하나의 전략만!
+    - model_path와 전략을 맞춰야 됩니다!
+    
+```bash
+python -m predict --strategies ST01 --model_path {MODEL_PATH}
+python -m predict --strategies ST01 --model_path ../input/checkpoint/ST01_base_95/checkpoint-1100
+```
+
+### reader train/validation
 
 ```bash
 python -m run_mrc --strategies ST01,ST02 --debug True --report False --run_cnt 1
 python -m run_mrc --strategies ST01,ST02 --debug False --report True --run_cnt 3
 ```
 
-- **retriver train/validation**
+### retriver train/validation
 
 ```bash
 python -m run_retrieval --strategies ST01,ST02 --debug True --report False --run_cnt 1
 python -m run_retrieval --strategies ST01,ST02 --debug False --report True --run_cnt 3
 ```
 
-- **reader, retriver validation**
+### reader, retriver validation
 
 ```bash
 python -m run --strategies ST01,ST02 --debug True --report False --run_cnt 1
 python -m run --strategies ST01,ST02 --debug False --report True --run_cnt 3
 ```
 
-- **make dataset**
+### make dataset
 
 ```bash
 python -m make_dataset.cheat_dataset
 python -m make_dataset.kor_sample_dataset
+python -m make_dataset.qd_pair_bm25
 ```
 
 ## File Structure  
@@ -98,6 +119,7 @@ input/
 odqa_baseline_code/
 │
 ├── reader/ - reader
+│   ├── pororo_reader.py
 │   └── base_reader.py
 │
 ├── retrieval/ - retriever
@@ -163,6 +185,7 @@ ST00.json 하이퍼파라미터는 아래 파일들을 참고해서 수정할 �
     "train": {
         "do_train": true,
         "do_eval": true,
+        "pororo_prediction": true,
         "save_total_limit": 2,
         "save_steps": 100,
         "logging_steps": 100,
@@ -170,9 +193,18 @@ ST00.json 하이퍼파라미터는 아래 파일들을 참고해서 수정할 �
         "report_to": ["wandb"]
     },
     "retriever": {
-        "retrain": false,
-        "dense_train_dataset": "train_dataset",
+        "b": 0.01,
+        "k1": 0.1,
         "topk": 30,
+        "alpha": 0.1,
+        "retrain": false,
+        "weight_decay": 0.01,
+        "learning_rate": 3e-5,
+        "num_train_epochs": 2,
+        "per_device_eval_batch_size": 2,
+        "gradient_accumulation_steps": 1,
+        "per_device_train_batch_size": 4,
+        "dense_train_dataset": "train_dataset"
     }
 }
 ```

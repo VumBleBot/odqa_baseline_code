@@ -1,16 +1,29 @@
 import numpy as np
-from sklearn.feature_extraction.text import TfidfVectorizer
 from konlpy.tag import Mecab
+from transformers import AutoTokenizer
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 from retrieval.sparse import SparseRetrieval
+from tokenization_kobert import KoBertTokenizer
 
 
 class TfidfRetrieval(SparseRetrieval):
     def __init__(self, args):
         super().__init__(args)
 
+        if self.args.model.tokenizer_name == "":
+            print("Using Mecab tokenizer")
+            mecab = Mecab()
+            self.tokenizer = mecab.morphs
+        elif self.args.model.tokenizer_name in ["monologg/kobert", "monologg/distilkobert"]:
+            print("Using KoBert tokenizer")
+            self.tokenizer = KoBertTokenizer.from_pretrained(args.model.tokenizer_name).tokenize
+        else:
+            print("Using AutoTokenizer: ", args.model.tokenizer_name)
+            self.tokenizer = AutoTokenizer.from_pretrained(args.model.tokenizer_name, use_fast=True).tokenize
+
         mecab = Mecab()
-        self.encoder = TfidfVectorizer(tokenizer=mecab.morphs, ngram_range=(1, 2))
+        self.encoder = TfidfVectorizer(tokenizer=self.tokenizer, ngram_range=(1, 2))
         self.p_embedding = None
 
     def _exec_embedding(self):

@@ -58,10 +58,11 @@ class DataTrainingArguments:
         },
     )
 
-    train_retrieval: bool = field(
-        default=True, metadata={"help": "Whether to train sparse/dense embedding (prepare for retrieval)."}
-    )
-
-    eval_retrieval: bool = field(
-        default=True, metadata={"help": "Whether to run passage retrieval using sparse/dense embedding )."}
-    )
+    # 안 사용하는 것 같아서 우선 주석처리
+    #  train_retrieval: bool = field(
+    #      default=True, metadata={"help": "Whether to train sparse/dense embedding (prepare for retrieval)."}
+    #  )
+    #
+    #  eval_retrieval: bool = field(
+    #      default=True, metadata={"help": "Whether to run passage retrieval using sparse/dense embedding )."}
+    #  )
