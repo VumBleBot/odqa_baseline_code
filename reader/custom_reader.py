@@ -5,32 +5,42 @@ from trainer_qa import QuestionAnsweringTrainer
 
 from transformers.modeling_outputs import QuestionAnsweringModelOutput
 from reader.base_reader import BaseReader
+from reader.reader_head import LstmQAHead, CnnQAHead, FcQAHead
 
-class LstmQAHead(nn.Module):
-    def __init__(self, input_size):
-        super().__init__()
-        self.lstm = nn.LSTM(input_size=input_size, hidden_size=input_size, num_layers=3, dropout=0.3, bidirectional=True, batch_first=True)
-        # self.pooler = nn.AdaptiveAvgPool1d(-1)
-        self.pooler = nn.Linear(1536, 1) # (B, L, 1536) -> (B, L, 1) 
+READER_HEAD = {"LSTM": LstmQAHead, "CNN": CnnQAHead, "FC": FcQAHead}
 
-    def forward(self, x):
-        x, (_, _) = self.lstm(x) #h_n, c_n is ignored  /// 768 vector => logit
-        x = self.pooler(x).squeezee(-1)
-        return x
-        
-class LstmReaderModel(nn.Module):
-    def __init__(self, backbone):
+class CustomModel(nn.Module):
+    def __init__(self, backbone, head):
         super().__init__()
-        # BERT 모델의 경우 add_pooling_layer=False 옵션 추가 필요('bert-base-multilingual-uncased')
         self.backbone = backbone
-        head_input_size = 768 # !!추후 수정 필요!! (자동화)
-        # 현재 'monologg/koelectra-base-v3-finetuned-korquad' 기준
+        head_input_size = 768 # 현재 embedding 768 기준, 추후 argument로 수정 필요
 
-        # self.start_token_lstm = nn.Linear(head_input_size, 1)
-        # self.end_token_lstm = nn.Linear(head_input_size, 1)
-        self.start_head = LstmQAHead(input_size=head_input_size)
-        self.end_head = LstmQAHead(input_size=head_input_size)
-    
+        self.start_head = READER_HEAD[head](input_size=head_input_size)
+        self.end_head = READER_HEAD[head](input_size=head_input_size)
+
+    def random_masking(self, input_ids, ratio=0.05): #ratio - masking비율
+        # BERT 모델의 일반적인 토큰 ID 기준
+        masked_input_ids = input_ids.clone()
+        
+        PAD_TOKEN_ID = 0
+        CLS_TOKEN_ID = 2
+        SEP_TOKEN_ID = 3
+        MASK_TOKEN_ID = 4
+        except_token = [PAD_TOKEN_ID, CLS_TOKEN_ID, SEP_TOKEN_ID, MASK_TOKEN_ID]
+
+        for input_id in masked_input_ids:
+            masked_num = 0
+            
+            while masked_num < int(len(input_id) * ratio):
+                target_pos = random.randrange(len(input_id))
+                if input_id[target_pos] not in except_token:
+                    input_id[target_pos] = MASK_TOKEN_ID
+                    if input_id[target_pos + 1] not in except_token: #연속 단어 마스킹 가능하면 ㄱ
+                        input_id[target_pos + 1] = MASK_TOKEN_ID
+                    masked_num += 1
+        
+        return masked_input_ids
+
     def forward(
         self,
         input_ids=None,
@@ -46,7 +56,7 @@ class LstmReaderModel(nn.Module):
         return_dict=None,
     ):
         discriminator_hidden_states = self.backbone(
-            input_ids,
+            self.random_masking(input_ids) if self.training else input_ids, # input
             attention_mask=attention_mask,
             token_type_ids=token_type_ids,
             position_ids=position_ids,
@@ -62,7 +72,6 @@ class LstmReaderModel(nn.Module):
 
         total_loss = None
         if start_positions is not None and end_positions is not None:
-            # sometimes the start/end positions are outside our model inputs, we ignore these terms
             ignored_index = start_logits.size(1)
             start_positions.clamp_(0, ignored_index)
             end_positions.clamp_(0, ignored_index)
@@ -87,10 +96,13 @@ class LstmReaderModel(nn.Module):
             attentions=discriminator_hidden_states.attentions,
         )
 
-class LstmHeadReader(BaseReader):
+
+class CustomHeadReader(BaseReader):
     def __init__(self, args, model, tokenizer, eval_answers):
         super().__init__(args, None, tokenizer, eval_answers)
-        self.model = CustomReaderModel(backbone=model)
+        self.model = CustomModel(backbone=model, head=args.model.reader_name)
+        if args.model.model_path != "": # for checkpoint loading
+            self.model.load_state_dict(torch.load(args.model.model_path))
 
     def get_trainer(self):
         trainer = QuestionAnsweringTrainer(

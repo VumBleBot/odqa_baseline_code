@@ -4,7 +4,7 @@ from tokenization_kobert import KoBertTokenizer
 from datasets import load_from_disk, load_dataset, concatenate_datasets, Dataset
 from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoModel, AutoTokenizer
 
-from reader import DprReader, LstmHeadReader, CnnHeadReader
+from reader import DprReader, CustomHeadReader
 from retrieval.hybrid import Bm25DprBert, TfidfDprBert, LogisticBm25DprBert
 from retrieval.sparse import TfidfRetrieval, BM25Retrieval, ATIREBM25Retrieval
 from retrieval.dense import DprBert, BaseTrainMixin, Bm25TrainMixin
@@ -23,7 +23,7 @@ RETRIEVER = {
     "LOG_BM25_DPRBERT" : LogisticBm25DprBert
 }
 
-READER = {"DPR": DprReader, "LstmHead": LstmHeadReader, "CNN": CnnHeadReader}
+READER = {"DPR": DprReader, "FC": CustomHeadReader, "CNN": CustomHeadReader, "LSTM": CustomHeadReader}
 
 
 def retriever_mixin_factory(name, base, mixin):
@@ -91,12 +91,12 @@ def get_reader(args, eval_answers):
             # args.model.tokenizer_name if args.model.tokenizer_name else args.model.model_name_or_path, use_fast=True
         )
 
-    if args.model.reader_name != "DPR":
-        model = AutoModel.from_pretrained(
+    if args.model.reader_name == "DPR":
+        model = AutoModelForQuestionAnswering.from_pretrained(
             args.model.model_name_or_path, from_tf=bool(".ckpt" in args.model.model_name_or_path), config=config
         )
-    else:
-        model = AutoModelForQuestionAnswering.from_pretrained(
+    else: # Custom head model를 사용할 경우 backbone만 가져와서 넘겨준다.
+        model = AutoModel.from_pretrained( # BERT 기반 모델의 경우 add_pooling_layer=False 옵션 추가 필요
             args.model.model_name_or_path, from_tf=bool(".ckpt" in args.model.model_name_or_path), config=config
         )
 
