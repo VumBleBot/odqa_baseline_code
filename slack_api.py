@@ -24,9 +24,9 @@ COLOR = secrets["SLACK"]["COLOR"]
 EMOJI = secrets["SLACK"]["EMOJI"]
 
 
-def get_format_datas(args, run_type, eval_results):
+def get_format_datas(args, run_type, eval_results, use_pororo=False):
     pretext = f"Module: {run_type} {EMOJI}"
-    author_name = f"전략: {args.strategy} 모델: {args.model.reader_name}"
+    author_name = f"전략: {args.strategy} | 모델: {args.model.reader_name} | PORORO: {use_pororo}"
     title = f"별칭: {args.alias}"
     text = f"*EM*: {eval_results['exact_match']}\n *F1*: {eval_results['f1']}"
     timestamp = int(datetime.datetime.now().timestamp() // 1)
@@ -48,14 +48,14 @@ def get_format_datas(args, run_type, eval_results):
     return attachments
 
 
-def report_reader_to_slack(args, run_type, eval_results):
+def report_reader_to_slack(args, run_type, eval_results, use_pororo=False):
     """report_reader_to_slack.
     Args:
         run_type: [run_mrc.py or run.py], 모듈 구분을 위한 인자
         eval_results: dict, {'exact_match': '00.00%', 'f1': '00.00%'}
     """
 
-    attachments = get_format_datas(args, run_type, eval_results)
+    attachments = get_format_datas(args, run_type, eval_results, use_pororo)
 
     try:
         result = client.chat_postMessage(channel=channel_id, attachments=attachments)

@@ -154,7 +154,7 @@ class BaseReader:
         return tokenized_examples
 
     def _post_processing_function(self, examples, features, predictions, training_args):
-        predictions = postprocess_qa_predictions(
+        predictions, pororo_predictions = postprocess_qa_predictions(
             examples=examples,
             features=features,
             predictions=predictions,
@@ -165,6 +165,22 @@ class BaseReader:
         )
 
         formatted_predictions = [{"id": k, "prediction_text": v} for k, v in predictions.items()]
+        if training_args.pororo_prediction:
+            formatted_pororo_predictions = [{"id": k, "prediction_text": v} for k, v in pororo_predictions.items()]
+
+            if training_args.do_predict:
+                return formatted_predictions
+
+            elif training_args.do_eval:
+                # query, 정답
+                references = [
+                    {"id": ex["id"], "answers": ex[self.answer_column_name]} for ex in self.eval_answers
+                ]
+                return (
+                    EvalPrediction(predictions=formatted_predictions, label_ids=references),
+                    EvalPrediction(predictions=formatted_pororo_predictions, label_ids=references)
+                ), training_args.pororo_prediction
+
         if training_args.do_predict:
             return formatted_predictions
 
@@ -173,10 +189,17 @@ class BaseReader:
             references = [
                 {"id": ex["id"], "answers": ex[self.answer_column_name]} for ex in self.eval_answers
             ]
-            return EvalPrediction(predictions=formatted_predictions, label_ids=references)
+            return EvalPrediction(predictions=formatted_predictions, label_ids=references), training_args.pororo_prediction
 
-    def _compute_metrics(self, p):
-        return self.metric.compute(predictions=p.predictions, references=p.label_ids)
+    def _compute_metrics(self, p, use_pororo=False):
+        if use_pororo:
+            p, pororo_p = p
+            return (
+                self.metric.compute(predictions=p.predictions, references=p.label_ids),
+                self.metric.compute(predictions=pororo_p.predictions, references=pororo_p.label_ids),
+            )
+
+        return (self.metric.compute(predictions=p.predictions, references=p.label_ids),)
 
     def get_trainer(self):
         raise NotImplementedError
