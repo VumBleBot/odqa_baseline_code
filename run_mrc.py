@@ -62,6 +62,8 @@ def train_reader(args):
 
             else:
                 eval_results = trainer.evaluate()
+                print(eval_results)
+                eval_results = eval_results[0]
                 results = evaluation(args)
                 eval_results["exact_match"] = results["EM"]["value"]
                 eval_results["f1"] = results["F1"]["value"]
