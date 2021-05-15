@@ -5,7 +5,7 @@ from datasets import load_from_disk, load_dataset, concatenate_datasets, Dataset
 from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoTokenizer
 
 from reader import DprReader
-from retrieval.hybrid import Bm25DprBert, TfidfDprBert, LogisticBm25DprBert
+from retrieval.hybrid import Bm25DprBert, TfidfDprBert, LogisticBm25DprBert, LogisticAtireBm25DprBert, AtireBm25DprBert
 from retrieval.sparse import TfidfRetrieval, BM25Retrieval, ATIREBM25Retrieval
 from retrieval.dense import DprBert, BaseTrainMixin, Bm25TrainMixin
 
@@ -20,7 +20,9 @@ RETRIEVER = {
     # Hybrid
     "BM25_DPRBERT": Bm25DprBert,
     "TFIDF_DPRBERT": TfidfDprBert,
-    "LOG_BM25_DPRBERT" : LogisticBm25DprBert
+    "ATIREBM25_DPRBERT": AtireBm25DprBert,
+    "LOG_BM25_DPRBERT": LogisticBm25DprBert,
+    "LOG_ATIREBM25_DPRBERT": LogisticAtireBm25DprBert,
 }
 
 READER = {"DPR": DprReader}
@@ -54,7 +56,7 @@ def get_retriever(args):
     # Dataset에 따라서 학습 방법이 달라진다. # retriever/dense/dense_train_mixin.py
     if args.retriever.dense_train_dataset.startswith("bm25"):
         retriever_class = retriever_mixin_factory("bm25_mixin_class", retriever_class, Bm25TrainMixin)
-    elif args.retriever.dense_train_dataset == "train_dataset":
+    elif args.retriever.dense_train_dataset == "train_dataset" and args.model.retriever_name != "COLBERT":
         retriever_class = retriever_mixin_factory("base_mixin_class", retriever_class, BaseTrainMixin)
 
     retriever = retriever_class(args)
@@ -87,7 +89,7 @@ def get_reader(args, eval_answers):
         tokenizer = KoBertTokenizer.from_pretrained(args.model_path or args.model.model_name_or_path)
     else:
         tokenizer = AutoTokenizer.from_pretrained(
-            args.model.tokenizer_name if args.model.tokenizer_name else args.model.model_name_or_path, use_fast=True
+            args.model.model_name_or_path, use_fast=True
         )
 
     model = AutoModelForQuestionAnswering.from_pretrained(
