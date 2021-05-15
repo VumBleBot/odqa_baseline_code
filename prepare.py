@@ -25,7 +25,6 @@ RETRIEVER = {
 
 READER = {"DPR": DprReader, "FC": CustomHeadReader, "CNN": CustomHeadReader, "LSTM": CustomHeadReader}
 
-
 def retriever_mixin_factory(name, base, mixin):
     """ mixin class의 method를 overwriting."""
     return base.__class__(name, (mixin, base), {})
