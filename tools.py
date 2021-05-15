@@ -137,7 +137,9 @@ def get_args():
 
     parser = HfArgumentParser((ModelArguments, DataTrainingArguments, TrainArguments, RetrievalTrainingArguments))
     model_args, data_args, train_args, retriever_args = parser.parse_args_into_dataclasses(args=[])
+
     training_args = TrainingArguments(output_dir=args.path.checkpoint)
+    training_args.pororo_prediction = train_args.pororo_prediction
 
     args.model = model_args
     args.data = data_args
