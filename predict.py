@@ -12,13 +12,15 @@ def predict(args):
     for idx, strategy in enumerate(strategies):
         args = update_args(args, strategy)  # auto add args.save_path, args.base_path
         args.strategy = strategy
+
+        args.model.model_name_or_path = args.model_path
         args.train.output_dir = p.join(args.path.checkpoint, strategy)
         args.train.do_predict = True
 
         datasets = get_dataset(args, is_train=False)
         reader = get_reader(args, eval_answers=datasets["validation"])
         retriever = get_retriever(args)
-        
+
         datasets["validation"] = retriever.retrieve(datasets["validation"], topk=args.retriever.topk)["validation"]
         reader.set_dataset(eval_dataset=datasets["validation"])
 
@@ -34,4 +36,4 @@ if __name__ == "__main__":
     args = get_args()
 
     predict(args)
-    print('Prediction finished.')
+    print("Prediction finished.")
