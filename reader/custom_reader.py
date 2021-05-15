@@ -32,7 +32,7 @@ class CustomModel(nn.Module):
             masked_num = 0
             
             while masked_num < int(len(input_id) * ratio):
-                target_pos = random.randrange(len(input_id))
+                target_pos = random.randrange(len(input_id) - 1)
                 if input_id[target_pos] not in except_token:
                     input_id[target_pos] = MASK_TOKEN_ID
                     if input_id[target_pos + 1] not in except_token: #연속 단어 마스킹 가능하면 ㄱ
@@ -56,7 +56,7 @@ class CustomModel(nn.Module):
         return_dict=None,
     ):
         discriminator_hidden_states = self.backbone(
-            self.random_masking(input_ids) if self.training else input_ids, # input
+            self.random_masking(input_ids) if self.training else input_ids,
             attention_mask=attention_mask,
             token_type_ids=token_type_ids,
             position_ids=position_ids,
