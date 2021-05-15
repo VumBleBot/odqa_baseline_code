@@ -20,7 +20,7 @@ class HybridRetrieval(Retrieval):
         self.dense_retriever.get_embedding()
         self.p_embedding = 1  # fake for super().retrieve's, assert line
 
-    def _rank_fusion_by_hybrid(self, dense_hits, sparse_hits):
+    def _rank_fusion_by_hybrid(self, dense_hits, sparse_hits, topk):
         ranks = []
         min_dense_score, min_sparse_score = min(dense_hits.values()), min(sparse_hits.values())
 
@@ -34,7 +34,7 @@ class HybridRetrieval(Retrieval):
 
             ranks.append((doc, score))
 
-        ranks = sorted(ranks, key=lambda x: x[1], reverse=True)[: self.args.retriever.topk]
+        ranks = sorted(ranks, key=lambda x: x[1], reverse=True)[: topk]
 
         doc_index, doc_score = zip(*ranks)
         doc_index, doc_score = list(doc_index), list(doc_score)
@@ -54,7 +54,7 @@ class HybridRetrieval(Retrieval):
             s_scores, s_indices = sparse_scores[idx], sparse_indices[idx]
             sparse_hits = {s_indices[k]: s_scores[k] for k in range(topk)}
 
-            doc_score, doc_index = self._rank_fusion_by_hybrid(dense_hits, sparse_hits)
+            doc_score, doc_index = self._rank_fusion_by_hybrid(dense_hits, sparse_hits, topk)
 
             doc_scores.append(doc_score)
             doc_indices.append(doc_index)

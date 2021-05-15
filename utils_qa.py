@@ -15,17 +15,24 @@
 """
 Post-processing utilities for question answering.
 """
-
+import copy
 import os
 import json
 import collections
 from typing import Optional, Tuple
 
 import numpy as np
+import torch
 from tqdm.auto import tqdm
 from konlpy.tag import Mecab
 
+from reader.pororo_reader import PororoMrcFactory
+
 mecab = Mecab()
+
+# TODO alpha를 config로 빼기
+# pororo voting 가중
+alpha = 2.0
 
 
 def tokenize(text):
@@ -75,6 +82,15 @@ def looping_through_all_features(
                 )
     return prelim_predictions
 
+def remove_last_postposition(predict):
+    """
+    예측 마지막에 조사가 있다면 제거
+    """
+    pos_tagged_predict = mecab.pos(predict)
+    # 조사제거
+    if len(predict) != 0 and pos_tagged_predict[-1][-1].startswith('J'):
+        predict = predict.replace(pos_tagged_predict[-1][0], "")
+    return predict
 
 
 def postprocess_qa_predictions(
@@ -83,7 +99,7 @@ def postprocess_qa_predictions(
         predictions: Tuple[np.ndarray, np.ndarray],
         topk: int = 1,
         version_2_with_negative: bool = False,
-        n_best_size: int = 20,
+        n_best_size: int = 5,
         max_answer_length: int = 30,
         null_score_diff_threshold: float = 0.0,
         output_dir: Optional[str] = None,
@@ -159,10 +175,17 @@ def postprocess_qa_predictions(
 
         prev_doc_offset = doc_offset
 
+    # PORORO Reader for Voting
+    my_mrc_factory = PororoMrcFactory('mrc', 'ko', "brainbert.base.ko.korquad")
+    pororo_mrc = my_mrc_factory.load(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
+
     all_predictions = collections.OrderedDict()
+    all_pororo_voted_predictions = collections.OrderedDict()
     all_nbest_json = collections.OrderedDict()
+    all_pororo_voted_nbest_json = collections.OrderedDict()
 
     topk_merged_predictions = []
+    topk_merged_pororo_predictions = []
 
     # 시작
     # example은 len(example_to_index) * topk 번을 돈다.
@@ -183,10 +206,15 @@ def postprocess_qa_predictions(
             )  # [offset, start logit, end logit, score]
 
 
-            # TODO: document마다 score 정규화
+            # pororo MRC top 1, score 뽑아오기
+            pororo_pred_text, _, pororo_score = pororo_mrc(example['question'], example['context'], postprocess=False)[0]
+            pororo_pred_text = remove_last_postposition(pororo_pred_text)
+            pororo_prediction = {"text": pororo_pred_text, "score": pororo_score}
 
             # 한 example에 있는 모든 predictions.
             predictions = sorted(prelim_predictions, key=lambda x: x["score"], reverse=True)[:n_best_size]
+
+
 
             # 01 predictions 정답 텍스트 매핑
             context = example["context"]
@@ -210,29 +238,44 @@ def postprocess_qa_predictions(
 
 
             topk_merged_predictions.extend(predictions)
+            topk_merged_pororo_predictions.append(pororo_prediction)
 
             # print(f"len(predictions): {len(predictions)} | len(topk_merged_predictions) : {len(topk_merged_predictions)} | len(prelimed) : {len(prelim_predictions)}")
 
 
         # 아래는 topk개로 묶어서 수행하는 logic
 
-        # (빈 답 거르고 softmax한 probability로 계산?)
-        # topk_merged_predictions = [pred for pred in topk_merged_predictions if pred["probability"] != 1.0]
-
         # 1. score로 계산
         predictions = sorted(topk_merged_predictions, key=lambda x: x["score"], reverse=True)[:n_best_size]
+        pororo_pred = max(topk_merged_pororo_predictions, key=lambda x:x["score"]) # 각 context의 top-1 중에서도 top-1만을 추출
+
+
+        # 2. pororo score 추가한 리스트를 따로 보관
+        pororo_voted_predictions = copy.deepcopy(predictions)
+        for pred in pororo_voted_predictions:
+            if pred["text"] == pororo_pred["text"]:
+                pred["score"] += pororo_pred["score"] * alpha
+                pred["pororo_voting"] = True
+        pororo_voted_predictions = sorted(pororo_voted_predictions, key=lambda x: x["score"], reverse=True)
 
         # 정답 로깅
         all_predictions[example["id"]] = predictions[0]["text"]
+        all_pororo_voted_predictions[example["id"]] = pororo_voted_predictions[0]["text"]
         # 정답 포함 가능성 있었던 답을 로깅
         all_nbest_json[example["id"]] = [
             {k: (float(v) if isinstance(v, (np.float16, np.float32, np.float64)) else v) for k, v in
              pred.items()}
             for pred in predictions
         ]
+        all_pororo_voted_nbest_json[example["id"]] = [
+            {k: (float(v) if isinstance(v, (np.float16, np.float32, np.float64)) else v) for k, v in
+             pred.items()}
+            for pred in pororo_voted_predictions
+        ]
 
         # print(f"{bundle_start_index+topk+1}, {topk} --- FLUSH")
         topk_merged_predictions = []  # k개 context를 묶었다가 flush
+        topk_merged_pororo_predictions = []
 
     # 그럼 이제 저장
     if output_dir is not None:
@@ -240,11 +283,21 @@ def postprocess_qa_predictions(
         prediction_file = os.path.join(
             output_dir, "predictions.json" if prefix is None else f"predictions_{prefix}.json"
         )
+        pororo_voted_prediction_file = os.path.join(
+            output_dir, "pororo_predictions.json" if prefix is None else f"pororo_predictions_{prefix}.json"
+        )
         nbest_file = os.path.join(
             output_dir, "nbest_predictions.json" if prefix is None else f"nbest_predictions_{prefix}.json"
         )
+        pororo_voted_nbest_file = os.path.join(
+            output_dir, "nbest_pororo_predictions.json" if prefix is None else f"nbest_pororo_predictions_{prefix}.json"
+        )
         with open(prediction_file, "w") as writer:
             writer.write(json.dumps(all_predictions, indent=4, ensure_ascii=False) + "\n")
+        with open(pororo_voted_prediction_file, "w") as writer:
+            writer.write(json.dumps(all_pororo_voted_predictions, indent=4, ensure_ascii=False) + "\n")
         with open(nbest_file, "w") as writer:
             writer.write(json.dumps(all_nbest_json, indent=4, ensure_ascii=False) + "\n")
-    return all_predictions
+        with open(pororo_voted_nbest_file, "w") as writer:
+            writer.write(json.dumps(all_pororo_voted_nbest_json, indent=4, ensure_ascii=False) + "\n")
+    return all_predictions, all_pororo_voted_predictions
