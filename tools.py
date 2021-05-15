@@ -144,6 +144,7 @@ def get_args():
     args.model = model_args
     args.data = data_args
     args.train = training_args
+    args.train.pororo_prediction = train_args.pororo_prediction
     args.retriever = retriever_args
 
     return args

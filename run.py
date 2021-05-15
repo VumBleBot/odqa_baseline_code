@@ -21,6 +21,8 @@ def train_reader(args):
         args.info = Namespace()
         set_seed(seed)
 
+        args.model.model_name_or_path = args.model_path
+
         # below codes must run before 'reader.get_trainer()'
         # run_name: strategy + alias + seed
         args.train.run_name = "_".join([strategy, args.alias, str(seed)])
@@ -32,7 +34,7 @@ def train_reader(args):
         datasets = get_dataset(args, is_train=True)
         reader = get_reader(args, eval_answers=datasets["validation"])
         retriever = get_retriever(args)
-        
+
         datasets["validation"] = retriever.retrieve(datasets["validation"], topk=args.retriever.topk)["validation"]
         reader.set_dataset(eval_dataset=datasets["validation"])
 
@@ -43,8 +45,7 @@ def train_reader(args):
                 eval_results, pororo_eval_results = trainer.evaluate()
                 results, pororo_results = evaluation(args), evaluation(args, prefix="pororo_")
 
-                for res, eval_res in zip((results, pororo_results),
-                                         (eval_results, pororo_eval_results)):
+                for res, eval_res in zip((results, pororo_results), (eval_results, pororo_eval_results)):
                     eval_res["exact_match"] = res["EM"]["value"]
                     eval_res["f1"] = res["F1"]["value"]
 
