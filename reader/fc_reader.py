@@ -1,3 +1,4 @@
+import random
 import numpy as np
 import torch
 from torch import nn
@@ -26,6 +27,30 @@ class FcReaderModel(nn.Module):
 
         self.head = FcQAHead(in_dim=head_input_size)
     
+    def random_masking(self, input_ids, ratio=0.05):
+        #현재 BERT 모델 일반적인 토큰 기준
+        masked_input_ids = input_ids.clone()
+        
+        PAD_TOKEN_ID = 0
+        CLS_TOKEN_ID = 2
+        SEP_TOKEN_ID = 3
+        MASK_TOKEN_ID = 4
+        except_token = [PAD_TOKEN_ID, CLS_TOKEN_ID, SEP_TOKEN_ID, MASK_TOKEN_ID]
+
+
+        for input_id in masked_input_ids:
+            masked_num = 0
+            
+            while masked_num < int(len(input_id) * ratio):
+                target_pos = random.randrange(len(input_id) - 1)
+                if input_id[target_pos] not in except_token:
+                    input_id[target_pos] = MASK_TOKEN_ID
+                    if input_id[target_pos + 1] not in except_token: #연속 단어 마스킹 가능하면 ㄱ
+                        input_id[target_pos + 1] = MASK_TOKEN_ID
+                    masked_num += 1
+        
+        return masked_input_ids
+
     def forward(
         self,
         input_ids=None,
@@ -41,7 +66,7 @@ class FcReaderModel(nn.Module):
         return_dict=None,
     ):
         discriminator_hidden_states = self.backbone(
-            input_ids,
+            self.random_masking(input_ids) if self.training else input_ids,
             attention_mask=attention_mask,
             token_type_ids=token_type_ids,
             position_ids=position_ids,

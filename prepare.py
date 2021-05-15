@@ -4,7 +4,7 @@ from tokenization_kobert import KoBertTokenizer
 from datasets import load_from_disk, load_dataset, concatenate_datasets, Dataset
 from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoModel, AutoTokenizer
 
-from reader import DprReader, LstmHeadReader, CnnHeadReader
+from reader import DprReader, LstmHeadReader, CnnHeadReader, FcHeadReader
 from retrieval.hybrid import Bm25DprBert, TfidfDprBert, LogisticBm25DprBert
 from retrieval.sparse import TfidfRetrieval, BM25Retrieval, ATIREBM25Retrieval
 from retrieval.dense import DprBert, BaseTrainMixin, Bm25TrainMixin
@@ -23,7 +23,7 @@ RETRIEVER = {
     "LOG_BM25_DPRBERT" : LogisticBm25DprBert
 }
 
-READER = {"DPR": DprReader, "LstmHead": LstmHeadReader, "CNN": CnnHeadReader}
+READER = {"DPR": DprReader, "LstmHead": LstmHeadReader, "CNN": CnnHeadReader, "FC": FcHeadReader}
 
 
 def retriever_mixin_factory(name, base, mixin):
