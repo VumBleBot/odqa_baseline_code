@@ -385,27 +385,6 @@ def pororo_ensemble(examples, output_dir, prefix, topk):
 
 
 
-'''
-postprocess_qa_predictions
-- function 1
-    여기서 return하도록.
-        - logits : 3중리스트. [ <-- 모델의 600개 prediction을 묶는
-                                [ <-- 하나의 question을 묶는  
-                                    [(s1, e1), (s2, e2), ...] <-- 하나의 context을 묶는)
-                                ] 
-                            ]
-        - offsets : 마찬가지
-        - contexts : 그냥 context 넘겨주세
-- function 2 
-- function 3 (prediction.json 생성)
-
-
-- prelimed predictions(->logits), example의 document_id, context, question id(mrc-xxx)값 넘겨주기. 리스트형태로.
-
-- 뽀로로 training args 받아서 사용 하고 말고 결 
-'''
-
-
 
 def postprocess_qa_predictions(
         examples,
