@@ -192,6 +192,7 @@ ST00.json 하이퍼파라미터는 아래 파일들을 참고해서 수정할 �
         "masking_ratio": 0.05,
         "do_train": true,
         "do_eval": true,
+        "do_eval_during_training": true,
         "pororo_prediction": true,
         "save_total_limit": 2,
         "save_steps": 100,
