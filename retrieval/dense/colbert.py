@@ -91,7 +91,7 @@ class DocTokenizer:
         self.cls_token, self.cls_token_id = self.tok.cls_token, self.tok.cls_token_id
         self.sep_token, self.sep_token_id = self.tok.sep_token, self.tok.sep_token_id
 
-        assert self.D_marker_token_id == 2
+        assert self.D_marker_token_id == 1
 
     def tokenize(self, batch_text, add_special_tokens=False):
         assert type(batch_text) in [list, tuple], type(batch_text)
@@ -333,6 +333,8 @@ class ColBert(DenseRetrieval):
             print(f"Epoch: {epoch + 1:02} | Time: {epoch_mins}m {epoch_secs}s")
             print(f"\tTrain Loss: {train_loss / len(batches):.4f}")
 
+        return colbert
+
     def _exec_embedding(self):
         colbert = self._load_model()
         batches = self._load_dataset()
@@ -353,7 +355,7 @@ class ColBert(DenseRetrieval):
 
         for passage in tqdm.tqdm(self.contexts):  # wiki
             passage = self.doc_tokenizer(
-                passage, padding="longest", truncation=True, max_length=512, return_tensors="pt"
+                passage, padding="max_length", truncation=True, max_length=512, return_tensors="pt"
             ).to("cuda")
             p_emb = colbert.query(**passage).to("cpu").detach().numpy()
             p_embedding.append(p_emb)
