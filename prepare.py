@@ -88,9 +88,7 @@ def get_reader(args, eval_answers):
         # if args.model_path != "" then load from args.model_path
         tokenizer = KoBertTokenizer.from_pretrained(args.model_path or args.model.model_name_or_path)
     else:
-        tokenizer = AutoTokenizer.from_pretrained(
-            args.model.model_name_or_path, use_fast=True
-        )
+        tokenizer = AutoTokenizer.from_pretrained(args.model.model_name_or_path, use_fast=True)
 
     model = AutoModelForQuestionAnswering.from_pretrained(
         args.model.model_name_or_path, from_tf=bool(".ckpt" in args.model.model_name_or_path), config=config
