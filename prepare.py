@@ -59,7 +59,7 @@ def get_retriever(args):
     # Dataset에 따라서 학습 방법이 달라진다. # retriever/dense/dense_train_mixin.py
     if args.retriever.dense_train_dataset.startswith("bm25"):
         retriever_class = retriever_mixin_factory("bm25_mixin_class", retriever_class, Bm25TrainMixin)
-    elif args.retriever.dense_train_dataset == "train_dataset":
+    elif args.retriever.dense_train_dataset == "train_dataset" and args.retriever.retriever_name != "COLBERT":
         retriever_class = retriever_mixin_factory("base_mixin_class", retriever_class, BaseTrainMixin)
 
     retriever = retriever_class(args)
@@ -92,7 +92,7 @@ def get_reader(args, eval_answers):
         tokenizer = KoBertTokenizer.from_pretrained(args.model_path or args.model.model_name_or_path)
     else:
         tokenizer = AutoTokenizer.from_pretrained(
-            args.model.tokenizer_name if args.model.tokenizer_name else args.model.model_name_or_path, use_fast=True
+            args.model.model_name_or_path, use_fast=True
         )
 
     model = AutoModelForQuestionAnswering.from_pretrained(
