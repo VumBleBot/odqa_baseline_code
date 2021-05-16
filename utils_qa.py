@@ -290,8 +290,10 @@ def load_predictions_from_json(data_dir, prefix):
     nbest_file = os.path.join(
         data_dir, "nbest_predictions.json" if prefix is None else f"nbest_predictions_{prefix}.json"
     )
+
     with open(prediction_file, "r") as prediction_file:
         predictions = json.load(prediction_file)
+
     with open(nbest_file, "r") as nbest_file:
         nbests = json.load(nbest_file)
 
@@ -364,9 +366,9 @@ def pororo_ensemble(examples, output_dir, prefix, topk):
 
     # MRC 모델로 예측하기
     all_pororo_preds = pororo_predict(examples, pororo_mrc, topk)
-    return all_pororo_preds
     # MRC 모델 예측 결과를 기존 결과에 합치기
-    all_pororo_voted_predictions, all_pororo_voted_nbest_json = pororo_voting(all_pororo_preds, output_dir, prefix, topk)
+    all_pororo_voted_predictions, all_pororo_voted_nbest_json = pororo_voting(examples, all_pororo_preds, output_dir,
+                                                                              prefix, topk)
 
     # 저장하기
     pororo_voted_prediction_file = os.path.join(
@@ -450,7 +452,7 @@ def postprocess_qa_predictions(
     if output_dir is not None:
         save_predictions_to_json(final_predictions, all_nbest_json, output_dir, prefix)
         if training_args.pororo_prediction:
-            all_pororo_voted_predictions = pororo_ensemble()
+            all_pororo_voted_predictions = pororo_ensemble(examples, output_dir, prefix, topk)
             return (final_predictions, all_pororo_voted_predictions)
 
     return (final_predictions)
