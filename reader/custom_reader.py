@@ -6,7 +6,7 @@ from torch import nn
 from trainer_qa import QuestionAnsweringTrainer
 
 from transformers.modeling_outputs import QuestionAnsweringModelOutput
-from reader.base_reader import BaseReader
+from reader.base_reader import BaseReader, EvalCallback
 from reader.custom_head import LstmQAHead, CnnQAHead, FcQAHead
 
 READER_HEAD = {"LSTM": LstmQAHead, "CNN": CnnQAHead, "FC": FcQAHead}
@@ -62,7 +62,7 @@ class CustomModel(nn.Module):
         return_dict=None,
     ):
         outputs = self.backbone(
-            self.random_masking(input_ids) if self.training else input_ids,
+            self.random_masking(input_ids) if (self.training and self.masking_ratio != 0.0) else input_ids,
             attention_mask=attention_mask,
             token_type_ids=token_type_ids,
             position_ids=position_ids,
@@ -107,7 +107,6 @@ class CustomModel(nn.Module):
             attentions=outputs.attentions,
         )
 
-
 class CustomHeadReader(BaseReader):
     def __init__(self, args, model, tokenizer, eval_answers):
         super().__init__(args, None, tokenizer, eval_answers)
@@ -115,7 +114,7 @@ class CustomHeadReader(BaseReader):
             backbone=model,
             head=args.model.reader_name, 
             pooling_pos=2 if 'bert' in args.model.model_name_or_path else 1,
-            masking_ratio = args.train.masking_ratio
+            masking_ratio=args.train.masking_ratio
         )
 
         if args.model.model_path != "": # for checkpoint loading
@@ -133,6 +132,7 @@ class CustomHeadReader(BaseReader):
             data_collator=self.data_collator,
             post_process_function=self._post_processing_function,
             compute_metrics=self._compute_metrics,
+            callbacks=[EvalCallback]
         )
 
         return trainer
