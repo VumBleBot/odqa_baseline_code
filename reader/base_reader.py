@@ -207,8 +207,8 @@ class BaseReader:
 
 class EvalCallback(TrainerCallback):
     def on_step_end(self, args, state, control,**kwargs):
-        if args.do_eval_during_training and state.global_step % args.save_steps == 0:
-            control.should_evaluate=True
+        if args.do_eval_during_training and state.global_step % args.eval_steps == 0:
+            control.should_evaluate = True
             # if args.load_best_model_at_end:
             #     control.should_save = True
         

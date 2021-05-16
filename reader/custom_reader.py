@@ -7,9 +7,9 @@ from trainer_qa import QuestionAnsweringTrainer
 
 from transformers.modeling_outputs import QuestionAnsweringModelOutput
 from reader.base_reader import BaseReader, EvalCallback
-from reader.custom_head import LstmQAHead, CnnQAHead, FcQAHead
+from reader.custom_head import LstmQAHead, CnnQAHead, FcQAHead, ComplexCnnQAHead
 
-READER_HEAD = {"LSTM": LstmQAHead, "CNN": CnnQAHead, "FC": FcQAHead}
+READER_HEAD = {"LSTM": LstmQAHead, "CNN": CnnQAHead, "FC": FcQAHead, "CCNN": ComplexCnnQAHead}
 
 class CustomModel(nn.Module):
     def __init__(self, backbone, head, pooling_pos, masking_ratio):
@@ -17,8 +17,7 @@ class CustomModel(nn.Module):
         self.backbone = backbone
         head_input_size = 768 # 현재 embedding 768 기준, 추후 argument로 수정 필요
 
-        self.start_head = READER_HEAD[head](input_size=head_input_size)
-        self.end_head = READER_HEAD[head](input_size=head_input_size)
+        self.qa_outputs = READER_HEAD[head](input_size=head_input_size)
 
         self.pooling_pos = pooling_pos
         self.masking_ratio = masking_ratio
@@ -73,8 +72,11 @@ class CustomModel(nn.Module):
         )
 
         sequence_output = outputs[0]
-        start_logits = self.start_head(sequence_output)
-        end_logits = self.end_head(sequence_output)
+
+        logits = self.qa_outputs(sequence_output)
+        start_logits, end_logits = logits.split(1, dim=-1)
+        start_logits = start_logits.squeeze(-1)
+        end_logits = end_logits.squeeze(-1)
 
         total_loss = None
         if start_positions is not None and end_positions is not None:
