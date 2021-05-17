@@ -18,8 +18,10 @@ class Retrieval:
         with open(os.path.join(self.args.data_path, "data", "wikipedia_documents.json"), "r") as f:
             wiki = json.load(f)
 
-        self.contexts = list(dict.fromkeys([v["title"] + ": " + v["text"] for v in wiki.values()]))
-#        self.contexts_bm25 = list(dict.fromkeys([v["title"] + ": " + v["text"] for v in wiki.values()]))
+        self.contexts = list(dict.fromkeys([v["text"] for v in wiki.values()]))
+
+        # BM25 단독으로 사용하시는 경우, title을 추가해주시면 성능이 더 올라갑니다.
+        # self.contexts = list(dict.fromkeys([v["title"] + ": " + v["text"] for v in wiki.values()]))
 
         self.context_ids = list(dict.fromkeys([v["document_id"] for v in wiki.values()]))
 
