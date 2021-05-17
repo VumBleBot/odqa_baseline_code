@@ -11,7 +11,6 @@ from fuzzywuzzy import fuzz
 from tools import get_args, update_args
 from slack_api import report_retriever_to_slack
 from prepare import get_dataset, get_retriever
-import pandas as pd
 
 
 def get_topk_fig(args, topk_result):
@@ -97,9 +96,11 @@ def train_retriever(args):
         for idx, fancy_index in enumerate(zip([indexes[i::topk] for i in range(topk)])):
             topk_dataset = valid_datasets["validation"][fancy_index[0]]
 
-            for question, real, pred in zip(topk_dataset["question"], topk_dataset["original_context"], topk_dataset["context"]):
+            for question, real, pred in zip(
+                topk_dataset["question"], topk_dataset["original_context"], topk_dataset["context"]
+            ):
                 # if two texts overlaps more than 65%,
-                if fuzz.ratio(real, pred) > 65 and not qc_dict[question]:
+                if fuzz.ratio(real, pred) > 85 and not qc_dict[question]:
                     qc_dict[question] = True
                     cur_cnt += 1
 
