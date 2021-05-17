@@ -12,15 +12,35 @@ from reader.custom_head import LstmQAHead, CnnQAHead, FcQAHead, ComplexCnnQAHead
 READER_HEAD = {"LSTM": LstmQAHead, "CNN": CnnQAHead, "FC": FcQAHead, "CCNN": ComplexCnnQAHead}
 
 class CustomModel(nn.Module):
-    def __init__(self, backbone, head, pooling_pos, masking_ratio):
+    def __init__(self, backbone, head, pooling_pos, masking_ratio, freeze_backbone):
         super().__init__()
         self.backbone = backbone
-        head_input_size = 768 # 현재 embedding 768 기준, 추후 argument로 수정 필요
 
+        head_input_size = 768 # 현재 embedding 768 기준, xlm-roberta-large의 경우 1024
         self.qa_outputs = READER_HEAD[head](input_size=head_input_size)
+        self.qa_outputs.apply(self._init_weight)
 
         self.pooling_pos = pooling_pos
         self.masking_ratio = masking_ratio
+
+        if freeze_backbone:
+            for name, param in self.backbone.named_parameters():
+                param.requires_grad = False
+
+    def _init_weight(self, model):
+        for module in model.modules():
+            if isinstance(module, nn.Linear):
+                nn.init.normal_(module.weight, mean=0.0, std=0.02)
+                if module.bias is not None:
+                    nn.init.zeros_(module.bias)
+            if isinstance(module, nn.Conv1d):
+                nn.init.kaiming_uniform_(module.weight)
+                if module.bias is not None:
+                    nn.init.zeros_(module.bias)   
+            if isinstance(module, nn.LSTM):
+                nn.init.kaiming_uniform_(module.weight)
+                if module.bias is not None:
+                    nn.init.zeros_(module.bias) 
 
     def random_masking(self, input_ids): #ratio - masking비율
         # BERT 모델의 일반적인 토큰 ID 기준
@@ -116,7 +136,8 @@ class CustomHeadReader(BaseReader):
             backbone=model,
             head=args.model.reader_name, 
             pooling_pos=2 if 'bert' in args.model.model_name_or_path else 1,
-            masking_ratio=args.train.masking_ratio
+            masking_ratio=args.train.masking_ratio,
+            freeze_backbone=False
         )
 
         if args.model.model_path != "": # for checkpoint loading

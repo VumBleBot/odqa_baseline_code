@@ -15,6 +15,7 @@ class LstmQAHead(nn.Module):
     def forward(self, x):
         x, (_, _) = self.lstm(x) 
         x = self.pooler(x)
+
         return x
 
 
