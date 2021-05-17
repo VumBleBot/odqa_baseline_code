@@ -3,6 +3,11 @@
 - [TIPS](#tips)
 - [Branch](#branch)
 - [Simple Use](#simple-use)
+  - [predict](#predict)
+  - [reader train/validation](#reader-trainvalidation)
+  - [retriver train/validation](#retriver-trainvalidation)
+  - [reader, retriver validation](#reader-retriver-validation)
+  - [make dataset](#make-dataset)
 - [File Structure](#file-structure)
   - [input](#input)
   - [baseline_code](#baseline_code)
@@ -164,6 +169,7 @@ ST00.json 하이퍼파라미터는 아래 파일들을 참고해서 수정할 �
     "alias": "base",
     "model": {
         "model_name_or_path": "monologg/koelectra-small-v3-discriminator",
+        "model_path": "",
         "retriever_name": "BM25_DPRKOBERT",
         "reader_name": "DPR",
         "config_name": "",
@@ -183,8 +189,11 @@ ST00.json 하이퍼파라미터는 아래 파일들을 참고해서 수정할 �
         "eval_retrieval": true
     },
     "train": {
+        "masking_ratio": 0.1,
         "do_train": true,
         "do_eval": true,
+        "do_eval_during_training": true,
+        "eval_step": 200,
         "pororo_prediction": true,
         "save_total_limit": 2,
         "save_steps": 100,
