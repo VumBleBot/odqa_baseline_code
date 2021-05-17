@@ -138,6 +138,8 @@ def get_args():
     parser = HfArgumentParser((ModelArguments, DataTrainingArguments, TrainArguments, RetrievalTrainingArguments))
     model_args, data_args, train_args, retriever_args = parser.parse_args_into_dataclasses(args=[])
 
+    # train_args : TrainingArgument Datasetdict인데, pororo_prediction key가 없어서 update_args에서 오류가 뜰 수 있어 key값 미리 initialize
+    # training_args : pororo_prediction와 output_dir를 추가반영하여 만든 custom argument(config의 train argument에 가까운)
     training_args = TrainingArguments(output_dir=args.path.checkpoint)
     training_args.pororo_prediction = train_args.pororo_prediction
 

@@ -154,15 +154,21 @@ class BaseReader:
         return tokenized_examples
 
     def _post_processing_function(self, examples, features, predictions, training_args):
-        predictions, pororo_predictions = postprocess_qa_predictions(
+        predictions = postprocess_qa_predictions(
             examples=examples,
             features=features,
             predictions=predictions,
+            training_args=training_args,
             topk=self.args.retriever.topk,
             max_answer_length=self.args.data.max_answer_length,
             output_dir=training_args.output_dir,
             prefix="test" if self.args.train.do_predict else "valid",
         )
+        if training_args.pororo_prediction:
+            predictions, pororo_predictions = predictions
+        else:
+            predictions = predictions[0]
+
 
         formatted_predictions = [{"id": k, "prediction_text": v} for k, v in predictions.items()]
         if training_args.pororo_prediction:
