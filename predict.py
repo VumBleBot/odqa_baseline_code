@@ -13,7 +13,7 @@ def predict(args):
         args = update_args(args, strategy)  # auto add args.save_path, args.base_path
         args.strategy = strategy
 
-        # args.model.model_name_or_path = args.model_path
+        args.model.model_name_or_path = args.model_path
         args.train.output_dir = p.join(args.path.checkpoint, strategy)
         args.train.do_predict = True
 
