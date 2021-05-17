@@ -1,5 +1,4 @@
 import random
-from collections import defaultdict
 
 import numpy as np
 import torch
@@ -8,9 +7,9 @@ from trainer_qa import QuestionAnsweringTrainer
 
 from transformers.modeling_outputs import QuestionAnsweringModelOutput
 from reader.base_reader import BaseReader, EvalCallback
-from reader.custom_head import LstmQAHead, CnnQAHead, FcQAHead, ComplexCnnQAHead, CnnLstmQAHead
+from reader.custom_head import LstmQAHead, CnnQAHead, FcQAHead, ComplexCnnQAHead, CnnLstmQAHead, ComplexCnnEmQAHead
 
-READER_HEAD = {"LSTM": LstmQAHead, "CNN": CnnQAHead, "FC": FcQAHead, "CCNN": ComplexCnnQAHead, "CNN_LSTM": CnnLstmQAHead}
+READER_HEAD = {"LSTM": LstmQAHead, "CNN": CnnQAHead, "FC": FcQAHead, "CCNN": ComplexCnnQAHead, "CNN_LSTM": CnnLstmQAHead, "CCNN_EM": ComplexCnnEmQAHead}
 
 class CustomModel(nn.Module):
     def __init__(self, backbone, head, pooling_pos, masking_ratio, freeze_backbone):
@@ -38,11 +37,13 @@ class CustomModel(nn.Module):
             if isinstance(module, nn.Conv1d):
                 nn.init.kaiming_uniform_(module.weight)
                 if module.bias is not None:
-                    nn.init.zeros_(module.bias)   
+                    nn.init.zeros_(module.bias)
             if isinstance(module, nn.LSTM):
-                nn.init.kaiming_uniform_(module.weight)
-                if module.bias is not None:
-                    nn.init.zeros_(module.bias) 
+                for name, param in module.named_parameters():
+                    if 'weight' in name:
+                        nn.init.kaiming_uniform_(param)
+                    elif 'bias' in name:
+                        nn.init.zeros_(param)
 
     def random_masking(self, input_ids): #ratio - masking비율
         # BERT 모델의 일반적인 토큰 ID 기준
@@ -70,26 +71,26 @@ class CustomModel(nn.Module):
 
     def get_exact_match_token(self, input_batch):
         exact_match_token = []
-        for input_ids in input_batch:
+        for input_ids in input_batch.cpu().numpy():
             is_question = True
             match_token = [0] * len(input_ids)
-            question_dict = defaultdict(int)
+            question_token_set = set()
 
             for idx, input_id in enumerate(input_ids[:-1]):
-                if input_id == 0:
-                    break
-                    
                 if is_question and input_id == 3:
                     is_question = False
                     continue
+                elif not is_question and input_id == 3:
+                    break
                 
                 if is_question:
-                    question_dict[input_id] += 1
-                elif not is_question and question_dict[input_id]:
+                    question_token_set.add(input_id)
+                elif not is_question and (input_id in question_token_set):
                     match_token[idx] = idx
+
             exact_match_token.append(match_token)
         
-        exact_match_token = torch.LongTensor(np.array(exact_match_token)).cuda()
+        exact_match_token = torch.Tensor(np.array(exact_match_token)).long().cuda()
         return exact_match_token
 
     def forward(
@@ -120,7 +121,7 @@ class CustomModel(nn.Module):
         sequence_output = outputs[0]
 
         logits = None
-        if self.head == 'CNN_LSTM':
+        if self.head == 'CNN_LSTM' or self.head == 'CCNN_EM':
             exact_match_token = self.get_exact_match_token(input_ids)
             logits = self.qa_outputs((sequence_output, exact_match_token))
         else: 
@@ -169,7 +170,7 @@ class CustomHeadReader(BaseReader):
             head=args.model.reader_name, 
             pooling_pos=2 if 'bert' in args.model.model_name_or_path else 1,
             masking_ratio=args.train.masking_ratio,
-            freeze_backbone=False
+            freeze_backbone=args.train.freeze_backbone
         )
 
         if args.model.model_path != "": # for checkpoint loading

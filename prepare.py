@@ -25,11 +25,15 @@ RETRIEVER = {
     "LOG_ATIREBM25_DPRBERT": LogisticAtireBm25DprBert,
 }
 
-READER = {"DPR": DprReader, 
-          "FC": CustomHeadReader, 
-          "CNN": CustomHeadReader, 
-          "LSTM": CustomHeadReader,
-          "CCNN": CustomHeadReader}
+READER = {
+    "DPR": DprReader,
+    "FC": CustomHeadReader,
+    "CNN": CustomHeadReader,
+    "LSTM": CustomHeadReader,
+    "CCNN": CustomHeadReader,
+    "CNN_LSTM": CustomHeadReader,
+    "CCNN_EM": CustomHeadReader
+}
 
 def retriever_mixin_factory(name, base, mixin):
     """ mixin class의 method를 overwriting."""
