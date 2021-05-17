@@ -18,7 +18,9 @@ class Retrieval:
         with open(os.path.join(self.args.data_path, "data", "wikipedia_documents.json"), "r") as f:
             wiki = json.load(f)
 
-        self.contexts = list(dict.fromkeys([v["text"] for v in wiki.values()]))
+        self.contexts = list(dict.fromkeys([v["title"] + ": " + v["text"] for v in wiki.values()]))
+#        self.contexts_bm25 = list(dict.fromkeys([v["title"] + ": " + v["text"] for v in wiki.values()]))
+
         self.context_ids = list(dict.fromkeys([v["document_id"] for v in wiki.values()]))
 
     def _exec_embedding(self):
