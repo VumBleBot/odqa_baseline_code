@@ -1,4 +1,5 @@
 import random
+from collections import defaultdict
 
 import numpy as np
 import torch
@@ -7,9 +8,9 @@ from trainer_qa import QuestionAnsweringTrainer
 
 from transformers.modeling_outputs import QuestionAnsweringModelOutput
 from reader.base_reader import BaseReader, EvalCallback
-from reader.custom_head import LstmQAHead, CnnQAHead, FcQAHead, ComplexCnnQAHead
+from reader.custom_head import LstmQAHead, CnnQAHead, FcQAHead, ComplexCnnQAHead, CnnLstmQAHead
 
-READER_HEAD = {"LSTM": LstmQAHead, "CNN": CnnQAHead, "FC": FcQAHead, "CCNN": ComplexCnnQAHead}
+READER_HEAD = {"LSTM": LstmQAHead, "CNN": CnnQAHead, "FC": FcQAHead, "CCNN": ComplexCnnQAHead, "CNN_LSTM": CnnLstmQAHead}
 
 class CustomModel(nn.Module):
     def __init__(self, backbone, head, pooling_pos, masking_ratio, freeze_backbone):
@@ -20,6 +21,7 @@ class CustomModel(nn.Module):
         self.qa_outputs = READER_HEAD[head](input_size=head_input_size)
         self.qa_outputs.apply(self._init_weight)
 
+        self.head = head
         self.pooling_pos = pooling_pos
         self.masking_ratio = masking_ratio
 
@@ -66,6 +68,30 @@ class CustomModel(nn.Module):
         
         return masked_input_ids
 
+    def get_exact_match_token(self, input_batch):
+        exact_match_token = []
+        for input_ids in input_batch:
+            is_question = True
+            match_token = [0] * len(input_ids)
+            question_dict = defaultdict(int)
+
+            for idx, input_id in enumerate(input_ids[:-1]):
+                if input_id == 0:
+                    break
+                    
+                if is_question and input_id == 3:
+                    is_question = False
+                    continue
+                
+                if is_question:
+                    question_dict[input_id] += 1
+                elif not is_question and question_dict[input_id]:
+                    match_token[idx] = idx
+            exact_match_token.append(match_token)
+        
+        exact_match_token = torch.LongTensor(np.array(exact_match_token)).cuda()
+        return exact_match_token
+
     def forward(
         self,
         input_ids=None,
@@ -93,7 +119,13 @@ class CustomModel(nn.Module):
 
         sequence_output = outputs[0]
 
-        logits = self.qa_outputs(sequence_output)
+        logits = None
+        if self.head == 'CNN_LSTM':
+            exact_match_token = self.get_exact_match_token(input_ids)
+            logits = self.qa_outputs((sequence_output, exact_match_token))
+        else: 
+            logits = self.qa_outputs(sequence_output)
+            
         start_logits, end_logits = logits.split(1, dim=-1)
         start_logits = start_logits.squeeze(-1)
         end_logits = end_logits.squeeze(-1)
