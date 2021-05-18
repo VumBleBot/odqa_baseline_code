@@ -6,17 +6,21 @@ from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoModel, A
 
 from reader import DprReader, CustomHeadReader
 from retrieval.hybrid import Bm25DprBert, TfidfDprBert, LogisticBm25DprBert, LogisticAtireBm25DprBert, AtireBm25DprBert
-from retrieval.sparse import TfidfRetrieval, BM25Retrieval, ATIREBM25Retrieval
-from retrieval.dense import DprBert, BaseTrainMixin, Bm25TrainMixin
+from retrieval.sparse import TfidfRetrieval, BM25Retrieval, ATIREBM25Retrieval, BM25LRetrieval, BM25PlusRetrieval, BM25EnsembleRetrieval
+from retrieval.dense import DprBert, BaseTrainMixin, Bm25TrainMixin, DprElectra
 
 
 RETRIEVER = {
     # Sparse
     "BM25": BM25Retrieval,
     "ATIREBM25": ATIREBM25Retrieval,
+    "BM25L": BM25LRetrieval,
+    "BM25Plus": BM25PlusRetrieval,
+    "BM25Ensemble": BM25EnsembleRetrieval,
     "TFIDF": TfidfRetrieval,
     # Dense
     "DPRBERT": DprBert,
+    "DPRELECTRA": DprElectra,
     # Hybrid
     "BM25_DPRBERT": Bm25DprBert,
     "TFIDF_DPRBERT": TfidfDprBert,
