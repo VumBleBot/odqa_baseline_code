@@ -1,4 +1,4 @@
-from transformers import EvalPrediction, DataCollatorWithPadding
+from transformers import TrainerCallback, EvalPrediction, DataCollatorWithPadding
 
 from datasets import load_metric
 from utils_qa import postprocess_qa_predictions
@@ -199,6 +199,16 @@ class BaseReader:
         raise NotImplementedError
 
 
+class EvalCallback(TrainerCallback):
+    def on_step_end(self, args, state, control,**kwargs):
+        if args.do_eval_during_training and state.global_step % args.eval_step == 0:
+            control.should_evaluate = True
+            # if args.load_best_model_at_end:
+            #     control.should_save = True
+        
+        return control
+
+
 class DprReader(BaseReader):
     def __init__(self, args, model, tokenizer, eval_answers):
         super().__init__(args, model, tokenizer, eval_answers)
@@ -215,6 +225,7 @@ class DprReader(BaseReader):
             data_collator=self.data_collator,
             post_process_function=self._post_processing_function,
             compute_metrics=self._compute_metrics,
+            callbacks=[EvalCallback]
         )
 
         return trainer

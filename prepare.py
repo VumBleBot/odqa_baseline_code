@@ -2,9 +2,9 @@ import os.path as p
 
 from tokenization_kobert import KoBertTokenizer
 from datasets import load_from_disk, load_dataset, concatenate_datasets, Dataset
-from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoTokenizer
+from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoModel, AutoTokenizer
 
-from reader import DprReader
+from reader import DprReader, CustomHeadReader
 from retrieval.hybrid import Bm25DprBert, TfidfDprBert, LogisticBm25DprBert, LogisticAtireBm25DprBert, AtireBm25DprBert
 from retrieval.sparse import TfidfRetrieval, BM25Retrieval, ATIREBM25Retrieval
 from retrieval.dense import DprBert, BaseTrainMixin, Bm25TrainMixin, ColBert
@@ -26,8 +26,11 @@ RETRIEVER = {
     "LOG_ATIREBM25_DPRBERT": LogisticAtireBm25DprBert,
 }
 
-READER = {"DPR": DprReader}
-
+READER = {"DPR": DprReader, 
+          "FC": CustomHeadReader, 
+          "CNN": CustomHeadReader, 
+          "LSTM": CustomHeadReader,
+          "CCNN": CustomHeadReader}
 
 def retriever_mixin_factory(name, base, mixin):
     """ mixin class의 method를 overwriting."""
@@ -91,9 +94,21 @@ def get_reader(args, eval_answers):
     else:
         tokenizer = AutoTokenizer.from_pretrained(args.model.model_name_or_path, use_fast=True)
 
-    model = AutoModelForQuestionAnswering.from_pretrained(
-        args.model.model_name_or_path, from_tf=bool(".ckpt" in args.model.model_name_or_path), config=config
-    )
+    if args.model.reader_name == "DPR":
+        model = AutoModelForQuestionAnswering.from_pretrained(
+            args.model.model_name_or_path, from_tf=bool(".ckpt" in args.model.model_name_or_path), config=config
+        )
+    else: # Custom head model를 사용할 경우 backbone만 가져와서 넘겨준다.
+        if 'bert' in args.model.model_name_or_path:
+            model = AutoModel.from_pretrained( # BERT 기반 모델의 경우 add_pooling_layer=False 옵션 추가 필요
+                args.model.model_name_or_path, from_tf=bool(".ckpt" in args.model.model_name_or_path), config=config, add_pooling_layer=False
+            )
+        elif 'electra' in args.model.model_name_or_path:
+            model = AutoModel.from_pretrained(
+                args.model.model_name_or_path, from_tf=bool(".ckpt" in args.model.model_name_or_path), config=config
+            )
+        else:
+            raise ValueError("BERT/ELECTRA 외 모델에 대한 Custom head model 미구현")
 
     reader = READER[args.model.reader_name](args, model, tokenizer, eval_answers)
 
