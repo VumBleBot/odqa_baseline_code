@@ -15,7 +15,7 @@ class BaseReader:
             self.tokenizer, pad_to_multiple_of=8 if self.args.train.fp16 else None
         )
 
-        self.train_dataset = None # 필요한거: train pp된거, eval 원본, eval retrieve 된거, eval retrieve 되고 pp된거
+        self.train_dataset = None  # 필요한거: train pp된거, eval 원본, eval retrieve 된거, eval retrieve 되고 pp된거
         self.eval_dataset = None
         self.eval_examples = None
         self.eval_answers = eval_answers
@@ -154,7 +154,7 @@ class BaseReader:
         return tokenized_examples
 
     def _post_processing_function(self, examples, features, predictions, training_args):
-        predictions = postprocess_qa_predictions(
+        pred_results = postprocess_qa_predictions(
             examples=examples,
             features=features,
             predictions=predictions,
@@ -164,48 +164,36 @@ class BaseReader:
             output_dir=training_args.output_dir,
             prefix="test" if self.args.train.do_predict else "valid",
         )
-        if training_args.pororo_prediction:
-            predictions, pororo_predictions = predictions
-        else:
-            predictions = predictions[0]
 
+        for k in pred_results.keys():
+            assert k in ["predictions", "pororo_predictions"]
 
-        formatted_predictions = [{"id": k, "prediction_text": v} for k, v in predictions.items()]
-        if training_args.pororo_prediction:
-            formatted_pororo_predictions = [{"id": k, "prediction_text": v} for k, v in pororo_predictions.items()]
-
-            if training_args.do_predict:
-                return formatted_predictions
-
-            elif training_args.do_eval:
-                # query, 정답
-                references = [
-                    {"id": ex["id"], "answers": ex[self.answer_column_name]} for ex in self.eval_answers
-                ]
-                return (
-                    EvalPrediction(predictions=formatted_predictions, label_ids=references),
-                    EvalPrediction(predictions=formatted_pororo_predictions, label_ids=references)
-                ), training_args.pororo_prediction
+        formatted_predictions = [{"id": k, "prediction_text": v} for k, v in pred_results["predictions"].items()]
 
         if training_args.do_predict:
             return formatted_predictions
 
-        elif training_args.do_eval:
-            # query, 정답
-            references = [
-                {"id": ex["id"], "answers": ex[self.answer_column_name]} for ex in self.eval_answers
-            ]
-            return EvalPrediction(predictions=formatted_predictions, label_ids=references), training_args.pororo_prediction
+        if not training_args.do_eval:  # do_predict, do_eval 모두 False일 때 여기까지 오면 이상한 거
+            raise KeyError("run evaluate with do_predict or do_eval")
 
-    def _compute_metrics(self, p, use_pororo=False):
-        if use_pororo:
-            p, pororo_p = p
-            return (
-                self.metric.compute(predictions=p.predictions, references=p.label_ids),
-                self.metric.compute(predictions=pororo_p.predictions, references=pororo_p.label_ids),
+        references = [{"id": ex["id"], "answers": ex[self.answer_column_name]} for ex in self.eval_answers]
+
+        valid_results = {}
+        valid_results["predictions"] = EvalPrediction(predictions=formatted_predictions, label_ids=references)
+
+        if training_args.pororo_prediction:
+            formatted_pororo_predictions = [
+                {"id": k, "prediction_text": v} for k, v in pred_results["pororo_predictions"].items()
+            ]
+
+            valid_results["pororo_prediction"] = EvalPrediction(
+                predictions=formatted_pororo_predictions, label_ids=references
             )
 
-        return (self.metric.compute(predictions=p.predictions, references=p.label_ids),)
+        return valid_results
+
+    def _compute_metrics(self, p):
+        return self.metric.compute(predictions=p.predictions, references=p.label_ids)
 
     def get_trainer(self):
         raise NotImplementedError

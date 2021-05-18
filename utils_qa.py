@@ -15,7 +15,6 @@
 """
 Post-processing utilities for question answering.
 """
-import copy
 import os
 import json
 import collections
@@ -34,7 +33,8 @@ mecab = Mecab()
 # pororo voting 가중
 alpha = 2.0
 
-def check_predictions_and_features(predictions, features):
+
+def get_all_logits(predictions, features):
     """
     Check assertions for predictions ans features length.
     If passes, return all start/end logits.
@@ -46,13 +46,12 @@ def check_predictions_and_features(predictions, features):
     assert len(predictions) == 2, "`predictions` should be a tuple with two elements (start_logits, end_logits)."
     all_start_logits, all_end_logits = predictions
 
-    assert len(predictions[0]) == len(
-        features), f"Got {len(predictions[0])} predictions and {len(features)} features."
+    assert len(predictions[0]) == len(features), f"Got {len(predictions[0])} predictions and {len(features)} features."
 
     return all_start_logits, all_end_logits
 
 
-def build_features_per_example_map(examples, topk, features):
+def map_examples_to_features(examples, features, topk):
     """
     Build {example : features} dictionary for  predictions from topk features.
     return mapped dictionary.
@@ -73,7 +72,7 @@ def build_features_per_example_map(examples, topk, features):
 
     # Build a map example to its corresponding features.
     # example_id_to_index = {'mrc-0-00XXXX_0' : 0, 'mrc-0-00XXXX_1' : 1, ....} --> origin*topk개 example마다 각각 다른 example_id를 준다.
-    example_id_to_index = {'_'.join([k, str(i % topk)]): i for i, k in enumerate(examples["id"])}
+    example_id_to_index = {"_".join([k, str(i % topk)]): i for i, k in enumerate(examples["id"])}
 
     features_per_example = collections.defaultdict(list)
     # ex) features_per_example[0] ==> [0], features_per_example[0] ==> [1,2,3] ....
@@ -83,9 +82,9 @@ def build_features_per_example_map(examples, topk, features):
 
         # query sequence를 지나 document의 첫번째 offset을 가리키는 doc_pointer
         doc_pointer = 0
-        while feature['offset_mapping'][doc_pointer] == None:
+        while feature["offset_mapping"][doc_pointer] is None:
             doc_pointer += 1
-        doc_offset = feature['offset_mapping'][doc_pointer][0]  # 해당 context sequence의 첫번째 offset
+        doc_offset = feature["offset_mapping"][doc_pointer][0]  # 해당 context sequence의 첫번째 offset
 
         # offset이 떨어지거나 같으면(0) --> topk묶음이 끝나면
         if doc_offset <= prev_doc_offset:
@@ -98,7 +97,7 @@ def build_features_per_example_map(examples, topk, features):
             # ex) mrc-00-00XXXX_0, mrc-00-00XXXX_2
 
         # 해당 feature를 example index dict에 등록
-        example_index_key = '_'.join([feature['example_id'], str(doc_id_postfix)])
+        example_index_key = "_".join([feature["example_id"], str(doc_id_postfix)])
         features_per_example[example_id_to_index[example_index_key]].append(i)
 
         prev_doc_offset = doc_offset
@@ -106,13 +105,8 @@ def build_features_per_example_map(examples, topk, features):
     return features_per_example
 
 
-
-def tokenize(text):
-    # return text.split(" ")
-    return mecab.morphs(text)
-
 def looping_through_all_features(
-        all_start_logits, all_end_logits, n_best_size, features, max_answer_length, feature_indices
+    all_start_logits, all_end_logits, n_best_size, features, max_answer_length, feature_indices
 ):
     min_null_prediction = None
     prelim_predictions = []
@@ -156,10 +150,7 @@ def looping_through_all_features(
 
 
 def get_all_prelim_predictions(
-        examples, features, features_per_example,
-        all_start_logits, all_end_logits,
-        max_answer_length,
-        topk, n_best_size
+    examples, features, features_per_example, all_start_logits, all_end_logits, max_answer_length, topk, n_best_size
 ):
     """
     Return list of predictions(in nbest_size) per context with descending order.
@@ -193,9 +184,11 @@ def get_all_prelim_predictions(
             )  # [offset, start logit, end logit, score]
 
             all_prelim_predictions.append(
-                sorted(prelim_predictions, key=lambda x: x["score"], reverse=True)[:n_best_size])
+                sorted(prelim_predictions, key=lambda x: x["score"], reverse=True)[:n_best_size]
+            )
 
     return all_prelim_predictions
+
 
 def make_predictions(examples, all_prelim_predictions, topk):
     """
@@ -218,10 +211,12 @@ def make_predictions(examples, all_prelim_predictions, topk):
             context = example["context"]
             for pred in predictions:
                 offsets = pred.pop("offsets")
-                pred["text"] = context[offsets[0]: offsets[1]]
+                pred["text"] = context[offsets[0] : offsets[1]]
+
             # 02 정답이 없다면 Fake 정답 생성
             if len(predictions) == 0 or (len(predictions) == 1 and predictions[0]["text"] == ""):
                 predictions.insert(0, {"text": "empty", "start_logit": 0.0, "end_logit": 0.0, "score": 0.0})
+
             # 03 확률값 계산(softmax)
             scores = np.array([pred["score"] for pred in predictions])
             exp_scores = np.exp(scores - np.max(scores))
@@ -231,9 +226,9 @@ def make_predictions(examples, all_prelim_predictions, topk):
                 # prediction 결과분석용
                 # run_mrc의 경우 retrieve가 되지 않으므로 document_id(정답 문서 id)만 존재
                 # run의 경우 retrieve 과정에서 predict source document를 context_id로 가공하여 전달
-                pred["question"] = example['question']
-                pred["context_id"] = example['context_id'] if 'context_id' in example.keys() else example['document_id']
-                pred["context"] = example['context']
+                pred["question"] = example["question"]
+                pred["context_id"] = example["context_id"] if "context_id" in example.keys() else example["document_id"]
+                pred["context"] = example["context"]
 
             all_predictions.append(predictions)
 
@@ -241,7 +236,6 @@ def make_predictions(examples, all_prelim_predictions, topk):
 
 
 def select_top_score_predict(examples, all_predictions, n_best_size, topk):
-
     # initialize
     final_predictions = collections.OrderedDict()
     all_nbest_json = collections.OrderedDict()
@@ -259,45 +253,28 @@ def select_top_score_predict(examples, all_predictions, n_best_size, topk):
 
         # 정답 포함 가능성 있었던 답을 로깅
         all_nbest_json[example["id"]] = [
-            {k: (float(v) if isinstance(v, (np.float16, np.float32, np.float64)) else v) for k, v in
-             pred.items()}
+            {k: (float(v) if isinstance(v, (np.float16, np.float32, np.float64)) else v) for k, v in pred.items()}
             for pred in predictions
         ]
     return final_predictions, all_nbest_json
 
 
-def save_predictions_to_json(final_predictions, all_nbest_json, output_dir, prefix):
+def save_predictions(predictions, output_dir, filename):
     assert os.path.isdir(output_dir), f"{output_dir} is not a directory."
+    save_path = os.path.join(output_dir, filename)
 
-    prediction_file = os.path.join(
-        output_dir, "predictions.json" if prefix is None else f"predictions_{prefix}.json"
-    )
-    nbest_file = os.path.join(
-        output_dir, "nbest_predictions.json" if prefix is None else f"nbest_predictions_{prefix}.json"
-    )
-    with open(prediction_file, "w") as writer:
-        writer.write(json.dumps(final_predictions, indent=4, ensure_ascii=False) + "\n")
-    with open(nbest_file, "w") as writer:
-        writer.write(json.dumps(all_nbest_json, indent=4, ensure_ascii=False) + "\n")
+    with open(save_path, "w") as writer:
+        writer.write(json.dumps(predictions, indent=4, ensure_ascii=False) + "\n")
 
 
-def load_predictions_from_json(data_dir, prefix):
+def load_predictions(data_dir, filename):
     assert os.path.isdir(data_dir), f"{data_dir} is not a directory."
+    load_path = os.path.join(data_dir, filename)
 
-    prediction_file = os.path.join(
-        data_dir, "predictions.json" if prefix is None else f"predictions_{prefix}.json"
-    )
-    nbest_file = os.path.join(
-        data_dir, "nbest_predictions.json" if prefix is None else f"nbest_predictions_{prefix}.json"
-    )
-
-    with open(prediction_file, "r") as prediction_file:
+    with open(load_path, "r") as prediction_file:
         predictions = json.load(prediction_file)
 
-    with open(nbest_file, "r") as nbest_file:
-        nbests = json.load(nbest_file)
-
-    return predictions, nbests
+    return predictions
 
 
 def remove_last_postposition(predict):
@@ -306,7 +283,7 @@ def remove_last_postposition(predict):
     """
     pos_tagged_predict = mecab.pos(predict)
     # 조사제거
-    if len(predict) != 0 and pos_tagged_predict[-1][-1].startswith('J'):
+    if len(predict) != 0 and pos_tagged_predict[-1][-1].startswith("J"):
         predict = predict.replace(pos_tagged_predict[-1][0], "")
     return predict
 
@@ -319,16 +296,13 @@ def pororo_predict(examples, mrc_model, topk):
         for example_index in range(bundle_start_index, bundle_start_index + topk):
             example = examples[example_index]
 
-            pororo_pred_text, _, pororo_score = \
-                mrc_model(example['question'], example['context'], postprocess=False)[
-                    0]
+            pororo_pred_text, _, pororo_score = mrc_model(example["question"], example["context"], postprocess=False)[0]
             pororo_pred_text = remove_last_postposition(pororo_pred_text)
             pororo_prediction = {"text": pororo_pred_text, "score": pororo_score}
 
             topk_merged_pororo_predictions.append(pororo_prediction)
 
-        pororo_pred = max(topk_merged_pororo_predictions,
-                          key=lambda x: x["score"])  # 각 context의 top-1 중에서도 top-1만을 추출
+        pororo_pred = max(topk_merged_pororo_predictions, key=lambda x: x["score"])  # 각 context의 top-1 중에서도 top-1만을 추출
         all_pororo_preds.append(pororo_pred)
         topk_merged_pororo_predictions = []
 
@@ -339,8 +313,10 @@ def pororo_voting(examples, all_pororo_preds, output_dir, prefix, topk):
     all_pororo_voted_predictions = collections.OrderedDict()
     all_pororo_voted_nbest_json = collections.OrderedDict()
 
-    _, all_nbests = load_predictions_from_json(output_dir, prefix) # len(dataset)
-    all_nbests = [val for val in all_nbests.values()] # len(dataset)
+    filename = "pororo_predictions.json" if not prefix else f"pororo_predictions_{prefix}.json"
+    all_nbests = load_predictions(output_dir, filename)
+
+    all_nbests = [val for val in all_nbests.values()]  # len(dataset)
 
     for i, nbest in enumerate(all_nbests):
         example = examples[i * topk]
@@ -351,8 +327,7 @@ def pororo_voting(examples, all_pororo_preds, output_dir, prefix, topk):
         pororo_voted_predictions = sorted(nbest, key=lambda x: x["score"], reverse=True)
         all_pororo_voted_predictions[example["id"]] = pororo_voted_predictions[0]["text"]
         all_pororo_voted_nbest_json[example["id"]] = [
-            {k: (float(v) if isinstance(v, (np.float16, np.float32, np.float64)) else v) for k, v in
-             pred.items()}
+            {k: (float(v) if isinstance(v, (np.float16, np.float32, np.float64)) else v) for k, v in pred.items()}
             for pred in pororo_voted_predictions
         ]
 
@@ -361,43 +336,43 @@ def pororo_voting(examples, all_pororo_preds, output_dir, prefix, topk):
 
 def pororo_ensemble(examples, output_dir, prefix, topk):
     # PORORO Reader for Voting
-    my_mrc_factory = PororoMrcFactory('mrc', 'ko', "brainbert.base.ko.korquad")
+    my_mrc_factory = PororoMrcFactory("mrc", "ko", "brainbert.base.ko.korquad")
     pororo_mrc = my_mrc_factory.load(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
 
     # MRC 모델로 예측하기
     all_pororo_preds = pororo_predict(examples, pororo_mrc, topk)
+
     # MRC 모델 예측 결과를 기존 결과에 합치기
-    all_pororo_voted_predictions, all_pororo_voted_nbest_json = pororo_voting(examples, all_pororo_preds, output_dir,
-                                                                              prefix, topk)
-
-    # 저장하기
-    pororo_voted_prediction_file = os.path.join(
-        output_dir, "pororo_predictions.json" if prefix is None else f"pororo_predictions_{prefix}.json"
+    all_pororo_voted_predictions, all_pororo_voted_nbest_json = pororo_voting(
+        examples, all_pororo_preds, output_dir, prefix, topk
     )
-    pororo_voted_nbest_file = os.path.join(
-        output_dir,
-        "nbest_pororo_predictions.json" if prefix is None else f"nbest_pororo_predictions_{prefix}.json"
+
+    return all_pororo_voted_predictions, all_pororo_voted_nbest_json
+
+
+def get_logits_with_offset(
+    examples, features, predictions, topk: int = 1, max_answer_length: int = 30, n_best_size: int = 5
+):
+
+    all_start_logits, all_end_logits = get_all_logits(predictions, features)
+    features_per_example = map_examples_to_features(examples, features, topk)
+    all_prelim_predictions = get_all_prelim_predictions(
+        examples, features, features_per_example, all_start_logits, all_end_logits, max_answer_length, topk, n_best_size
     )
-    with open(pororo_voted_prediction_file, "w") as writer:
-        writer.write(json.dumps(all_pororo_voted_predictions, indent=4, ensure_ascii=False) + "\n")
-    with open(pororo_voted_nbest_file, "w") as writer:
-        writer.write(json.dumps(all_pororo_voted_nbest_json, indent=4, ensure_ascii=False) + "\n")
 
-    return all_pororo_voted_predictions
-
-
+    return all_prelim_predictions
 
 
 def postprocess_qa_predictions(
-        examples,
-        features,
-        predictions: Tuple[np.ndarray, np.ndarray],
-        training_args,
-        topk: int = 1,
-        n_best_size: int = 5,
-        max_answer_length: int = 30,
-        output_dir: Optional[str] = None,
-        prefix: Optional[str] = None,
+    examples,
+    features,
+    predictions: Tuple[np.ndarray, np.ndarray],
+    training_args,
+    topk: int = 1,
+    n_best_size: int = 5,
+    max_answer_length: int = 30,
+    output_dir: Optional[str] = None,
+    prefix: Optional[str] = None,
 ):
     """
     Post-processes the predictions of a question-answering model to convert them to answers that are substrings of the
@@ -431,28 +406,38 @@ def postprocess_qa_predictions(
             Whether this process is the main process or not (used to determine if logging/saves should be done).
     """
     # predictions,features length check
-    all_start_logits, all_end_logits = check_predictions_and_features(predictions, features)
+    all_start_logits, all_end_logits = get_all_logits(predictions, features)
 
     # one example - n features map
-    features_per_example = build_features_per_example_map(examples, topk, features)
+    features_per_example = map_examples_to_features(features, examples, topk)
 
-    all_prelim_predictions = get_all_prelim_predictions(examples, features, features_per_example,
-                                                     all_start_logits, all_end_logits,
-                                                     max_answer_length, topk, n_best_size)
-
-    # -> ensemble.py
-    if training_args.do_ensemble :
-        return all_prelim_predictions, list(examples['context_id']),  list(examples['context']), list(examples['id'])
-
+    all_prelim_predictions = get_all_prelim_predictions(
+        examples, features, features_per_example, all_start_logits, all_end_logits, max_answer_length, topk, n_best_size
+    )
 
     all_preds = make_predictions(examples, all_prelim_predictions, topk)
-
     final_predictions, all_nbest_json = select_top_score_predict(examples, all_preds, n_best_size, topk)
 
-    if output_dir is not None:
-        save_predictions_to_json(final_predictions, all_nbest_json, output_dir, prefix)
-        if training_args.pororo_prediction:
-            all_pororo_voted_predictions = pororo_ensemble(examples, output_dir, prefix, topk)
-            return (final_predictions, all_pororo_voted_predictions)
+    results = {}
 
-    return (final_predictions)
+    if output_dir is not None:
+        filename = "predictions.json" if not prefix else f"predictions_{prefix}.json"
+        save_predictions(final_predictions, output_dir, filename)
+
+        filename = "nbest_" + filename
+        save_predictions(all_nbest_json, output_dir, filename)
+
+        results["predictions"] = final_predictions
+
+    if output_dir is not None and training_args.pororo_prediction is True:
+        all_pororo_voted_predictions, all_pororo_voted_nbest_json = pororo_ensemble(examples, output_dir, prefix, topk)
+
+        filename = "pororo_predictions.json" if not prefix else f"pororo_predictions_{prefix}.json"
+        save_predictions(all_pororo_voted_predictions, output_dir, filename)
+
+        filename = "nbest_" + filename
+        save_predictions(all_pororo_voted_nbest_json, output_dir, filename)
+
+        results["pororo_predictions"] = all_pororo_voted_predictions
+
+    return results
