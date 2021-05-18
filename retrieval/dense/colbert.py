@@ -1,6 +1,7 @@
 import time
 import tqdm
 import string
+import pickle
 import os.path as p
 
 import torch
@@ -300,8 +301,12 @@ class ColBert(DenseRetrieval):
         else:
             self.p_embedding, self.encoder = self._exec_embedding()
 
-            with open(self.embed_path, "wb") as f:
-                pickle.dump(self.p_embedding, f, protocol=2)
+            p_embedding = self.p_embedding.detach().cpu().numpy()
+
+            np.save(self.embed_path, p_embedding)
+
+            # with open(self.embed_path, "wb") as f:
+                # pickle.dump(self.p_embedding, f, protocol=2)
 
             torch.save(self.encoder.state_dict(), self.encoder_path)
 
@@ -341,7 +346,7 @@ class ColBert(DenseRetrieval):
         return colbert
 
     def _exec_embedding(self):
-        colbert = self._load_model()
+        self.encoder = self._load_model()
         batches = self._load_dataset()
 
         args = TrainingArguments(
@@ -355,7 +360,7 @@ class ColBert(DenseRetrieval):
             gradient_accumulation_steps=self.args.retriever.gradient_accumulation_steps,
         )
 
-        self.encoder = self._train(args, batches, colbert)
+        # self.encoder = self._train(args, batches, self.encoder)
         total_len = len(self.contexts)
         p_embedding = torch.empty(total_len, 512, self.dim)
 

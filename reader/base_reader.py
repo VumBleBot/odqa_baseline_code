@@ -186,7 +186,7 @@ class BaseReader:
                 {"id": k, "prediction_text": v} for k, v in pred_results["pororo_predictions"].items()
             ]
 
-            valid_results["pororo_prediction"] = EvalPrediction(
+            valid_results["pororo_predictions"] = EvalPrediction(
                 predictions=formatted_pororo_predictions, label_ids=references
             )
 
