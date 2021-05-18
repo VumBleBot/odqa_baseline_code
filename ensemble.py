@@ -3,8 +3,16 @@ from collections import defaultdict
 import numpy as np
 
 from tools import get_args
+from evaluation import evaluation
 from prepare import get_retriever, get_reader, get_dataset
-from utils_qa import save_predictions
+
+
+def offset_visualize():
+    pass
+
+
+def span_visualize():
+    pass
 
 
 def update_offsets(start_scores, end_scores, logits):
@@ -13,7 +21,12 @@ def update_offsets(start_scores, end_scores, logits):
         end_scores[logit["offsets"][1]] += logit["end_logit"]  # pred["text"] = context[offsets[0] : offsets[1]]
 
 
-def soft_voting(predictions, logits, contexts, document_ids, question_ids):
+def update_spans(span_scores, logits):
+    for logit in logits:
+        span_scores[logit["offsets"][0] : logit["offsets"][1]] += logit["start_logit"] + logit["end_logit"]  # broadcast
+
+
+def soft_voting_use_offset(predictions, logits, contexts, document_ids, question_ids):
     for logit, context, doc_id, que_id in zip(logits, contexts, document_ids, question_ids):
         if que_id not in predictions:
             predictions[que_id] = dict()
@@ -31,14 +44,44 @@ def soft_voting(predictions, logits, contexts, document_ids, question_ids):
         print(f"질문 ID: {que_id}, 문서 ID: {doc_id}")
 
 
+def soft_voting_use_span(predictions, logits, contexts, document_ids, question_ids):
+    for logit, context, doc_id, que_id in zip(logits, contexts, document_ids, question_ids):
+        if que_id not in predictions:
+            predictions[que_id] = dict()
+
+        if doc_id not in predictions[que_id]:
+            predictions[que_id][doc_id] = dict()
+            predictions[que_id][doc_id]["span"] = np.zeros(len(context) + 1)
+            predictions[que_id][doc_id]["context"] = context
+
+        span_scores = predictions[que_id][doc_id]["span"]
+        update_offsets(span_scores, logit)
+
+
 def hard_voting(logits, offsets, contexts, question_ids):
     pass
 
 
-def run(args, trainer, predictions, test_dataset, test_examples):
-    logits, (contexts, document_ids, question_ids) = trainer.get_logits_with_keys(
-        test_dataset, test_examples, keys=["context", "context_id", "id"]
-    )
+def run(args, models, eval_answers, datasets):
+    predictions = defaultdict(dict)
+
+    # soft_voting_use_offset
+
+    for model_path in models:
+        args.model_name_or_path = model_path
+
+        reader = get_reader(args, eval_answers=eval_answers)
+        reader.set_dataset(eval_dataset=datasets["validation"])
+
+        trainer = reader.get_trainer()
+
+        logits, (contexts, document_ids, question_ids) = trainer.get_logits_with_keys(
+            reader.eval_dataset, datasets["validation"], keys=["context", "context_id", "id"]
+        )
+
+        soft_voting_use_offset(predictions, logits, contexts, document_ids, question_ids)
+
+    #
 
     print(len(logits), len(contexts), len(document_ids), len(question_ids))
     print(logits[0])
@@ -49,13 +92,12 @@ def run(args, trainer, predictions, test_dataset, test_examples):
     if args.voting == "hard":
         hard_voting(predictions, logits, contexts, document_ids, question_ids)
     elif args.voting == "soft":
-        soft_voting(predictions, logits, contexts, document_ids, question_ids)
+        soft_voting_use_offset(predictions, logits, contexts, document_ids, question_ids)
 
     print(predictions)
 
 
-def main(args):
-    predictions = defaultdict(dict)
+def model_ensemble(args):
 
     MODELS = ["../input/checkpoint/ST01_base_95/checkpoint-1100"]
     args.retriever.topk = 3
@@ -70,14 +112,9 @@ def main(args):
     eval_answers = datasets["validation"]
     datasets["validation"] = retriever.retrieve(datasets["validation"], topk=args.retriever.topk)["validation"]
 
-    # ENSEMBLE
-    for model_path in MODELS:
-        args.model_name_or_path = model_path
-        reader = get_reader(args, eval_answers=eval_answers)
-        reader.set_dataset(eval_dataset=datasets["validation"])
+    run(args, MODELS, eval_answers, datasets)
 
-        trainer = reader.get_trainer()
-        run(args, trainer, predictions, reader.eval_dataset, datasets["validation"])
+    # ENSEMBLE
 
     # ENSEMBLE PREDICTIONS
     ensemble_result = {}
@@ -111,7 +148,6 @@ def main(args):
 
     output_dir = "."
     filename = "test.json"
-    save_predictions(ensemble_result, output_dir, filename)
 
 
 if __name__ == "__main__":
@@ -128,4 +164,4 @@ if __name__ == "__main__":
     #  update_offsets(start_scores, end_scores, logit)
 
     args = get_args()
-    main(args)
+    model_ensemble(args)
