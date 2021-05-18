@@ -183,3 +183,13 @@ def concatenate_datasets_with_ratio(args, train_dataset):
     train_dataset = concatenate_datasets([train_dataset.flatten_indices()] + concatenate_list)
 
     return train_dataset
+
+def get_full_dataset(args, is_train):
+    try:
+        full_ds = load_from_disk(p.join(args.path.train_data_dir, "full_dataset"))
+    except Exception as e:
+        print('full_dataset이 없습니다.')
+        print(e)
+        raise FileNotFoundError
+
+    return full_ds
