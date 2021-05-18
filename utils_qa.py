@@ -313,7 +313,7 @@ def pororo_voting(examples, all_pororo_preds, output_dir, prefix, topk):
     all_pororo_voted_predictions = collections.OrderedDict()
     all_pororo_voted_nbest_json = collections.OrderedDict()
 
-    filename = "pororo_predictions.json" if not prefix else f"pororo_predictions_{prefix}.json"
+    filename = "nbest_predictions.json" if not prefix else f"nbest_predictions_{prefix}.json"
     all_nbests = load_predictions(output_dir, filename)
 
     all_nbests = [val for val in all_nbests.values()]  # len(dataset)
@@ -324,6 +324,7 @@ def pororo_voting(examples, all_pororo_preds, output_dir, prefix, topk):
             if pred["text"] == all_pororo_preds[i]["text"]:
                 pred["score"] += all_pororo_preds[i]["score"] * alpha
                 pred["pororo_voting"] = True
+
         pororo_voted_predictions = sorted(nbest, key=lambda x: x["score"], reverse=True)
         all_pororo_voted_predictions[example["id"]] = pororo_voted_predictions[0]["text"]
         all_pororo_voted_nbest_json[example["id"]] = [
@@ -409,7 +410,7 @@ def postprocess_qa_predictions(
     all_start_logits, all_end_logits = get_all_logits(predictions, features)
 
     # one example - n features map
-    features_per_example = map_examples_to_features(features, examples, topk)
+    features_per_example = map_examples_to_features(examples, features, topk)
 
     all_prelim_predictions = get_all_prelim_predictions(
         examples, features, features_per_example, all_start_logits, all_end_logits, max_answer_length, topk, n_best_size
