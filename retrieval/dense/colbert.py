@@ -1,7 +1,6 @@
 import time
 import tqdm
 import string
-import cPickle as pickle
 import os.path as p
 
 import torch
@@ -86,7 +85,7 @@ class QueryTokenizer:
 class DocTokenizer:
     def __init__(self):
         self.tok = BertTokenizerFast.from_pretrained("bert-base-multilingual-cased")
-    
+
         self.D_marker_token, self.D_marker_token_id = "[D]", self.tok.convert_tokens_to_ids("[unused1]")
         self.cls_token, self.cls_token_id = self.tok.cls_token, self.tok.cls_token_id
         self.sep_token, self.sep_token_id = self.tok.sep_token, self.tok.sep_token_id
@@ -126,8 +125,7 @@ class DocTokenizer:
         batch_text = [". " + x for x in batch_text]
 
         obj = self.tok(
-            batch_text, padding="max_length", truncation=True, 
-            return_tensors="pt", max_length=self.tok.model_max_length
+            batch_text, padding="max_length", truncation=True, return_tensors="pt", max_length=self.tok.model_max_length
         )
 
         ids, mask = obj["input_ids"], obj["attention_mask"]
@@ -257,7 +255,7 @@ class ColBERTEncoder(BertPreTrainedModel):
 class ColBert(DenseRetrieval):
     def __init__(self, args):
         super().__init__(args)
-        self.backbone = 'bert-base-multilingual-cased'
+        self.backbone = "bert-base-multilingual-cased"
         self.query_tokenizer = QueryTokenizer()
         self.doc_tokenizer = DocTokenizer()
         self.dim = 128
@@ -308,7 +306,9 @@ class ColBert(DenseRetrieval):
             torch.save(self.encoder.state_dict(), self.encoder_path)
 
     def _train(self, training_args, batches, colbert):
-        optimizer = AdamW(filter(lambda p: p.requires_grad, colbert.parameters()), lr=training_args.learning_rate, eps=1e-8)
+        optimizer = AdamW(
+            filter(lambda p: p.requires_grad, colbert.parameters()), lr=training_args.learning_rate, eps=1e-8
+        )
         optimizer.zero_grad()
 
         criterion = nn.CrossEntropyLoss()
@@ -379,12 +379,12 @@ class ColBert(DenseRetrieval):
             q_embedding = q_embedding.cpu().detach()
 
         # p_embedding: numpy, q_embedding: numpy
-        
+
         result = torch.empty(len(q_embedding), len(self.contexts))
-        
+
         for idx, q_emb in enumerate(q_embedding):
             result[idx] = self.encoder.score(q_emb, self.p_embedding)
-    
+
         # result = self.encoder.score(q_embedding, self.p_embedding)
 
         doc_indices = torch.argsort(result, dim=1, descending=True)[:, :topk]
