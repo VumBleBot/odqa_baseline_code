@@ -94,6 +94,7 @@ class CnnLstmQAHead(nn.Module):
 
         return x
 
+
 class ComplexCnnEmQAHead(nn.Module):
     def __init__(self, input_size):
         super().__init__()
@@ -114,3 +115,43 @@ class ComplexCnnEmQAHead(nn.Module):
         output = self.fc(torch.cat((conv1_out, conv3_out, conv5_out), -1))
 
         return output
+
+
+class ComplexCnnLstmQAHead(nn.Module):
+    def __init__(self, input_size):
+        super().__init__()
+        self.em_embedding = nn.Embedding(num_embeddings=384, embedding_dim=768)
+        
+        self.lstm_front = nn.LSTM(input_size=input_size, hidden_size=input_size, num_layers=3, dropout=0.5, bidirectional=True, batch_first=True)
+        
+        self.conv_1 = nn.Conv1d(in_channels=input_size * 2, out_channels=input_size, kernel_size=1, padding=0)
+        self.conv_3 = nn.Conv1d(in_channels=input_size * 2, out_channels=input_size, kernel_size=3, padding=1)
+        self.conv_5 = nn.Conv1d(in_channels=input_size * 2, out_channels=input_size, kernel_size=5, padding=2)
+        
+        self.lstm_back = nn.LSTM(input_size=input_size, hidden_size=input_size, num_layers=3, dropout=0.5, bidirectional=True, batch_first=True)
+
+        self.conv_1 = nn.Conv1d(in_channels=input_size * 2, out_channels=input_size, kernel_size=1, padding=0)
+        self.conv_3 = nn.Conv1d(in_channels=input_size * 2, out_channels=input_size, kernel_size=3, padding=1)
+        self.conv_5 = nn.Conv1d(in_channels=input_size * 2, out_channels=input_size, kernel_size=5, padding=2)
+        
+        self.dropout = nn.Dropout(p=0.5)
+        self.fc = nn.Linear(768, 2)
+
+    def forward(self, inputs):
+        """
+            x (8, 384)
+            exact_match_pos (8, 384)
+                = [[0, 1, 0, 0, ..., 1, 0, ...], ...]
+        """
+        x, exact_match_pos = inputs
+        
+        x = x + self.em_embedding(exact_match_pos) # (8, 384(문장길이), 768(임베딩)) => x[2] + em_embedding[2] / x[8] + em_embedding[8]
+        x, (_, _) = self.lstm(x) 
+
+        x = x.transpose(1, 2).contiguous()
+        conv1_out = self.conv_1(x).transpose(1, 2).contiguous().squeeze(-1)
+        conv3_out = self.conv_3(x).transpose(1, 2).contiguous().squeeze(-1)
+        conv5_out = self.conv_5(x).transpose(1, 2).contiguous().squeeze(-1)
+        x = self.fc(torch.cat((conv1_out, conv3_out, conv5_out), -1))
+
+        return x
