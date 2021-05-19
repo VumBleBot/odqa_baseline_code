@@ -48,6 +48,25 @@ def soft_voting_use_offset(predictions, logits, contexts, document_ids, question
         update_soft_offsets(start_scores, end_scores, logit)
 
 
+def logit_list_standardization(logit_list):
+    start_logits, end_logits = [], []
+    
+    for logits in logit_list:
+        for logit in logits:
+            start_logits.append(logit['start_logit'])
+            end_logits.append(logit['end_logit'])
+        
+    start_logits = np.array(start_logits)
+    end_logits = np.array(end_logits)
+    
+    for logits in logit_list:
+        for logit in logits:
+            logit['start_logit'] = (logit['start_logit'] - start_logits.mean()) / start_logits.std()
+            logit['end_logit'] = (logit['end_logit'] - end_logits.mean()) / end_logits.std()
+
+    return logit_list
+
+
 def hard_voting_use_offset(predictions, logits, contexts, document_ids, question_ids):
     for logit, context, doc_id, que_id in tqdm(
         zip(logits, contexts, document_ids, question_ids), desc="Soft Voting Use Offset"
@@ -82,23 +101,29 @@ def soft_voting_use_span(predictions, logits, contexts, document_ids, question_i
         update_spans(span_scores, logit)
 
 
-def postprocess(predictions):
+def postprocess(predictions, key="sp"):
     """ 0이 아닌 값들의 최소값을 1로 맞춘다. """
 
     min_value_list = []
 
     for que_id in predictions.keys():
         for doc_id in predictions[que_id].keys():
-            doc_min_score = predictions[que_id][doc_id]["span"].min()
+            doc_min_score = predictions[que_id][doc_id][key].min()
             min_value_list.append(doc_min_score)
 
     best_min = min(min_value_list) + 1
 
     for que_id in predictions.keys():
         for doc_id in predictions[que_id].keys():
-            f_idxs = np.where(predictions[que_id][doc_id]["span"] != OFFSET_DEFAULT)
-            predictions[que_id][doc_id]["span"][f_idxs] += best_min
+            f_idxs = np.where(predictions[que_id][doc_id][key] != OFFSET_DEFAULT)
+            predictions[que_id][doc_id][key][f_idxs] += best_min
 
+def offset_postprocess(predictions):
+    postprocess(predictions, key="sp")
+    postprocess(predictions, key="ep")
+
+def span_postprocess(predictions):
+    postprocess(predictions, key="span")
 
 def save_offset_ensemble(args, predictions, filename):
     ensemble_results = {}
@@ -171,17 +196,22 @@ def run(args, models, eval_answers, datasets):
 
         trainer = reader.get_trainer()
 
-        logits, (contexts, document_ids, question_ids) = trainer.get_logits_with_keys(
+        logit_list, (contexts, document_ids, question_ids) = trainer.get_logits_with_keys(
             reader.eval_dataset, datasets["validation"], keys=["context", "context_id", "id"]
         )
 
-        soft_voting_use_offset(soft_offset_predictions, logits, contexts, document_ids, question_ids)
-        hard_voting_use_offset(hard_offset_predictions, logits, contexts, document_ids, question_ids)
+        logit_list = logit_list_standardization(logit_list)
+
+        soft_voting_use_offset(soft_offset_predictions, logit_list, contexts, document_ids, question_ids)
+        hard_voting_use_offset(hard_offset_predictions, logit_list, contexts, document_ids, question_ids)
 
         #  soft_voting_use_span(soft_span_predictions, logits, contexts, document_ids, question_ids)
 
-    postprocess(soft_offset_predictions)
-    postprocess(hard_offset_predictions)
+    offset_postprocess(soft_offset_predictions)
+    offset_postprocess(hard_offset_predictions)
+
+    # postprocess(soft_offset_predictions)
+    # postprocess(hard_offset_predictions)
 
     #  postprocess(soft_span_predictions)
 
@@ -193,8 +223,19 @@ def run(args, models, eval_answers, datasets):
 
 
 def model_ensemble(args):
+    
+    # EM: 61.67%, F1: 78.48%
+    # EM: 54.58%, F1: 71.17%
+    # EM: 40.42%, F1: 71.64%
+    # EM: 40.00%, F1: 73.70%
 
-    MODELS = ["../input/checkpoint"]
+    MODELS = [
+            "../input/checkpoint/RD_G04_C01_KOELECTRA_BASE_V3_FINETUNED_95/checkpoint-6000",
+            "../input/checkpoint/RD_G04_C02_KOELECTRA_BASE_V2_95/checkpoint-6000",
+            "../input/checkpoint/RD_G04_C03_FUNNEL_KOR_BASE_95/checkpoint-5000",
+            "../input/checkpoint/RD_G04_C04_BERT_KOR_95/checkpoint-5000",
+    ]
+
     args.retriever.topk = 10
     args.data.max_answer_length = 30
     args.retriever.model_name = "ATIREBM25_DPRBERT"
