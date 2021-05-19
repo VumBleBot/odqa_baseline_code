@@ -7,16 +7,23 @@ from trainer_qa import QuestionAnsweringTrainer
 
 from transformers.modeling_outputs import QuestionAnsweringModelOutput
 from reader.base_reader import BaseReader, EvalCallback
-from reader.custom_head import LstmQAHead, CnnQAHead, FcQAHead, ComplexCnnQAHead, CnnLstmQAHead, ComplexCnnEmQAHead
+from reader.custom_head import LstmQAHead, CnnQAHead, FcQAHead, ComplexCnnQAHead, CnnLstmQAHead, ComplexCnnEmQAHead, ComplexCnnLstmEmQAHead, NewCnnQAHead
 
-READER_HEAD = {"LSTM": LstmQAHead, "CNN": CnnQAHead, "FC": FcQAHead, "CCNN": ComplexCnnQAHead, "CNN_LSTM": CnnLstmQAHead, "CCNN_EM": ComplexCnnEmQAHead}
+READER_HEAD = {"LSTM": LstmQAHead, 
+               "CNN": CnnQAHead, 
+               "FC": FcQAHead, 
+               "CCNN": ComplexCnnQAHead, 
+               "CNN_LSTM": CnnLstmQAHead, 
+               "CCNN_EM": ComplexCnnEmQAHead, 
+               "CCNN_LSTM_EM": ComplexCnnLstmEmQAHead,
+               "NEW_CNN": NewCnnQAHead}
 
 class CustomModel(nn.Module):
     def __init__(self, backbone, head, pooling_pos, masking_ratio, freeze_backbone):
         super().__init__()
         self.backbone = backbone
 
-        head_input_size = 768 # 현재 embedding 768 기준, xlm-roberta-large의 경우 1024
+        head_input_size = 1024 # 현재 embedding 768 기준, xlm-roberta-large의 경우 1024
         self.qa_outputs = READER_HEAD[head](input_size=head_input_size)
         self.qa_outputs.apply(self._init_weight)
 
@@ -121,7 +128,7 @@ class CustomModel(nn.Module):
         sequence_output = outputs[0]
 
         logits = None
-        if self.head == 'CNN_LSTM' or self.head == 'CCNN_EM':
+        if self.head == 'CCNN_LSTM_EM' or self.head == 'CCNN_EM':
             exact_match_token = self.get_exact_match_token(input_ids)
             logits = self.qa_outputs((sequence_output, exact_match_token))
         else: 
