@@ -138,6 +138,7 @@ def looping_through_all_features(
                     continue
                 if token_is_max_context is not None and not token_is_max_context.get(str(start_index), False):
                     continue
+
                 prelim_predictions.append(
                     {
                         "offsets": (offset_mapping[start_index][0], offset_mapping[end_index][1]),
@@ -352,7 +353,7 @@ def pororo_ensemble(examples, output_dir, prefix, topk):
 
 
 def get_logits_with_offset(
-    examples, features, predictions, topk: int = 1, max_answer_length: int = 30, n_best_size: int = 5
+    examples, features, predictions, topk: int = 1, max_answer_length: int = 30, n_best_size: int = 20
 ):
 
     all_start_logits, all_end_logits = get_all_logits(predictions, features)

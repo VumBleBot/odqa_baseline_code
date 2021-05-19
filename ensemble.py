@@ -94,12 +94,13 @@ def run(args, models, eval_answers, datasets):
     elif args.voting == "soft":
         soft_voting_use_offset(predictions, logits, contexts, document_ids, question_ids)
 
-    print(predictions)
-
 
 def model_ensemble(args):
 
-    MODELS = ["../input/checkpoint/ST01_base_95/checkpoint-1100"]
+    MODELS = [
+            "../input/checkpoint"
+            
+            ]
     args.retriever.topk = 3
 
     args.retriever.model_name = "BM25"
