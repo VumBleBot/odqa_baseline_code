@@ -19,6 +19,10 @@ class Retrieval:
             wiki = json.load(f)
 
         self.contexts = list(dict.fromkeys([v["text"] for v in wiki.values()]))
+
+        # BM25 단독으로 사용하시는 경우, title을 추가해주시면 성능이 더 올라갑니다.
+        # self.contexts = list(dict.fromkeys([v["title"] + ": " + v["text"] for v in wiki.values()]))
+
         self.context_ids = list(dict.fromkeys([v["document_id"] for v in wiki.values()]))
 
     def _exec_embedding(self):
