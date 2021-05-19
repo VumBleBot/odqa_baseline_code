@@ -1,21 +1,25 @@
+import json
+import os.path as p
 from collections import defaultdict
 
 import numpy as np
+from tqdm.auto import tqdm
 
 from tools import get_args
-from evaluation import evaluation
 from prepare import get_retriever, get_reader, get_dataset
 
 
-def offset_visualize():
-    pass
+OFFSET_DEFAULT = 0
+SPAN_DEFAULT = 0
 
 
-def span_visualize():
-    pass
+def update_hard_offsets(start_scores, end_scores, logits):
+    for logit in logits:
+        start_scores[logit["offsets"][0]] = max(start_scores[logit["offsets"][0]], logit["start_logit"])
+        end_scores[logit["offsets"][1]] = max(start_scores[logit["offsets"][1]], logit["end_logit"])
 
 
-def update_offsets(start_scores, end_scores, logits):
+def update_soft_offsets(start_scores, end_scores, logits):
     for logit in logits:
         start_scores[logit["offsets"][0]] += logit["start_logit"]
         end_scores[logit["offsets"][1]] += logit["end_logit"]  # pred["text"] = context[offsets[0] : offsets[1]]
@@ -27,43 +31,135 @@ def update_spans(span_scores, logits):
 
 
 def soft_voting_use_offset(predictions, logits, contexts, document_ids, question_ids):
-    for logit, context, doc_id, que_id in zip(logits, contexts, document_ids, question_ids):
+    for logit, context, doc_id, que_id in tqdm(
+        zip(logits, contexts, document_ids, question_ids), desc="Soft Voting Use Offset"
+    ):
         if que_id not in predictions:
             predictions[que_id] = dict()
 
         if doc_id not in predictions[que_id]:
             predictions[que_id][doc_id] = dict()
-            predictions[que_id][doc_id]["sp"] = np.zeros(len(context) + 1)
-            predictions[que_id][doc_id]["ep"] = np.zeros(len(context) + 1)
+            predictions[que_id][doc_id]["sp"] = np.zeros(len(context) + 1) + OFFSET_DEFAULT
+            predictions[que_id][doc_id]["ep"] = np.zeros(len(context) + 1) + OFFSET_DEFAULT
             predictions[que_id][doc_id]["context"] = context
 
         start_scores = predictions[que_id][doc_id]["sp"]
         end_scores = predictions[que_id][doc_id]["ep"]
-        update_offsets(start_scores, end_scores, logit)
-
-        print(f"질문 ID: {que_id}, 문서 ID: {doc_id}")
+        update_soft_offsets(start_scores, end_scores, logit)
 
 
-def soft_voting_use_span(predictions, logits, contexts, document_ids, question_ids):
-    for logit, context, doc_id, que_id in zip(logits, contexts, document_ids, question_ids):
+def hard_voting_use_offset(predictions, logits, contexts, document_ids, question_ids):
+    for logit, context, doc_id, que_id in tqdm(
+        zip(logits, contexts, document_ids, question_ids), desc="Soft Voting Use Offset"
+    ):
         if que_id not in predictions:
             predictions[que_id] = dict()
 
         if doc_id not in predictions[que_id]:
             predictions[que_id][doc_id] = dict()
-            predictions[que_id][doc_id]["span"] = np.zeros(len(context) + 1)
+            predictions[que_id][doc_id]["sp"] = np.zeros(len(context) + 1) + OFFSET_DEFAULT
+            predictions[que_id][doc_id]["ep"] = np.zeros(len(context) + 1) + OFFSET_DEFAULT
+            predictions[que_id][doc_id]["context"] = context
+
+        start_scores = predictions[que_id][doc_id]["sp"]
+        end_scores = predictions[que_id][doc_id]["ep"]
+        update_hard_offsets(start_scores, end_scores, logit)
+
+
+def soft_voting_use_span(predictions, logits, contexts, document_ids, question_ids):
+    for logit, context, doc_id, que_id in tqdm(
+        zip(logits, contexts, document_ids, question_ids), desc="Soft Voting Use Span"
+    ):
+        if que_id not in predictions:
+            predictions[que_id] = dict()
+
+        if doc_id not in predictions[que_id]:
+            predictions[que_id][doc_id] = dict()
+            predictions[que_id][doc_id]["span"] = np.zeros(len(context) + 1) + SPAN_DEFAULT
             predictions[que_id][doc_id]["context"] = context
 
         span_scores = predictions[que_id][doc_id]["span"]
-        update_offsets(span_scores, logit)
+        update_spans(span_scores, logit)
 
 
-def hard_voting(logits, offsets, contexts, question_ids):
-    pass
+def postprocess(predictions):
+    """ 0이 아닌 값들의 최소값을 1로 맞춘다. """
+
+    min_value_list = []
+
+    for que_id in predictions.keys():
+        for doc_id in predictions[que_id].keys():
+            doc_min_score = predictions[que_id][doc_id]["span"].min()
+            min_value_list.append(doc_min_score)
+
+    best_min = min(min_value_list) + 1
+
+    for que_id in predictions.keys():
+        for doc_id in predictions[que_id].keys():
+            f_idxs = np.where(predictions[que_id][doc_id]["span"] != OFFSET_DEFAULT)
+            predictions[que_id][doc_id]["span"][f_idxs] += best_min
+
+
+def save_offset_ensemble(args, predictions, filename):
+    ensemble_results = {}
+
+    for que_id in predictions.keys():
+        used_doc = None
+        best_score = float("-inf")
+
+        for doc_id in predictions[que_id].keys():
+            max_score = predictions[que_id][doc_id]["sp"].max()
+
+            if best_score < max_score:
+                best_score = max_score
+                used_doc = doc_id
+
+        s_offset, e_offset = None, None
+        s_offset = predictions[que_id][used_doc]["sp"].argmax()
+
+        e_offset_start = s_offset + 1
+        e_offset_end = e_offset_start + args.data.max_answer_length + 1
+
+        e_offset = e_offset_start + predictions[que_id][used_doc]["ep"][e_offset_start:e_offset_end].argmax()
+        ensemble_results[que_id] = predictions[que_id][used_doc]["context"][s_offset:e_offset]
+
+    # TODO: 애플 사이더, 댄싱 크래프트, 이마트에서 판다.
+    save_path = p.join(args.path.info, filename)
+
+    with open(save_path, "w") as f:
+        f.write(json.dumps(ensemble_results, indent=4, ensure_ascii=False) + "\n")
+
+
+#  def span_ensemble(args, predictions, filename, percent=75):
+#      ensemble_results = {}
+#
+#      for que_id in predictions.keys():
+#          used_doc = None
+#          best_score = float("-inf")
+#
+#          for doc_id in predictions[que_id].keys():
+#              max_score = predictions[que_id][doc_id]["span"].max()
+#
+#              if best_score < max_score:
+#                  best_score = max_score
+#                  used_doc = doc_id
+#
+#          peak = np.argmax(predictions[que_id][used_doc]["span"])
+#          sample = predictions[que_id][doc_id]["span"][max:]
+#
+#          if len(sample) != 0:
+#              sample_75 = np.percentile(sample, 75)
+#
+#          peak = np.argmax()
+#
+#      f = lambda x: 0 if x < sample_75 else x
 
 
 def run(args, models, eval_answers, datasets):
-    predictions = defaultdict(dict)
+    soft_offset_predictions = defaultdict(dict)
+    hard_offset_predictions = defaultdict(dict)
+
+    #  soft_span_predictions = defaultdict(dict)
 
     # soft_voting_use_offset
 
@@ -79,33 +175,30 @@ def run(args, models, eval_answers, datasets):
             reader.eval_dataset, datasets["validation"], keys=["context", "context_id", "id"]
         )
 
-        soft_voting_use_offset(predictions, logits, contexts, document_ids, question_ids)
+        soft_voting_use_offset(soft_offset_predictions, logits, contexts, document_ids, question_ids)
+        hard_voting_use_offset(hard_offset_predictions, logits, contexts, document_ids, question_ids)
 
-    #
+        #  soft_voting_use_span(soft_span_predictions, logits, contexts, document_ids, question_ids)
 
-    print(len(logits), len(contexts), len(document_ids), len(question_ids))
-    print(logits[0])
-    print(contexts[0])
-    print(document_ids[0])
-    print(question_ids[0])
+    postprocess(soft_offset_predictions)
+    postprocess(hard_offset_predictions)
 
-    if args.voting == "hard":
-        hard_voting(predictions, logits, contexts, document_ids, question_ids)
-    elif args.voting == "soft":
-        soft_voting_use_offset(predictions, logits, contexts, document_ids, question_ids)
+    #  postprocess(soft_span_predictions)
+
+    filename = "soft_offset_predictions.json"
+    save_offset_ensemble(args, soft_offset_predictions, filename)
+
+    filename = "hard_offset_predictions.json"
+    save_offset_ensemble(args, hard_offset_predictions, filename)
 
 
 def model_ensemble(args):
 
-    MODELS = [
-            "../input/checkpoint"
-            
-            ]
-    args.retriever.topk = 3
-
-    args.retriever.model_name = "BM25"
+    MODELS = ["../input/checkpoint"]
+    args.retriever.topk = 10
+    args.data.max_answer_length = 30
+    args.retriever.model_name = "ATIREBM25_DPRBERT"
     args.train.do_predict = True
-    args.voting = "soft"
 
     datasets = get_dataset(args, is_train=False)
     retriever = get_retriever(args)
@@ -114,41 +207,6 @@ def model_ensemble(args):
     datasets["validation"] = retriever.retrieve(datasets["validation"], topk=args.retriever.topk)["validation"]
 
     run(args, MODELS, eval_answers, datasets)
-
-    # ENSEMBLE
-
-    # ENSEMBLE PREDICTIONS
-    ensemble_result = {}
-
-    for que_id in predictions.keys():
-
-        # (1) Pick, DOC ID
-        used_doc = None
-        best_score = float("-inf")
-
-        # (2) Start Logits
-        for doc_id in predictions[que_id].keys():
-            max_score = predictions[que_id][doc_id]["sp"].max()
-
-            if best_score < max_score:
-                best_score = max_score
-                used_doc = doc_id
-
-        # (2)
-        s_offset, e_offset = None, None
-
-        # (s_offset, e_offset) 짝을 이룰 수 있다는 것이 보장되어 있다.
-        s_offset = predictions[que_id][used_doc]["sp"].argmax()
-
-        e_offset_start = s_offset + 1
-        e_offset_end = e_offset_start + args.data.max_answer_length + 1
-
-        e_offset = e_offset_start + predictions[que_id][used_doc]["ep"][e_offset_start:e_offset_end].argmax()
-
-        ensemble_result[que_id] = predictions[que_id][used_doc]["context"][s_offset:e_offset]
-
-    output_dir = "."
-    filename = "test.json"
 
 
 if __name__ == "__main__":
