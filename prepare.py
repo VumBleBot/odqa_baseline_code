@@ -29,11 +29,17 @@ RETRIEVER = {
     "LOG_ATIREBM25_DPRBERT": LogisticAtireBm25DprBert,
 }
 
-READER = {"DPR": DprReader, 
-          "FC": CustomHeadReader, 
-          "CNN": CustomHeadReader, 
-          "LSTM": CustomHeadReader,
-          "CCNN": CustomHeadReader}
+READER = {
+    "DPR": DprReader,
+    "FC": CustomHeadReader,
+    "CNN": CustomHeadReader,
+    "LSTM": CustomHeadReader,
+    "CCNN": CustomHeadReader,
+    "CCNN_v2": CustomHeadReader,
+    "CNN_LSTM": CustomHeadReader,
+    "CCNN_EM": CustomHeadReader,
+    "NEW_CNN": CustomHeadReader
+}
 
 def retriever_mixin_factory(name, base, mixin):
     """ mixin class의 method를 overwriting."""
@@ -137,6 +143,8 @@ def get_dataset(args, is_train=True):
             datasets = load_from_disk(p.join(args.path.train_data_dir, args.data.dataset_name))
         else:
             datasets = load_from_disk(p.join(args.path.train_data_dir, "test_dataset"))
+    elif args.data.dataset_name == "train_sent_dataset" or args.data.dataset_name == "shuffled_dataset":
+        datasets = load_from_disk(p.join(args.path.train_data_dir, args.data.dataset_name))
     elif args.data.dataset_name == "squad_kor_v1":
         datasets = load_dataset(args.data.dataset_name)
     # Add more dataset option here.
