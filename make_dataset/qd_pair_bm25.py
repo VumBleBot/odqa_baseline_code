@@ -31,7 +31,7 @@ def make_dataset(args):
 
     # contexts: question
     bm25.contexts = questions
-    bm25._exec_embedding()  # Not Save, Just fit_transform
+    bm25._exec_embedding  # Not Save, Just fit_transform
 
     # context, questions 형태의 데이터 셋을 생성
     make_negative_dataset(args, bm25, answers, questions, questions, "bm25_document_questions", num=32)

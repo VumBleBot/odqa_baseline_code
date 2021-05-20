@@ -37,7 +37,7 @@ class DprRetrieval(DenseRetrieval):
     def _exec_embedding(self):
         p_encoder, q_encoder = self._load_model()
 
-        train_dataset = self._load_dataset()
+        train_dataset, eval_dataset = self._load_dataset(eval=True)
 
         args = TrainingArguments(
             output_dir="dense_retrieval",
@@ -50,7 +50,7 @@ class DprRetrieval(DenseRetrieval):
             gradient_accumulation_steps=self.args.retriever.gradient_accumulation_steps,
         )
 
-        p_encoder, q_encoder = self._train(args, train_dataset, p_encoder, q_encoder)
+        p_encoder, q_encoder = self._train(args, train_dataset, p_encoder, q_encoder, eval_dataset)
         p_embedding = []
 
         for passage in tqdm.tqdm(self.contexts):  # wiki
@@ -65,17 +65,17 @@ class DprRetrieval(DenseRetrieval):
 
 
 class BaseTrainMixin:
-    def _load_dataset(self):
+    def _load_dataset(self, eval=False):
         # dataset.features : ['question', 'context', 'answers', ...]
         datasets = get_retriever_dataset(self.args)
 
-        tokenizer_input = self.tokenizer(datasets["train"][1]["context"], padding="max_length", truncation=True)
-        print("tokenizer:", self.tokenizer.convert_ids_to_tokens(tokenizer_input["input_ids"]))
+#        tokenizer_input = self.tokenizer(datasets["train"][1]["context"], padding="max_length", max_length=512, truncation=True)
+#        print("tokenizer:", self.tokenizer.convert_ids_to_tokens(tokenizer_input["input_ids"]))
 
         train_dataset = datasets["train"]
 
-        q_seqs = self.tokenizer(train_dataset["question"], padding="longest", truncation=True, return_tensors="pt")
-        p_seqs = self.tokenizer(train_dataset["context"], padding="longest", truncation=True, return_tensors="pt")
+        q_seqs = self.tokenizer(train_dataset["question"], padding="longest", truncation=True, max_length=512, return_tensors="pt")
+        p_seqs = self.tokenizer(train_dataset["context"], padding="max_length", truncation=True, max_length=512, return_tensors="pt")
 
         train_dataset = TensorDataset(
             p_seqs["input_ids"],
@@ -85,15 +85,39 @@ class BaseTrainMixin:
             q_seqs["attention_mask"],
             q_seqs["token_type_ids"],
         )
+        eval_dataset = None
 
-        return train_dataset
+        if eval:
 
-    def _train(self, training_args, dataset, p_model, q_model):
+            eval_dataset = datasets["validation"]
+
+            q_seqs = self.tokenizer(eval_dataset["question"], padding="longest", truncation=True, max_length=512,
+                                    return_tensors="pt")
+            p_seqs = self.tokenizer(eval_dataset["context"], padding="max_length", truncation=True, max_length=512,
+                                    return_tensors="pt")
+
+            eval_dataset = TensorDataset(
+                p_seqs["input_ids"],
+                p_seqs["attention_mask"],
+                p_seqs["token_type_ids"],
+                q_seqs["input_ids"],
+                q_seqs["attention_mask"],
+                q_seqs["token_type_ids"],
+            )
+
+        return train_dataset, eval_dataset
+
+    def _train(self, training_args, train_dataset, p_model, q_model, eval_dataset):
         print("TRAINING IN BASE TRAIN MIXIN")
-        train_sampler = RandomSampler(dataset)
+        train_sampler = RandomSampler(train_dataset)
         train_dataloader = DataLoader(
-            dataset, sampler=train_sampler, batch_size=training_args.per_device_train_batch_size
+            train_dataset, sampler=train_sampler, batch_size=training_args.per_device_train_batch_size, drop_last=True
         )
+        if eval_dataset:
+            eval_sampler = RandomSampler(eval_dataset)
+            eval_dataloader = DataLoader(
+                eval_dataset, sampler=eval_sampler, batch_size=training_args.per_device_eval_batch_size
+            )
 
         optimizer_grouped_parameters = [{"params": p_model.parameters()}, {"params": q_model.parameters()}]
         optimizer = AdamW(optimizer_grouped_parameters, lr=training_args.learning_rate, eps=training_args.adam_epsilon)
@@ -136,9 +160,11 @@ class BaseTrainMixin:
                     targets = targets.to("cuda")
 
                 sim_scores = F.log_softmax(sim_scores, dim=1)
-                loss = F.nll_loss(sim_scores, targets) / training_args.gradient_accumulation_steps
+                loss = F.nll_loss(sim_scores, targets)
 
-                print(f"epoch: {epoch:02} step: {step:02} loss: {loss}", end="\r")
+                loss = loss / training_args.gradient_accumulation_steps
+
+                print(f"epoch: {epoch + 1:02} step: {step:02} loss: {loss}", end="\r")
                 train_loss += loss.item()
 
                 loss.backward()
@@ -159,6 +185,52 @@ class BaseTrainMixin:
             print(f"Epoch: {epoch + 1:02} | Time: {epoch_mins}m {epoch_secs}s")
             print(f"\tTrain Loss: {train_loss / len(train_dataloader):.4f}")
 
+            if eval_dataset:
+                eval_loss = 0
+                correct = 0
+                total = 0
+
+                p_model.eval()
+                q_model.eval()
+
+                with torch.no_grad():
+                    for idx, batch in enumerate(eval_dataloader):
+                        if torch.cuda.is_available():
+                            batch = tuple(t.cuda() for t in batch)
+
+                        p_inputs = {"input_ids": batch[0], "attention_mask": batch[1], "token_type_ids": batch[2]}
+                        q_inputs = {"input_ids": batch[3], "attention_mask": batch[4], "token_type_ids": batch[5]}
+
+                        p_outputs = p_model(**p_inputs)
+                        q_outputs = q_model(**q_inputs)
+
+                        sim_scores = torch.matmul(q_outputs, torch.transpose(p_outputs, 0, 1))
+                        targets = torch.arange(0, training_args.per_device_eval_batch_size).long()
+
+                        if torch.cuda.is_available():
+                            targets = targets.to("cuda")
+
+                        sim_scores = F.log_softmax(sim_scores, dim=1)
+
+                        loss = F.nll_loss(sim_scores, targets)
+
+                        loss = loss / training_args.gradient_accumulation_steps
+
+                        predicts = np.argmax(sim_scores.cpu(), axis=1)
+
+                        for idx, predict in enumerate(predicts):
+                            total += 1
+                            if predict == idx:
+                                correct += 1
+
+                        eval_loss += loss.item()
+
+                    print(f"Epoch: {epoch + 1:02}\tEval Loss: {eval_loss / len(eval_dataloader):.4f}\tAccuracy: {correct/total:.4f}")
+
+            p_model.train()
+            q_model.train()
+
+
         return p_model, q_model
 
 
@@ -175,7 +247,7 @@ class Bm25TrainMixin:
             dataset["query"],
             padding="longest",
             truncation=True,
-            max_length=self.tokenizer.model_max_length,
+            max_length=512,
             return_tensors="pt",
         )
 
@@ -186,7 +258,7 @@ class Bm25TrainMixin:
             negative_samples,
             padding="longest",
             truncation=True,
-            max_length=self.tokenizer.model_max_length,
+            max_length=512,
             return_tensors="pt",
         )
 
