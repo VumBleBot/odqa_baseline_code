@@ -86,7 +86,6 @@ def kfold_train_and_predict(args):
 
             print(f"Fold {index + 1} prediction is merged into kfold prediction.")
 
-            if index == 1: break
 
         kfold_prediction = None
         for fold_index, pred in kfold_predictions.items():
