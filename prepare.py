@@ -35,6 +35,7 @@ READER = {
     "CNN": CustomHeadReader,
     "LSTM": CustomHeadReader,
     "CCNN": CustomHeadReader,
+    "CCNN_v2": CustomHeadReader,
     "CNN_LSTM": CustomHeadReader,
     "CCNN_EM": CustomHeadReader,
     "NEW_CNN": CustomHeadReader
