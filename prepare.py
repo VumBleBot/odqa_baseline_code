@@ -184,7 +184,7 @@ def concatenate_datasets_with_ratio(args, train_dataset):
 
     return train_dataset
 
-def get_full_dataset(args, is_train):
+def get_full_dataset(args):
     try:
         full_ds = load_from_disk(p.join(args.path.train_data_dir, "full_dataset"))
     except Exception as e:

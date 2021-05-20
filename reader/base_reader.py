@@ -196,7 +196,7 @@ class BaseReader:
             p, pororo_p = p
             return (
                 self.metric.compute(predictions=p.predictions, references=p.label_ids),
-                self.metric.compute(predictions=pororo_p.predictions, references=pororo_p.label_ids),
+                self.metric.compute(predictions=pororo_p.predictions, references=pororo_p.label_ids)
             )
 
         return (self.metric.compute(predictions=p.predictions, references=p.label_ids),)
@@ -231,7 +231,7 @@ class DprReader(BaseReader):
             data_collator=self.data_collator,
             post_process_function=self._post_processing_function,
             compute_metrics=self._compute_metrics,
-            callbacks=[EvalCallback]
+            #callbacks=[EvalCallback]
         )
 
         return trainer
