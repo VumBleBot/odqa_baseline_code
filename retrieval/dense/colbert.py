@@ -30,6 +30,7 @@ class QueryTokenizer:
         self.cls_token, self.cls_token_id = self.tok.cls_token, self.tok.cls_token_id
         self.sep_token, self.sep_token_id = self.tok.sep_token, self.tok.sep_token_id
         self.mask_token, self.mask_token_id = self.tok.mask_token, self.tok.mask_token_id
+        self.query_maxlen = self.tok.model_max_length
 
         assert self.Q_marker_token_id == 100 and self.mask_token_id == 103
 
@@ -83,15 +84,14 @@ class QueryTokenizer:
 
 
 class DocTokenizer:
-    def __init__(self, doc_maxlen):
-        self.tok = BertTokenizerFast.from_pretrained("bert-base-mulist-cased")
-        self.doc_maxlen = doc_maxlen
+    def __init__(self):
+        self.tok = BertTokenizerFast.from_pretrained("bert-base-multilingual-cased")
 
         self.D_marker_token, self.D_marker_token_id = "[D]", self.tok.convert_tokens_to_ids("[unused1]")
         self.cls_token, self.cls_token_id = self.tok.cls_token, self.tok.cls_token_id
         self.sep_token, self.sep_token_id = self.tok.sep_token, self.tok.sep_token_id
 
-        assert self.D_marker_token_id == 2
+        assert self.D_marker_token_id == 1
 
     def tokenize(self, batch_text, add_special_tokens=False):
         assert type(batch_text) in [list, tuple], type(batch_text)
@@ -126,7 +126,7 @@ class DocTokenizer:
         batch_text = [". " + x for x in batch_text]
 
         obj = self.tok(
-            batch_text, padding="longest", truncation="longest_first", return_tensors="pt", max_length=self.doc_maxlen
+            batch_text, padding="max_length", truncation=True, return_tensors="pt", max_length=self.tok.model_max_length
         )
 
         ids, mask = obj["input_ids"], obj["attention_mask"]
@@ -219,18 +219,18 @@ class ColBERTEncoder(BertPreTrainedModel):
         return self.score(self.query(*Q), self.doc(*D))
 
     def query(self, input_ids, attention_mask, token_type_ids=None):
-        input_ids, attention_mask = input_ids.to("gpu"), attention_mask.to("gpu")
+        input_ids, attention_mask = input_ids.to("cuda"), attention_mask.to("cuda")
         Q = self.bert(input_ids, attention_mask=attention_mask)[0]
         Q = self.linear(Q)
 
         return torch.nn.functional.normalize(Q, p=2, dim=2)
 
     def doc(self, input_ids, attention_mask, token_type_ids=None, keep_dims=True):
-        input_ids, attention_mask = input_ids.to("gpu"), attention_mask.to("gpu")
+        input_ids, attention_mask = input_ids.to("cuda"), attention_mask.to("cuda")
         D = self.bert(input_ids, attention_mask=attention_mask)[0]
         D = self.linear(D)
 
-        mask = torch.tensor(self.mask(input_ids), device="gpu").unsqueeze(2).float()
+        mask = torch.tensor(self.mask(input_ids), device="cuda").unsqueeze(2).float()
         D = D * mask
 
         D = torch.nn.functional.normalize(D, p=2, dim=2)
@@ -256,6 +256,7 @@ class ColBERTEncoder(BertPreTrainedModel):
 class ColBert(DenseRetrieval):
     def __init__(self, args):
         super().__init__(args)
+        self.backbone = "bert-base-multilingual-cased"
         self.query_tokenizer = QueryTokenizer()
         self.doc_tokenizer = DocTokenizer()
         self.dim = 128
@@ -263,7 +264,7 @@ class ColBert(DenseRetrieval):
     def _load_model(self):
         config = BertConfig.from_pretrained(self.backbone)
         colbert = ColBERTEncoder.from_pretrained(
-            config=config, mask_punctuation=string.punctuation, dim=self.dim, similarity_metric="cosine"
+            self.backbone, config=config, mask_punctuation=string.punctuation, dim=self.dim, similarity_metric="cosine"
         ).cuda()
         return colbert
 
@@ -275,14 +276,17 @@ class ColBert(DenseRetrieval):
         return colbert
 
     def _load_dataset(self):
-        triplet_dataset = load_from_disk(self.args.path.train_data_dir, "triplet_dataset")
+        triplet_dataset = load_from_disk(p.join(self.args.path.train_data_dir, "triplet_dataset"))
+        train_len = len(triplet_dataset) - len(triplet_dataset) % self.args.retriever.per_device_train_batch_size
+        triplet_dataset = triplet_dataset.select(range(train_len))
+
         batches = tensorize_triples(
             self.query_tokenizer,
             self.doc_tokenizer,
             triplet_dataset["question"],
             triplet_dataset["context"],
             triplet_dataset["negative"],
-            self.retriever.per_device_train_batch_size,
+            self.args.retriever.per_device_train_batch_size,
         )
 
         return batches
@@ -297,13 +301,19 @@ class ColBert(DenseRetrieval):
         else:
             self.p_embedding, self.encoder = self._exec_embedding()
 
-            with open(self.embed_path, "wb") as f:
-                pickle.dump(self.p_embedding, f)
+            p_embedding = self.p_embedding.detach().cpu().numpy()
+
+            np.save(self.embed_path, p_embedding)
+
+            # with open(self.embed_path, "wb") as f:
+                # pickle.dump(self.p_embedding, f, protocol=2)
 
             torch.save(self.encoder.state_dict(), self.encoder_path)
 
     def _train(self, training_args, batches, colbert):
-        optimizer = AdamW(filter(lambda p: p.requires_grad, colbert.parameters()), lr=training_args.lr, eps=1e-8)
+        optimizer = AdamW(
+            filter(lambda p: p.requires_grad, colbert.parameters()), lr=training_args.learning_rate, eps=1e-8
+        )
         optimizer.zero_grad()
 
         criterion = nn.CrossEntropyLoss()
@@ -333,8 +343,10 @@ class ColBert(DenseRetrieval):
             print(f"Epoch: {epoch + 1:02} | Time: {epoch_mins}m {epoch_secs}s")
             print(f"\tTrain Loss: {train_loss / len(batches):.4f}")
 
+        return colbert
+
     def _exec_embedding(self):
-        colbert = self._load_model()
+        self.encoder = self._load_model()
         batches = self._load_dataset()
 
         args = TrainingArguments(
@@ -348,16 +360,42 @@ class ColBert(DenseRetrieval):
             gradient_accumulation_steps=self.args.retriever.gradient_accumulation_steps,
         )
 
-        colbert = self._train(args, batches, colbert)
-        p_embedding = []
+        # self.encoder = self._train(args, batches, self.encoder)
+        total_len = len(self.contexts)
+        p_embedding = torch.empty(total_len, 512, self.dim)
 
-        for passage in tqdm.tqdm(self.contexts):  # wiki
-            passage = self.doc_tokenizer(
-                passage, padding="longest", truncation=True, max_length=512, return_tensors="pt"
-            ).to("cuda")
-            p_emb = colbert.query(**passage).to("cpu").detach().numpy()
-            p_embedding.append(p_emb)
+        for idx, passage in enumerate(tqdm.tqdm(self.contexts)):  # wiki
+            passage = self.doc_tokenizer.tensorize([passage])
+            ids, masks = passage[0], passage[1]
+            p_emb = self.encoder.doc(ids, masks).to("cpu").detach()
+            p_embedding[idx] = p_emb
 
-        p_embedding = np.array(p_embedding).squeeze()  # numpy
+        return p_embedding, self.encoder
 
-        return p_embedding, colbert
+    def get_relevant_doc_bulk(self, queries, topk=1):
+        self.encoder.eval()  # question encoder
+        self.encoder.cuda()
+
+        with torch.no_grad():
+            q_seqs_val = self.query_tokenizer.tensorize(queries)
+            ids, masks = q_seqs_val[0], q_seqs_val[1]
+            q_embedding = self.encoder.query(ids, masks)
+            q_embedding.squeeze_()  # in-place
+            q_embedding = q_embedding.cpu().detach()
+
+        # p_embedding: numpy, q_embedding: numpy
+
+        result = torch.empty(len(q_embedding), len(self.contexts))
+
+        for idx, q_emb in enumerate(q_embedding):
+            result[idx] = self.encoder.score(q_emb, self.p_embedding)
+
+        # result = self.encoder.score(q_embedding, self.p_embedding)
+
+        doc_indices = torch.argsort(result, dim=1, descending=True)[:, :topk]
+        doc_scores = []
+
+        for i in range(len(doc_indices)):
+            doc_scores.append(result[i][[doc_indices[i].tolist()]])
+
+        return doc_scores, doc_indices

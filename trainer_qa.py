@@ -19,10 +19,13 @@ A subclass of `Trainer` specific to Question-Answering tasks
 import datasets
 from transformers import Trainer
 
+from utils_qa import get_logits_with_offset
+
 
 class QuestionAnsweringTrainer(Trainer):
     def __init__(self, *args, custom_args=None, eval_examples=None, post_process_function=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.custom_args = custom_args
         self.eval_examples = eval_examples
         self.post_process_function = post_process_function
 
@@ -50,23 +53,60 @@ class QuestionAnsweringTrainer(Trainer):
         if isinstance(eval_dataset, datasets.Dataset):
             eval_dataset.set_format(type=eval_dataset.format["type"], columns=list(eval_dataset.features.keys()))
 
-        if self.post_process_function is not None and self.compute_metrics is not None:
-            eval_preds, use_pororo = self.post_process_function(eval_examples, eval_dataset, output.predictions, self.args)
-            metrics = self.compute_metrics(eval_preds, use_pororo=use_pororo)
+        metric_results = {}
 
-            # pororo를 사용할 경우 pororo_voted_prediction만, pororo를 사용하지 않을 경우 original prediction만을 이용하여 측정
-            self.log(metrics[-1])
+        if self.post_process_function is not None and self.compute_metrics is not None:
+            valid_results = self.post_process_function(eval_examples, eval_dataset, output.predictions, self.args)
+
+            for pred_type, eval_preds in valid_results.items():
+                metrics = self.compute_metrics(eval_preds)
+                metric_results[pred_type] = metrics
+
+                # Logging용 metrics
+                metrics = {f"{pred_type}_{k}": v for k, v in metrics.items()}
+                self.log(metrics)  # logs: Dict[str, float]
         else:
             metrics = {}
 
         self.control = self.callback_handler.on_evaluate(self.args, self.state, self.control, metrics)
-        return metrics
+        return metric_results
+
+    def get_logits_with_keys(self, test_dataset, test_examples, keys=None, ignore_keys=None):
+        for key in keys:
+            assert key in test_examples.features.keys(), f"{key}는 {test_examples.features}안에 없습니다!"
+
+        test_dataloader = self.get_test_dataloader(test_dataset)
+
+        compute_metrics = self.compute_metrics
+        self.compute_metrics = None
+        try:
+            output = self.prediction_loop(
+                test_dataloader,
+                description="Evaluation",
+                prediction_loss_only=True if compute_metrics is None else None,
+                ignore_keys=ignore_keys,
+            )
+        finally:
+            self.compute_metrics = compute_metrics
+
+        if isinstance(test_dataset, datasets.Dataset):
+            test_dataset.set_format(type=test_dataset.format["type"], columns=list(test_dataset.features.keys()))
+
+        logits = get_logits_with_offset(
+            test_examples,
+            test_dataset,
+            output.predictions,
+            topk=self.custom_args.retriever.topk,  # custom_args: args, returned to tools.get_args()
+            max_answer_length=self.custom_args.data.max_answer_length,
+        )
+
+        return logits, (list(test_examples[k]) for k in keys)
 
     def predict(self, test_dataset, test_examples, ignore_keys=None):
         test_dataloader = self.get_test_dataloader(test_dataset)
 
         # Temporarily disable metric computation, we will do it in the loop here.
-        compute_metrics = self.compute_metrics # tuple object
+        compute_metrics = self.compute_metrics  # tuple object
         self.compute_metrics = None
         try:
             output = self.prediction_loop(

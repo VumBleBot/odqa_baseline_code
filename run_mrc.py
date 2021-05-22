@@ -36,7 +36,7 @@ def train_reader(args):
 
         datasets = get_dataset(args, is_train=True)
         reader = get_reader(args, eval_answers=datasets["validation"])
-        
+
         reader.set_dataset(train_dataset=datasets["train"], eval_dataset=datasets["validation"])
 
         trainer = reader.get_trainer()
@@ -45,35 +45,36 @@ def train_reader(args):
             train_results = trainer.train()
             print(train_results)
 
+        metric_results = None
+
         if args.train.do_eval:
+            metric_results = trainer.evaluate()
+            results = evaluation(args)
+
+            metric_results["predictions"]["exact_match"] = results["EM"]["value"]
+            metric_results["predictions"]["f1"] = results["F1"]["value"]
+
+            print("EVAL RESULT")
+            print(metric_results["predictions"])
+
+        if args.train.do_eval and args.train.pororo_prediction:
+            assert metric_results is not None, "trainer.evaluate()가 None을 반환합니다."
+
+            results = evaluation(args, prefix="pororo_")
+
+            metric_results["pororo_predictions"]["exact_match"] = results["EM"]["value"]
+            metric_results["pororo_predictions"]["f1"] = results["F1"]["value"]
+
+            print("PORORO EVAL RESULT")
+            print(metric_results["pororo_predictions"])
+
+        if args.train.do_eval and args.report:
+            report_reader_to_slack(args, p.basename(__file__), metric_results["predictions"], use_pororo=False)
+
             if args.train.pororo_prediction:
-                eval_results, pororo_eval_results = trainer.evaluate()
-                results, pororo_results = evaluation(args), evaluation(args, prefix="pororo_")
-
-                for res, eval_res in zip((results, pororo_results),
-                                         (eval_results, pororo_eval_results)):
-                    eval_res["exact_match"] = res["EM"]["value"]
-                    eval_res["f1"] = res["F1"]["value"]
-
-                print("EVAL RESULT")
-                print(eval_results)
-                print("PORORO_EVAL RESULT")
-                print(pororo_eval_results)
-
-            else:
-                eval_results = trainer.evaluate()
-                eval_results = eval_results[0]
-                results = evaluation(args)
-                eval_results["exact_match"] = results["EM"]["value"]
-                eval_results["f1"] = results["F1"]["value"]
-
-                print("EVAL RESULT")
-                print(eval_results)
-
-            if args.report is True:
-                report_reader_to_slack(args, p.basename(__file__), eval_results, use_pororo=False)
-                if args.train.pororo_prediction is True:
-                    report_reader_to_slack(args, p.basename(__file__), pororo_eval_results, use_pororo=True)
+                report_reader_to_slack(
+                    args, p.basename(__file__), metric_results["pororo_predictions"], use_pororo=True
+                )
 
 
 if __name__ == "__main__":
