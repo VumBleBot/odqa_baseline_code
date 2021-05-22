@@ -91,7 +91,7 @@ run_mrc를 사용하기 위해서 참고해야 하는 Args들을 알아봅시다
     "alias": "RUN_RETRIEVAL_BASE_CONFIG",
     "model": {
         "retriever_name": "DPRBERT",
-        "tokenizer_name": 'xlm-roberta-large',
+        "tokenizer_name": "xlm-roberta-large",
     },
     "data": {
         "dataset_name": "train_dataset",
