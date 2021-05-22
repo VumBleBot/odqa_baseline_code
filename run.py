@@ -21,7 +21,7 @@ def train_reader(args):
         args.info = Namespace()
         set_seed(seed)
 
-        args.model.model_name_or_path = args.model_path
+        # args.model.model_name_or_path = args.model_path
 
         # below codes must run before 'reader.get_trainer()'
         # run_name: strategy + alias + seed

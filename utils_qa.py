@@ -29,8 +29,7 @@ from reader.pororo_reader import PororoMrcFactory
 
 mecab = Mecab()
 
-# TODO alpha를 config로 빼기
-# pororo voting 가중
+# TODO: alpha를 config로 빼기, pororo voting 가중
 alpha = 2.0
 
 
@@ -110,12 +109,14 @@ def looping_through_all_features(
 ):
     min_null_prediction = None
     prelim_predictions = []
+
     for feature_index in feature_indices:
         start_logits = all_start_logits[feature_index]
         end_logits = all_end_logits[feature_index]
         offset_mapping = features[feature_index]["offset_mapping"]
         token_is_max_context = features[feature_index].get("token_is_max_context", None)
         feature_null_score = start_logits[0] + end_logits[0]
+
         if min_null_prediction is None or min_null_prediction["score"] > feature_null_score:
             min_null_prediction = {
                 "offsets": (0, 0),
@@ -123,8 +124,10 @@ def looping_through_all_features(
                 "start_logit": start_logits[0],
                 "end_logit": end_logits[0],
             }
+
         start_indexes = np.argsort(start_logits)[-1 : -n_best_size - 1 : -1].tolist()
         end_indexes = np.argsort(end_logits)[-1 : -n_best_size - 1 : -1].tolist()
+
         for start_index in start_indexes:
             for end_index in end_indexes:
                 if (
@@ -147,6 +150,7 @@ def looping_through_all_features(
                         "end_logit": end_logits[end_index],
                     }
                 )
+
     return prelim_predictions
 
 
@@ -222,8 +226,10 @@ def make_predictions(examples, all_prelim_predictions, topk):
             scores = np.array([pred["score"] for pred in predictions])
             exp_scores = np.exp(scores - np.max(scores))
             probs = exp_scores / exp_scores.sum()
+
             for prob, pred in zip(probs, predictions):
                 pred["probability"] = prob
+
                 # prediction 결과분석용
                 # run_mrc의 경우 retrieve가 되지 않으므로 document_id(정답 문서 id)만 존재
                 # run의 경우 retrieve 과정에서 predict source document를 context_id로 가공하여 전달

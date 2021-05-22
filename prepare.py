@@ -6,18 +6,29 @@ from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoModel, A
 
 from reader import DprReader, CustomHeadReader
 from retrieval.hybrid import Bm25DprBert, TfidfDprBert, LogisticBm25DprBert, LogisticAtireBm25DprBert, AtireBm25DprBert
-from retrieval.sparse import TfidfRetrieval, BM25Retrieval, ATIREBM25Retrieval
-from retrieval.dense import DprBert, BaseTrainMixin, Bm25TrainMixin, ColBert
+from retrieval.sparse import (
+    TfidfRetrieval,
+    BM25Retrieval,
+    BM25LRetrieval,
+    BM25PlusRetrieval,
+    ATIREBM25Retrieval,
+    BM25EnsembleRetrieval,
+)
+from retrieval.dense import DprBert, BaseTrainMixin, Bm25TrainMixin, ColBert, DprElectra
 
 
 RETRIEVER = {
     # Sparse
     "BM25": BM25Retrieval,
     "ATIREBM25": ATIREBM25Retrieval,
+    "BM25L": BM25LRetrieval,
+    "BM25Plus": BM25PlusRetrieval,
+    "BM25Ensemble": BM25EnsembleRetrieval,
     "TFIDF": TfidfRetrieval,
     # Dense
     "DPRBERT": DprBert,
     "COLBERT": ColBert,
+    "DPRELECTRA": DprElectra,
     # Hybrid
     "BM25_DPRBERT": Bm25DprBert,
     "TFIDF_DPRBERT": TfidfDprBert,
@@ -26,11 +37,18 @@ RETRIEVER = {
     "LOG_ATIREBM25_DPRBERT": LogisticAtireBm25DprBert,
 }
 
-READER = {"DPR": DprReader, 
-          "FC": CustomHeadReader, 
-          "CNN": CustomHeadReader, 
-          "LSTM": CustomHeadReader,
-          "CCNN": CustomHeadReader}
+READER = {
+    "DPR": DprReader,
+    "FC": CustomHeadReader,
+    "CNN": CustomHeadReader,
+    "LSTM": CustomHeadReader,
+    "CCNN": CustomHeadReader,
+    "CCNN_v2": CustomHeadReader,
+    "CNN_LSTM": CustomHeadReader,
+    "CCNN_EM": CustomHeadReader,
+    "NEW_CNN": CustomHeadReader,
+}
+
 
 def retriever_mixin_factory(name, base, mixin):
     """ mixin class의 method를 overwriting."""
@@ -98,12 +116,15 @@ def get_reader(args, eval_answers):
         model = AutoModelForQuestionAnswering.from_pretrained(
             args.model.model_name_or_path, from_tf=bool(".ckpt" in args.model.model_name_or_path), config=config
         )
-    else: # Custom head model를 사용할 경우 backbone만 가져와서 넘겨준다.
-        if 'bert' in args.model.model_name_or_path:
-            model = AutoModel.from_pretrained( # BERT 기반 모델의 경우 add_pooling_layer=False 옵션 추가 필요
-                args.model.model_name_or_path, from_tf=bool(".ckpt" in args.model.model_name_or_path), config=config, add_pooling_layer=False
+    else:  # Custom head model를 사용할 경우 backbone만 가져와서 넘겨준다.
+        if "bert" in args.model.model_name_or_path:
+            model = AutoModel.from_pretrained(  # BERT 기반 모델의 경우 add_pooling_layer=False 옵션 추가 필요
+                args.model.model_name_or_path,
+                from_tf=bool(".ckpt" in args.model.model_name_or_path),
+                config=config,
+                add_pooling_layer=False,
             )
-        elif 'electra' in args.model.model_name_or_path:
+        elif "electra" in args.model.model_name_or_path:
             model = AutoModel.from_pretrained(
                 args.model.model_name_or_path, from_tf=bool(".ckpt" in args.model.model_name_or_path), config=config
             )
@@ -132,6 +153,8 @@ def get_dataset(args, is_train=True):
             datasets = load_from_disk(p.join(args.path.train_data_dir, args.data.dataset_name))
         else:
             datasets = load_from_disk(p.join(args.path.train_data_dir, "test_dataset"))
+    elif args.data.dataset_name == "train_sent_dataset" or args.data.dataset_name == "shuffled_dataset":
+        datasets = load_from_disk(p.join(args.path.train_data_dir, args.data.dataset_name))
     elif args.data.dataset_name == "squad_kor_v1":
         datasets = load_dataset(args.data.dataset_name)
     # Add more dataset option here.

@@ -199,6 +199,7 @@ ST00.json 하이퍼파라미터는 아래 파일들을 참고해서 수정할 �
         "save_steps": 100,
         "logging_steps": 100,
         "overwrite_output_dir": true,
+        "freeze_backbone": false,
         "report_to": ["wandb"]
     },
     "retriever": {
