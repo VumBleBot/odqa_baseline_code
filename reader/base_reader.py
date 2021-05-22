@@ -15,7 +15,7 @@ class BaseReader:
             self.tokenizer, pad_to_multiple_of=8 if self.args.train.fp16 else None
         )
 
-        self.train_dataset = None # 필요한거: train pp된거, eval 원본, eval retrieve 된거, eval retrieve 되고 pp된거
+        self.train_dataset = None  # 필요한거: train pp된거, eval 원본, eval retrieve 된거, eval retrieve 되고 pp된거
         self.eval_dataset = None
         self.eval_examples = None
         self.eval_answers = eval_answers
@@ -173,12 +173,10 @@ class BaseReader:
 
             elif training_args.do_eval:
                 # query, 정답
-                references = [
-                    {"id": ex["id"], "answers": ex[self.answer_column_name]} for ex in self.eval_answers
-                ]
+                references = [{"id": ex["id"], "answers": ex[self.answer_column_name]} for ex in self.eval_answers]
                 return (
                     EvalPrediction(predictions=formatted_predictions, label_ids=references),
-                    EvalPrediction(predictions=formatted_pororo_predictions, label_ids=references)
+                    EvalPrediction(predictions=formatted_pororo_predictions, label_ids=references),
                 ), training_args.pororo_prediction
 
         if training_args.do_predict:
@@ -186,10 +184,11 @@ class BaseReader:
 
         elif training_args.do_eval:
             # query, 정답
-            references = [
-                {"id": ex["id"], "answers": ex[self.answer_column_name]} for ex in self.eval_answers
-            ]
-            return EvalPrediction(predictions=formatted_predictions, label_ids=references), training_args.pororo_prediction
+            references = [{"id": ex["id"], "answers": ex[self.answer_column_name]} for ex in self.eval_answers]
+            return (
+                EvalPrediction(predictions=formatted_predictions, label_ids=references),
+                training_args.pororo_prediction,
+            )
 
     def _compute_metrics(self, p, use_pororo=False):
         if use_pororo:
@@ -206,12 +205,12 @@ class BaseReader:
 
 
 class EvalCallback(TrainerCallback):
-    def on_step_end(self, args, state, control,**kwargs):
+    def on_step_end(self, args, state, control, **kwargs):
         if args.do_eval_during_training and state.global_step % args.eval_step == 0:
             control.should_evaluate = True
             # if args.load_best_model_at_end:
             #     control.should_save = True
-        
+
         return control
 
 
@@ -231,7 +230,7 @@ class DprReader(BaseReader):
             data_collator=self.data_collator,
             post_process_function=self._post_processing_function,
             compute_metrics=self._compute_metrics,
-            callbacks=[EvalCallback]
+            callbacks=[EvalCallback],
         )
 
         return trainer

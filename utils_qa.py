@@ -39,8 +39,9 @@ def tokenize(text):
     # return text.split(" ")
     return mecab.morphs(text)
 
+
 def looping_through_all_features(
-        all_start_logits, all_end_logits, n_best_size, features, max_answer_length, feature_indices
+    all_start_logits, all_end_logits, n_best_size, features, max_answer_length, feature_indices
 ):
     min_null_prediction = None
     prelim_predictions = []
@@ -82,29 +83,30 @@ def looping_through_all_features(
                 )
     return prelim_predictions
 
+
 def remove_last_postposition(predict):
     """
     예측 마지막에 조사가 있다면 제거
     """
     pos_tagged_predict = mecab.pos(predict)
     # 조사제거
-    if len(predict) != 0 and pos_tagged_predict[-1][-1].startswith('J'):
+    if len(predict) != 0 and pos_tagged_predict[-1][-1].startswith("J"):
         predict = predict.replace(pos_tagged_predict[-1][0], "")
     return predict
 
 
 def postprocess_qa_predictions(
-        examples,
-        features,
-        predictions: Tuple[np.ndarray, np.ndarray],
-        topk: int = 1,
-        version_2_with_negative: bool = False,
-        n_best_size: int = 5,
-        max_answer_length: int = 30,
-        null_score_diff_threshold: float = 0.0,
-        output_dir: Optional[str] = None,
-        prefix: Optional[str] = None,
-        is_world_process_zero: bool = True,
+    examples,
+    features,
+    predictions: Tuple[np.ndarray, np.ndarray],
+    topk: int = 1,
+    version_2_with_negative: bool = False,
+    n_best_size: int = 5,
+    max_answer_length: int = 30,
+    null_score_diff_threshold: float = 0.0,
+    output_dir: Optional[str] = None,
+    prefix: Optional[str] = None,
+    is_world_process_zero: bool = True,
 ):
     """
     Post-processes the predictions of a question-answering model to convert them to answers that are substrings of the
@@ -140,12 +142,11 @@ def postprocess_qa_predictions(
     assert len(predictions) == 2, "`predictions` should be a tuple with two elements (start_logits, end_logits)."
     all_start_logits, all_end_logits = predictions
 
-    assert len(predictions[0]) == len(
-        features), f"Got {len(predictions[0])} predictions and {len(features)} features."
+    assert len(predictions[0]) == len(features), f"Got {len(predictions[0])} predictions and {len(features)} features."
 
     # Build a map example to its corresponding features.
     # example_id_to_index = {'mrc-0-00XXXX_0' : 0, 'mrc-0-00XXXX_1' : 1, ....} --> 720개 example마다 각각 다른 example_id를 준다.
-    example_id_to_index = {'_'.join([k, str(i % topk)]): i for i, k in enumerate(examples["id"])}
+    example_id_to_index = {"_".join([k, str(i % topk)]): i for i, k in enumerate(examples["id"])}
 
     features_per_example = collections.defaultdict(list)
     # ex) features_per_example[0] ==> [0], features_per_example[0] ==> [1,2,3] ....
@@ -155,9 +156,9 @@ def postprocess_qa_predictions(
 
         # query sequence를 지나 document의 첫번째 offset을 가리키는 doc_pointer
         doc_pointer = 0
-        while feature['offset_mapping'][doc_pointer] == None:
+        while feature["offset_mapping"][doc_pointer] == None:
             doc_pointer += 1
-        doc_offset = feature['offset_mapping'][doc_pointer][0]  # 해당 context sequence의 첫번째 offset
+        doc_offset = feature["offset_mapping"][doc_pointer][0]  # 해당 context sequence의 첫번째 offset
 
         # offset이 떨어지거나 같으면(0) --> topk묶음이 끝나면
         if doc_offset <= prev_doc_offset:
@@ -170,13 +171,13 @@ def postprocess_qa_predictions(
             # ex) mrc-00-00XXXX_0, mrc-00-00XXXX_2
 
         # 해당 feature를 example index dict에 등록
-        example_index_key = '_'.join([feature['example_id'], str(doc_id_postfix)])
+        example_index_key = "_".join([feature["example_id"], str(doc_id_postfix)])
         features_per_example[example_id_to_index[example_index_key]].append(i)
 
         prev_doc_offset = doc_offset
 
     # PORORO Reader for Voting
-    my_mrc_factory = PororoMrcFactory('mrc', 'ko', "brainbert.base.ko.korquad")
+    my_mrc_factory = PororoMrcFactory("mrc", "ko", "brainbert.base.ko.korquad")
     pororo_mrc = my_mrc_factory.load(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
 
     all_predictions = collections.OrderedDict()
@@ -199,28 +200,26 @@ def postprocess_qa_predictions(
             # print(f"example {example_index} | feature_indices {feature_indices}")
             # print(f"example {example['question']} | feature_indices {feature_indices}")
 
-
             # 하나의 example에 딸린 context들을 전부 돌면서 prediction 수집
             prelim_predictions = looping_through_all_features(
                 all_start_logits, all_end_logits, n_best_size, features, max_answer_length, feature_indices
             )  # [offset, start logit, end logit, score]
 
-
             # pororo MRC top 1, score 뽑아오기
-            pororo_pred_text, _, pororo_score = pororo_mrc(example['question'], example['context'], postprocess=False)[0]
+            pororo_pred_text, _, pororo_score = pororo_mrc(example["question"], example["context"], postprocess=False)[
+                0
+            ]
             pororo_pred_text = remove_last_postposition(pororo_pred_text)
             pororo_prediction = {"text": pororo_pred_text, "score": pororo_score}
 
             # 한 example에 있는 모든 predictions.
             predictions = sorted(prelim_predictions, key=lambda x: x["score"], reverse=True)[:n_best_size]
 
-
-
             # 01 predictions 정답 텍스트 매핑
             context = example["context"]
             for pred in predictions:
                 offsets = pred.pop("offsets")
-                pred["text"] = context[offsets[0]: offsets[1]]
+                pred["text"] = context[offsets[0] : offsets[1]]
             # 02 정답이 없다면 Fake 정답 생성
             if len(predictions) == 0 or (len(predictions) == 1 and predictions[0]["text"] == ""):
                 predictions.insert(0, {"text": "empty", "start_logit": 0.0, "end_logit": 0.0, "score": 0.0})
@@ -233,22 +232,19 @@ def postprocess_qa_predictions(
                 # prediction 결과분석용
                 # run_mrc의 경우 retrieve가 되지 않으므로 document_id(정답 문서 id)만 존재
                 # run의 경우 retrieve 과정에서 predict source document를 context_id로 가공하여 전달
-                pred["context_id"] = example['context_id'] if 'context_id' in example.keys() else example['document_id']
-                pred["context"] = example['context']
-
+                pred["context_id"] = example["context_id"] if "context_id" in example.keys() else example["document_id"]
+                pred["context"] = example["context"]
 
             topk_merged_predictions.extend(predictions)
             topk_merged_pororo_predictions.append(pororo_prediction)
 
             # print(f"len(predictions): {len(predictions)} | len(topk_merged_predictions) : {len(topk_merged_predictions)} | len(prelimed) : {len(prelim_predictions)}")
 
-
         # 아래는 topk개로 묶어서 수행하는 logic
 
         # 1. score로 계산
         predictions = sorted(topk_merged_predictions, key=lambda x: x["score"], reverse=True)[:n_best_size]
-        pororo_pred = max(topk_merged_pororo_predictions, key=lambda x:x["score"]) # 각 context의 top-1 중에서도 top-1만을 추출
-
+        pororo_pred = max(topk_merged_pororo_predictions, key=lambda x: x["score"])  # 각 context의 top-1 중에서도 top-1만을 추출
 
         # 2. pororo score 추가한 리스트를 따로 보관
         pororo_voted_predictions = copy.deepcopy(predictions)
@@ -263,13 +259,11 @@ def postprocess_qa_predictions(
         all_pororo_voted_predictions[example["id"]] = pororo_voted_predictions[0]["text"]
         # 정답 포함 가능성 있었던 답을 로깅
         all_nbest_json[example["id"]] = [
-            {k: (float(v) if isinstance(v, (np.float16, np.float32, np.float64)) else v) for k, v in
-             pred.items()}
+            {k: (float(v) if isinstance(v, (np.float16, np.float32, np.float64)) else v) for k, v in pred.items()}
             for pred in predictions
         ]
         all_pororo_voted_nbest_json[example["id"]] = [
-            {k: (float(v) if isinstance(v, (np.float16, np.float32, np.float64)) else v) for k, v in
-             pred.items()}
+            {k: (float(v) if isinstance(v, (np.float16, np.float32, np.float64)) else v) for k, v in pred.items()}
             for pred in pororo_voted_predictions
         ]
 
