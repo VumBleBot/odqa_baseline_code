@@ -1,5 +1,9 @@
 ![vumblebot-logo](https://i.imgur.com/ch7hFii.png)
 
+<b>Open-Domain Question Answering(ODQA)</b>는 다양한 주제에 대한 문서 집합으로부터 자연어 질의에 대한 답변을 찾아오는 task입니다. 이때 사용자 질의에 답변하기 위해 주어지는 지문이 따로 존재하지 않습니다. 따라서 사전에 구축되어있는 Knowledge Resource(본 글에서는 한국어 Wikipedia)에서 질문에 대답할 수 있는 문서를 찾는 과정이 필요합니다.
+
+**VumBleBot**은 ODQA 문제를 해결하기 위해 설계되었습니다. 질문에 관련된 문서를 찾아주는 Retriever, 관련된 문서를 읽고 간결한 답변을 내보내주는 Reader가 구현되어 있습니다. 이 두 단계를 거쳐 만들어진 VumBleBot은 어떤 어려운 질문을 던져도 척척 답변을 해주는 질의응답 시스템입니다.
+
 [:bookmark_tabs: **Wrap-up report**](https://hackmd.io/@9NfvP9AZQL2Psilxs3oNBA/SyH-EkVt_)에 모델, 실험 관리 및 검증 전략, 앙상블, 코드 추상화 등 저희가 다룬 기술의 흐름과 고민의 흔적들이 담겨있습니다.
 
 # VumbleBot - BaselineCode  <!-- omit in toc -->
