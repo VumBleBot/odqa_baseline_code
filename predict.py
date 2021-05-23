@@ -1,5 +1,8 @@
+import os
 import os.path as p
+from glob import glob
 
+from transformers.trainer_utils import get_last_checkpoint
 from utils.tools import update_args, get_args
 from utils.prepare import get_dataset, get_reader, get_retriever
 
@@ -10,8 +13,16 @@ def predict(args):
     strategies = args.strategies
 
     for idx, strategy in enumerate(strategies):
-        args = update_args(args, strategy)  # auto add args.save_path, args.base_path
+        args = update_args(args, strategy) 
         args.strategy = strategy
+
+        checkpoint_dir = glob(p.join(args.path.checkpoint, strategy, "/*"))
+        if not checkpoint_dir:
+            raise FileNotFoundError(f"{strategy} 전략에 대한 checkpoint가 존재하지 않습니다.")
+        
+        args.model.model_path = get_last_checkpoint(checkpoint_dir[0])
+        if args.model.model_path is None:
+            raise FileNotFoundError(f"{checkpoint_dir[0]} 경로에 체크포인트가 존재하지 않습니다.")
 
         args.train.output_dir = p.join(args.path.checkpoint, strategy)
         args.train.do_predict = True

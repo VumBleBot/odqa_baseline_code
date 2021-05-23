@@ -21,9 +21,14 @@ def train_reader(args):
         args.info = Namespace()
         set_seed(seed)
 
-        # args.model.model_name_or_path = args.model_path
-
-        # below codes must run before 'reader.get_trainer()'
+        checkpoint_dir = glob(p.join(args.path.checkpoint, strategy, "/*"))
+        if not checkpoint_dir:
+            raise FileNotFoundError(f"{strategy} 전략에 대한 checkpoint가 존재하지 않습니다.")
+        
+        args.model.model_path = get_last_checkpoint(checkpoint_dir[0])
+        if args.model.model_path is None:
+            raise FileNotFoundError(f"{checkpoint_dir[0]} 경로에 체크포인트가 존재하지 않습니다.")
+            
         # run_name: strategy + alias + seed
         args.train.run_name = "_".join([strategy, args.alias, str(seed)])
         args.train.output_dir = p.join(args.path.checkpoint, args.train.run_name)
