@@ -13,13 +13,13 @@ def predict(args):
     strategies = args.strategies
 
     for idx, strategy in enumerate(strategies):
-        args = update_args(args, strategy) 
+        args = update_args(args, strategy)
         args.strategy = strategy
 
         checkpoint_dir = glob(p.join(args.path.checkpoint, f"{strategy}*"))
         if not checkpoint_dir:
             raise FileNotFoundError(f"{strategy} 전략에 대한 checkpoint가 존재하지 않습니다.")
-        
+
         args.model.model_path = get_last_checkpoint(checkpoint_dir[0])
         if args.model.model_path is None:
             raise FileNotFoundError(f"{checkpoint_dir[0]} 경로에 체크포인트가 존재하지 않습니다.")

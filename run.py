@@ -1,8 +1,11 @@
+from glob import glob
+
 import wandb
 import os.path as p
 from itertools import product
 from argparse import Namespace
 from transformers import set_seed
+from transformers.trainer_utils import get_last_checkpoint
 
 from utils.tools import update_args
 from utils.slack_api import report_reader_to_slack
@@ -24,11 +27,11 @@ def train_reader(args):
         checkpoint_dir = glob(p.join(args.path.checkpoint, f"{strategy}*"))
         if not checkpoint_dir:
             raise FileNotFoundError(f"{strategy} 전략에 대한 checkpoint가 존재하지 않습니다.")
-        
+
         args.model.model_path = get_last_checkpoint(checkpoint_dir[0])
         if args.model.model_path is None:
             raise FileNotFoundError(f"{checkpoint_dir[0]} 경로에 체크포인트가 존재하지 않습니다.")
-            
+
         # run_name: strategy + alias + seed
         args.train.run_name = "_".join([strategy, args.alias, str(seed)])
         args.train.output_dir = p.join(args.path.checkpoint, args.train.run_name)
@@ -76,7 +79,7 @@ def train_reader(args):
 
 
 if __name__ == "__main__":
-    from tools import get_args
+    from utils.tools import get_args
 
     args = get_args()
     train_reader(args)
