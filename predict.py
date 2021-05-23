@@ -16,7 +16,7 @@ def predict(args):
         args = update_args(args, strategy) 
         args.strategy = strategy
 
-        checkpoint_dir = glob(p.join(args.path.checkpoint, strategy, "/*"))
+        checkpoint_dir = glob(p.join(args.path.checkpoint, f"{strategy}*"))
         if not checkpoint_dir:
             raise FileNotFoundError(f"{strategy} 전략에 대한 checkpoint가 존재하지 않습니다.")
         
