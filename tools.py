@@ -143,11 +143,17 @@ def get_args():
     training_args = TrainingArguments(output_dir=args.path.checkpoint)
     training_args.pororo_prediction = train_args.pororo_prediction
 
-    args.model = model_args
     args.data = data_args
-    args.train = training_args
-    args.train.pororo_prediction = train_args.pororo_prediction
+    args.model = model_args
     args.retriever = retriever_args
+
+    args.train = training_args
+    args.train.eval_step = train_args.eval_step
+    args.train.do_ensemble = train_args.do_ensemble
+    args.train.masking_ratio = train_args.masking_ratio
+    args.train.freeze_backbone = train_args.freeze_backbone
+    args.train.pororo_prediction = train_args.pororo_prediction
+    args.train.do_eval_during_training = train_args.do_eval_during_training
 
     return args
 

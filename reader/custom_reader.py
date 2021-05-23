@@ -6,6 +6,7 @@ import torch
 from torch import nn
 from trainer_qa import QuestionAnsweringTrainer
 
+from transformers import TrainerCallback
 from transformers.modeling_outputs import QuestionAnsweringModelOutput
 from reader.base_reader import BaseReader
 from reader.custom_head import (
@@ -16,7 +17,7 @@ from reader.custom_head import (
     ComplexCnnQAHead_v2,
     CnnLstmQAHead,
     ComplexCnnEmQAHead,
-    ComplexCnnLstmEmQAHead
+    ComplexCnnLstmEmQAHead,
 )
 
 READER_HEAD = {
@@ -27,21 +28,21 @@ READER_HEAD = {
     "CCNN_v2": ComplexCnnQAHead_v2,
     "CNN_LSTM": CnnLstmQAHead,
     "CCNN_EM": ComplexCnnEmQAHead,
-    "CCNN_LSTM_EM": ComplexCnnLstmEmQAHead
+    "CCNN_LSTM_EM": ComplexCnnLstmEmQAHead,
 }
 
 
 class CustomModel(nn.Module):
     def __init__(
-        self, 
-        backbone, 
-        head, 
-        input_size, 
-        pooling_pos, 
-        masking_ratio, 
-        special_token_ids, # for random masking
-        mask_token_id, # for random masking
-        freeze_backbone
+        self,
+        backbone,
+        head,
+        input_size,
+        pooling_pos,
+        masking_ratio,
+        special_token_ids,  # for random masking
+        mask_token_id,  # for random masking
+        freeze_backbone,
     ):
         super().__init__()
         self.backbone = backbone
@@ -77,7 +78,7 @@ class CustomModel(nn.Module):
                         nn.init.zeros_(param)
 
     def random_masking(self, input_ids):
-        ratio = self.masking_ratio / 2 # span masking two tokens at a time
+        ratio = self.masking_ratio / 2  # span masking two tokens at a time
         masked_input_ids = input_ids.clone()
 
         for input_id in masked_input_ids:
@@ -87,7 +88,7 @@ class CustomModel(nn.Module):
                 target_pos = random.randrange(len(input_id) - 1)
                 if input_id[target_pos] not in self.special_tokens_ids:
                     input_id[target_pos] = self.mask_token_id
-                    if input_id[target_pos + 1] not in self.special_tokens_ids:  
+                    if input_id[target_pos + 1] not in self.special_tokens_ids:
                         input_id[target_pos + 1] = self.mask_token_id
                     masked_num += 1
 
