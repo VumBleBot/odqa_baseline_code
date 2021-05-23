@@ -1,0 +1,17 @@
+{
+    "alias": "EXAMPLES BM25",
+    "model": {
+        "retriever_name": "BM25",
+        "tokenizer_name": "xlm-roberta-large"
+    },
+    "data": {
+        "dataset_name": "train_dataset",
+        "sub_datasets": ""
+    },
+    "retriever": {
+        "retrain": false,
+        "b": 0.3,
+        "k1": 1.1,
+        "topk": 10
+    }
+}

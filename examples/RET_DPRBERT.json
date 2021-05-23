@@ -1,0 +1,21 @@
+{
+    "alias": "EXAMPLES DPRBERT",
+    "model": {
+        "retriever_name": "DPRBERT",
+        "tokenizer_name": ""
+    },
+    "data": {
+        "dataset_name": "train_dataset",
+        "sub_datasets": ""
+    },
+    "retriever": {
+        "retrain": false,
+        "dense_train_dataset": "train_dataset",
+        "topk": 10,
+        "learning_rate": 3e-5,
+        "per_device_train_batch_size": 16,
+        "per_device_eval_batch_size": 4,
+        "num_train_epochs": 15,
+        "weight_decay": 0.01
+    }
+}

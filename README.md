@@ -1,4 +1,4 @@
-# VumbleBot - BaselineCode <!-- omit in toc -->
+# VumbleBot - BaselineCode  <!-- omit in toc -->
 
 - [TIPS](#tips)
 - [Branch](#branch)
@@ -21,6 +21,31 @@
   - [Usage: Predict](#usage-predict)
     - [Predict result](#predict-result)
 - [TDD](#tdd)
+
+## DEMO
+
+### Reader
+
+```
+python -m run_mrc --strategies RED_DPR_BERT --run_cnt 1 --debug False --report False
+```
+
+![image](https://user-images.githubusercontent.com/40788624/119262677-03442780-bc17-11eb-84d0-89590e48fd9d.png)
+
+### Retrieval
+
+```
+python -m run_retrieval --strategies RET_DPRBERT --run_cnt 1 --debug False --report False
+
+```
+![image](https://user-images.githubusercontent.com/40788624/119262941-f83dc700-bc17-11eb-85a1-325a54dc32e0.png)
+
+```
+python -m run_retrieval --strategies RET_TFIDF,RET_BM25,RET_DPRBERT,RET_ATIREBM25 --run_cnt 1 --debug False --report False
+```
+
+![retriever-compare-top-k](https://i.imgur.com/2iHdE5f.png)
+
 
 ## TIPS
 
