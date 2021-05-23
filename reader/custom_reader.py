@@ -6,44 +6,53 @@ from torch import nn
 from trainer_qa import QuestionAnsweringTrainer
 
 from transformers.modeling_outputs import QuestionAnsweringModelOutput
-from reader.base_reader import BaseReader, EvalCallback
+from reader.base_reader import BaseReader
 from reader.custom_head import (
+    DprQAHead,
     LstmQAHead,
     CnnQAHead,
-    FcQAHead,
     ComplexCnnQAHead,
     ComplexCnnQAHead_v2,
     CnnLstmQAHead,
     ComplexCnnEmQAHead,
-    ComplexCnnLstmEmQAHead,
-    NewCnnQAHead,
+    ComplexCnnLstmEmQAHead
 )
 
 READER_HEAD = {
+    "DPR": DprQAHead,
     "LSTM": LstmQAHead,
     "CNN": CnnQAHead,
-    "FC": FcQAHead,
     "CCNN": ComplexCnnQAHead,
     "CCNN_v2": ComplexCnnQAHead_v2,
     "CNN_LSTM": CnnLstmQAHead,
     "CCNN_EM": ComplexCnnEmQAHead,
-    "CCNN_LSTM_EM": ComplexCnnLstmEmQAHead,
-    "NEW_CNN": NewCnnQAHead,
+    "CCNN_LSTM_EM": ComplexCnnLstmEmQAHead
 }
 
 
 class CustomModel(nn.Module):
-    def __init__(self, backbone, head, pooling_pos, masking_ratio, freeze_backbone):
+    def __init__(
+        self, 
+        backbone, 
+        head, 
+        input_size, 
+        pooling_pos, 
+        masking_ratio, 
+        special_token_ids, # for random masking
+        mask_token_id, # for random masking
+        freeze_backbone
+    ):
         super().__init__()
         self.backbone = backbone
 
-        head_input_size = 768  # 현재 embedding 768 기준, xlm-roberta-large의 경우 1024
-        self.qa_outputs = READER_HEAD[head](input_size=head_input_size)
+        self.qa_outputs = READER_HEAD[head](input_size=input_size)
         self.qa_outputs.apply(self._init_weight)
 
         self.head = head
         self.pooling_pos = pooling_pos
         self.masking_ratio = masking_ratio
+        self.special_token_ids = special_token_ids
+        self.mask_token_id = mask_token_id
 
         if freeze_backbone:
             for name, param in self.backbone.named_parameters():
@@ -66,26 +75,19 @@ class CustomModel(nn.Module):
                     elif "bias" in name:
                         nn.init.zeros_(param)
 
-    def random_masking(self, input_ids):  # ratio - masking비율
-        # BERT 모델의 일반적인 토큰 ID 기준
-        ratio = self.masking_ratio / 2
+    def random_masking(self, input_ids):
+        ratio = self.masking_ratio / 2 # span masking two tokens at a time
         masked_input_ids = input_ids.clone()
-
-        PAD_TOKEN_ID = 0
-        CLS_TOKEN_ID = 2
-        SEP_TOKEN_ID = 3
-        MASK_TOKEN_ID = 4
-        except_token = [PAD_TOKEN_ID, CLS_TOKEN_ID, SEP_TOKEN_ID, MASK_TOKEN_ID]
 
         for input_id in masked_input_ids:
             masked_num = 0
 
             while masked_num < int(len(input_id) * ratio):
                 target_pos = random.randrange(len(input_id) - 1)
-                if input_id[target_pos] not in except_token:
-                    input_id[target_pos] = MASK_TOKEN_ID
-                    if input_id[target_pos + 1] not in except_token:  # 연속 단어 마스킹 가능하면 ㄱ
-                        input_id[target_pos + 1] = MASK_TOKEN_ID
+                if input_id[target_pos] not in self.special_tokens_ids:
+                    input_id[target_pos] = self.mask_token_id
+                    if input_id[target_pos + 1] not in self.special_tokens_ids:  
+                        input_id[target_pos + 1] = self.mask_token_id
                     masked_num += 1
 
         return masked_input_ids
@@ -181,14 +183,25 @@ class CustomModel(nn.Module):
         )
 
 
+class EvalCallback(TrainerCallback):
+    def on_step_end(self, args, state, control, **kwargs):
+        if args.do_eval_during_training and state.global_step % args.eval_step == 0:
+            control.should_evaluate = True
+
+        return control
+
+
 class CustomHeadReader(BaseReader):
     def __init__(self, args, model, tokenizer, eval_answers):
         super().__init__(args, None, tokenizer, eval_answers)
         self.model = CustomModel(
             backbone=model,
             head=args.model.reader_name,
+            input_size=model.config.hidden_size,
             pooling_pos=2 if "bert" in args.model.model_name_or_path else 1,
             masking_ratio=args.train.masking_ratio,
+            special_token_ids=tokenizer.all_special_ids,
+            mask_token_id=tokenizer.mask_token_id,
             freeze_backbone=args.train.freeze_backbone,
         )
 

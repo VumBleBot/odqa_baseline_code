@@ -197,35 +197,3 @@ class BaseReader:
 
     def get_trainer(self):
         raise NotImplementedError
-
-
-class EvalCallback(TrainerCallback):
-    def on_step_end(self, args, state, control, **kwargs):
-        if args.do_eval_during_training and state.global_step % args.eval_step == 0:
-            control.should_evaluate = True
-            # if args.load_best_model_at_end:
-            #     control.should_save = True
-
-        return control
-
-
-class DprReader(BaseReader):
-    def __init__(self, args, model, tokenizer, eval_answers):
-        super().__init__(args, model, tokenizer, eval_answers)
-
-    def get_trainer(self):
-        trainer = QuestionAnsweringTrainer(
-            model=self.model,
-            args=self.args.train,  # training_args
-            custom_args=self.args,
-            train_dataset=self.train_dataset,
-            eval_dataset=self.eval_dataset,
-            eval_examples=self.eval_examples,
-            tokenizer=self.tokenizer,
-            data_collator=self.data_collator,
-            post_process_function=self._post_processing_function,
-            compute_metrics=self._compute_metrics,
-            callbacks=[EvalCallback],
-        )
-
-        return trainer
