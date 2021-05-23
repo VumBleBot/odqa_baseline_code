@@ -1,7 +1,6 @@
 ![vumblebot-logo](https://i.imgur.com/ch7hFii.png)
 
-[Wrap-up Report]('https://hackmd.io/@9NfvP9AZQL2Psilxs3oNBA/SyH-EkVt_')  
-:bookmark_tabs: **Wrap-up report**에는 모델, 실험 관리 및 검증 전략, 앙상블, 코드 추상화 등 저희가 다룬 기술의 흐름과 고민의 흔적들이 담겨있습니다.
+[:bookmark_tabs: **Wrap-up report**](https://hackmd.io/@9NfvP9AZQL2Psilxs3oNBA/SyH-EkVt_)에 모델, 실험 관리 및 검증 전략, 앙상블, 코드 추상화 등 저희가 다룬 기술의 흐름과 고민의 흔적들이 담겨있습니다.
 
 # VumbleBot - BaselineCode  <!-- omit in toc -->
 
