@@ -1,3 +1,4 @@
+import os.path as p
 import random
 
 import numpy as np
@@ -205,8 +206,8 @@ class CustomHeadReader(BaseReader):
             freeze_backbone=args.train.freeze_backbone,
         )
 
-        if args.model.model_path != "":  # for checkpoint loading
-            self.model.load_state_dict(torch.load(args.model.model_path))
+        if p.exists(p.join(args.model.model_path, "pytorch_model.bin")):  # for checkpoint loading
+            self.model.load_state_dict(torch.load(p.join(args.model.model_path, "pytorch_model.bin")))
 
     def get_trainer(self):
         trainer = QuestionAnsweringTrainer(
