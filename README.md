@@ -77,7 +77,9 @@ python -m run_retrieval --strategies RET_05_BM25_DPRBERT,RET_06_TFIDF_DPRBERT,RE
 - wandb==0.10.27 
 
 ### Install packages
-`pip install -r requirements.txt`
+```
+pip install -r requirements.txt
+```
 
 ### Predict
 ```bash
@@ -314,50 +316,28 @@ input/
 
 - 전략(ST00.json)에 있는 Reader 모델은 사용하지 않습니다.
 - Retriever 모델은 학습이 완료된 이후로는 결과가 불변이기 때문에 run_cnt 값을 1로 설정해주시면 됩니다.
-- retrain 인자를 사용해서 재학습을 진행할 수 있습니다.
-
+- retrain 인자를 사용해서 재학습을 진행할 수 있습니다.  
 `python -m run_retrieval --strategies ST07,ST08,ST09 --run_cnt 1`
 
 #### RETRIEVER Result
 
 - wandb.ai에서 이미지를 확인 할 수 있습니다.
 
-```
-전략: RET_07_ATIREBM25_DPRBERT: ATIREBM25_DPRBERT
-TOPK: 1 ACC: 75.00
-TOPK: 2 ACC: 85.83
-TOPK: 3 ACC: 90.42
-TOPK: 4 ACC: 90.83
-TOPK: 5 ACC: 91.67
-TOPK: 6 ACC: 93.33
-TOPK: 7 ACC: 95.00
-TOPK: 8 ACC: 95.42
-TOPK: 9 ACC: 95.83
-TOPK: 10 ACC: 96.25
-```
+  ```
+  전략: RET_07_ATIREBM25_DPRBERT: ATIREBM25_DPRBERT
+  TOPK: 1 ACC: 75.00
+  TOPK: 2 ACC: 85.83
+  TOPK: 3 ACC: 90.42
+  TOPK: 4 ACC: 90.83
+  TOPK: 5 ACC: 91.67
+  TOPK: 6 ACC: 93.33
+  TOPK: 7 ACC: 95.00
+  TOPK: 8 ACC: 95.42
+  TOPK: 9 ACC: 95.83
+  TOPK: 10 ACC: 96.25
+  ```
 
 ![image](https://user-images.githubusercontent.com/40788624/119265923-9c793b00-bc23-11eb-8439-c237fa91f6bb.png)
-
-```
-input
-└── embed
-    ├── TFIDF
-    │   ├── TFIDF.bin
-    │   └── embedding.bin
-    ├── BM25
-    │   ├── BM25.bin
-    │   └── embedding.bin
-    ├── ATIREBM25
-    │   ├── ATIREBM25.bin
-    │   ├── ATIREBM25_idf.bin
-    │   └── embedding.bin
-    ├── DPRBERT
-    │   ├── DPRBERT.pth
-    │   └── embedding.bin
-    └── ATIREBM25_DPRBERT
-        └── classifier.bin
-```
-
 
 ### Usage: Predict
 
