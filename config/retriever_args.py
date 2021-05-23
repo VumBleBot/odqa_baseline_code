@@ -41,3 +41,4 @@ class RetrievalTrainingArguments:
 
     # Whether retrain embeddings
     retrain: Optional[bool] = field(default=False, metadata={"help": "Whether retrain&overwrite embedding files"})
+    
