@@ -1,7 +1,16 @@
 import torch
 from torch import nn
 
-# - embedding dim 768 기준입니다 / 추후 argument로 줄 수 있도록 수정 필요
+
+class DprQAHead(nn.Module):
+    def __init__(self, input_size):
+        super().__init__()
+        self.fc = nn.Linear(input_size, 2)
+
+    def forward(self, x):
+        x = self.fc(x)
+
+        return x
 
 
 class LstmQAHead(nn.Module):
@@ -15,7 +24,7 @@ class LstmQAHead(nn.Module):
             bidirectional=True,
             batch_first=True,
         )
-        self.pooler = nn.Linear(input_size * 2, 2)  # nn.AdaptiveAvgPool1d(-1)
+        self.pooler = nn.Linear(input_size * 2, 2)
 
     def forward(self, x):
         x, (_, _) = self.lstm(x)
@@ -37,17 +46,6 @@ class CnnQAHead(nn.Module):
         conv3_out = self.relu(self.conv_3(x).transpose(1, 2).contiguous().squeeze(-1))
         conv5_out = self.relu(self.conv_5(x).transpose(1, 2).contiguous().squeeze(-1))
         x = conv1_out + conv3_out + conv5_out
-
-        return x
-
-
-class FcQAHead(nn.Module):
-    def __init__(self, input_size):
-        super().__init__()
-        self.fc = nn.Linear(input_size, 2)
-
-    def forward(self, x):
-        x = self.fc(x)
 
         return x
 
@@ -139,9 +137,7 @@ class ComplexCnnEmQAHead(nn.Module):
             = [[0, 1, 0, 0, ..., 1, 0, ...], ...]
         """
         x, exact_match_pos = inputs
-        x = x + self.em_embedding(
-            exact_match_pos
-        )  # (8, 384(문장길이), 768(임베딩)) => x[2] + em_embedding[2] / x[8] + em_embedding[8]
+        x = x + self.em_embedding(exact_match_pos) 
 
         x = x.transpose(1, 2).contiguous()
         conv1_out = self.relu(self.conv_1(x).transpose(1, 2).contiguous().squeeze(-1))
@@ -178,9 +174,7 @@ class ComplexCnnLstmEmQAHead(nn.Module):
             = [[0, 1, 0, 0, ..., 1, 0, ...], ...]
         """
         x, exact_match_pos = inputs
-        x = x + self.em_embedding(
-            exact_match_pos
-        )  # (8, 384(문장길이), 768(임베딩)) => x[2] + em_embedding[2] / x[8] + em_embedding[8]
+        x = x + self.em_embedding(exact_match_pos)
 
         x, (_, _) = self.lstm(x)
         x = x.transpose(1, 2).contiguous()
@@ -189,34 +183,5 @@ class ComplexCnnLstmEmQAHead(nn.Module):
         conv3_out = self.relu(self.conv_3(x).transpose(1, 2).contiguous().squeeze(-1))
         conv5_out = self.relu(self.conv_5(x).transpose(1, 2).contiguous().squeeze(-1))
         output = self.fc(self.dropout(torch.cat((conv1_out, conv3_out, conv5_out), -1)))
-
-        return output
-
-
-class NewCnnQAHead(nn.Module):
-    def __init__(self, input_size):
-        super().__init__()
-        self.relu = nn.GELU()
-        self.dropout = nn.Dropout(p=0.5)
-
-        self.conv_1 = nn.Conv1d(in_channels=input_size, out_channels=256, kernel_size=1, padding=0)
-        self.conv_3 = nn.Conv1d(in_channels=input_size, out_channels=256, kernel_size=3, padding=1)
-        self.conv_5 = nn.Conv1d(in_channels=input_size, out_channels=256, kernel_size=5, padding=2)
-
-        self.fc_13 = nn.Linear(512, 128)
-        self.fc_35 = nn.Linear(512, 128)
-        self.fc_final = nn.Linear(256, 2)
-
-    def forward(self, x):
-        x = x.transpose(1, 2).contiguous()
-        conv1_out = self.relu(self.conv_1(x).transpose(1, 2).contiguous().squeeze(-1))
-        conv3_out = self.relu(self.conv_3(x).transpose(1, 2).contiguous().squeeze(-1))
-        conv5_out = self.relu(self.conv_5(x).transpose(1, 2).contiguous().squeeze(-1))
-
-        fc_13_out = self.relu(self.fc_13(self.dropout(torch.cat((conv1_out, conv3_out), -1))))
-        fc_35_out = self.relu(self.fc_35(self.dropout(torch.cat((conv3_out, conv5_out), -1))))
-
-        output = self.fc_final(self.dropout(torch.cat((fc_13_out, fc_35_out), -1)))
-        # output = self.fc(torch.cat((conv1_out, conv3_out, conv5_out), -1))
 
         return output

@@ -12,6 +12,10 @@ class ModelArguments:
         default="bert-base-multilingual-cased",
         metadata={"help": "Reader Backbone, Path to pretrained model or model identifier from huggingface.co/models"},
     )
+    model_path: str = field(
+        default="",
+        metadata={"help": "checkpoint path to load(used when evaluate&test)"},
+    )
 
     retriever_name: str = field(default="TFIDF", metadata={"help": "this args used in tools/get_retriever"})
     reader_name: str = field(default="DPR")

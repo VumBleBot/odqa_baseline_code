@@ -38,3 +38,7 @@ class RetrievalTrainingArguments:
 
     # Parameters for hybrid-retriever
     alpha: Optional[float] = field(default=0.1, metadata={"help": "Set weight for sparse retriever"})
+
+    # Whether retrain embeddings
+    retrain: Optional[bool] = field(default=False, metadata={"help": "Whether retrain&overwrite embedding files"})
+    
