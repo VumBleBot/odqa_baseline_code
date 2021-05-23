@@ -1,12 +1,16 @@
+![vumblebot-logo](https://i.imgur.com/ch7hFii.png)
+
 # VumbleBot - BaselineCode  <!-- omit in toc -->
 
+- [DEMO](#demo)
+  - [Reader](#reader)
+  - [Retrieval](#retrieval)
 - [TIPS](#tips)
-- [Branch](#branch)
 - [Simple Use](#simple-use)
   - [predict](#predict)
   - [reader train/validation](#reader-trainvalidation)
-  - [retriver train/validation](#retriver-trainvalidation)
-  - [reader, retriver validation](#reader-retriver-validation)
+  - [retriever train/validation](#retriever-trainvalidation)
+  - [reader, retriever validation](#reader-retriever-validation)
   - [make dataset](#make-dataset)
 - [File Structure](#file-structure)
   - [input](#input)
@@ -16,8 +20,8 @@
   - [Usage: Train](#usage-train)
     - [READER Train](#reader-train)
     - [READER Result](#reader-result)
-    - [RETRIVER Train](#retriver-train)
-    - [RETRIVER Result](#retriver-result)
+    - [RETRIEVER Train](#retriever-train)
+    - [RETRIEVER Result](#retriever-result)
   - [Usage: Predict](#usage-predict)
     - [Predict result](#predict-result)
 - [TDD](#tdd)
@@ -30,47 +34,27 @@
 python -m run_mrc --strategies RED_DPR_BERT --run_cnt 1 --debug False --report False
 ```
 
-![image](https://user-images.githubusercontent.com/40788624/119262677-03442780-bc17-11eb-84d0-89590e48fd9d.png)
+![image](https://user-images.githubusercontent.com/40788624/119266204-cf6ffe80-bc24-11eb-9d33-369c239b857e.png)
 
 ### Retrieval
 
 ```
-python -m run_retrieval --strategies RET_DPRBERT --run_cnt 1 --debug False --report False
-
-```
-![image](https://user-images.githubusercontent.com/40788624/119262941-f83dc700-bc17-11eb-85a1-325a54dc32e0.png)
-
-```
-python -m run_retrieval --strategies RET_TFIDF,RET_BM25,RET_DPRBERT,RET_ATIREBM25 --run_cnt 1 --debug False --report False
+python -m run_retrieval --strategies RET_05_BM25_DPRBERT,RET_06_TFIDF_DPRBERT,RET_07_ATIREBM25_DPRBERT --run_cnt 1 --debug False --report False
 ```
 
-![retriever-compare-top-k](https://i.imgur.com/2iHdE5f.png)
-
+![retriever-top-k-compare](https://user-images.githubusercontent.com/40788624/119266107-6daf9480-bc24-11eb-85f5-6f6f09691c9b.png)
 
 ## TIPS
 
 - [전체적인 내용](./documents/README.md)
 - [READER class](./documents/reader.md)
-- [RETRIVER class](./documents/retriever.md)
-
-
-## Branch 
-
-- 코드 수정 후 main branch로 pull request
+- [RETRIEVER class](./documents/retriever.md)
 
 ## Simple Use
 
-> 학습 후 메모리 해제가 완벽하게 안 되는 이슈가 있습니다! 한 번에 너무 많이 돌리는 것만 지양하면 괜찮을 것 같습니다!
-
 ### predict
-
-**지금 방식은 비효율적이라서 곧 수정될 예정입니다!**
-    - 한 번에 하나의 전략만!
-    - model_path와 전략을 맞춰야 됩니다!
-    
 ```bash
-python -m predict --strategies ST01 --model_path {MODEL_PATH}
-python -m predict --strategies ST01 --model_path ../input/checkpoint/ST01_base_95/checkpoint-1100
+python -m predict --strategies ST01 
 ```
 
 ### reader train/validation
@@ -80,14 +64,14 @@ python -m run_mrc --strategies ST01,ST02 --debug True --report False --run_cnt 1
 python -m run_mrc --strategies ST01,ST02 --debug False --report True --run_cnt 3
 ```
 
-### retriver train/validation
+### retriever train/validation
 
 ```bash
 python -m run_retrieval --strategies ST01,ST02 --debug True --report False --run_cnt 1
 python -m run_retrieval --strategies ST01,ST02 --debug False --report True --run_cnt 3
 ```
 
-### reader, retriver validation
+### reader, retriever validation
 
 ```bash
 python -m run --strategies ST01,ST02 --debug True --report False --run_cnt 1
@@ -115,6 +99,8 @@ input/
 │
 ├── checkpoint/ - checkpoints&predictions (strategy_alias_seed)
 │   ├── ST01_base_00
+│   │   ├── checkpoint-500
+│   │   └── ...
 │   ├── ST01_base_95
 │   └── ...
 │ 
@@ -123,21 +109,23 @@ input/
 │   ├── train_data/
 │   └── test_data/
 │
-├── embed/ - embedding caches of `wikidocs.json`
-│   ├── TFIDF/
-│   │   ├── embedding.bin
-│   │   └── tfidv.bin
-│   ├── BM25/
-│   └── DPR/
+├─── embed/ - embedding caches of wikidocs.json
+│   ├── TFIDF
+│   │   ├── TFIDF.bin
+│   │   └── embedding.bin
+│   ├── BM25
+│   │   ├── BM25.bin
+│   │   └── embedding.bin
+│   ├── ATIREBM25
+│   │   ├── ATIREBM25.bin
+│   │   ├── ATIREBM25_idf.bin
+│   │   └── embedding.bin
+│   ├── DPRBERT
+│   │   ├── DPRBERT.pth
+│   │   └── embedding.bin
+│   └── ATIREBM25_DPRBERT
+│       └── classifier.bin
 │
-├── info/ - logging (for visualization)
-│   └── NOT IMPLEMENTED YET
-│
-├── config/ - arguments
-│    ├── data_args.py
-│    ├── model_args.py
-│    └── train_args.py
-│ 
 └── keys/ - secret keys or tokens
     └── secrets.json
 ```
@@ -147,35 +135,59 @@ input/
 ```
 odqa_baseline_code/
 │
-├── reader/ - reader
-│   ├── pororo_reader.py
-│   └── base_reader.py
+├── config/ - arguments config file
+│   ├── README.md
+│   ├── model_args.py
+│   ├── data_args.py
+│   ├── retriever_args.py
+│   └── train_args.py
+│
+├── reader/ - reader 
+│   ├── base_reader.py
+│   ├── custom_head.py
+│   ├── custom_reader.py
+│   └── pororo_reader.py
 │
 ├── retrieval/ - retriever
-│   ├── sparse/
-│   │   ├── tfidf.py
-│   │   └── bm25.py
-│   │
-│   └── dense/
-│       └── dpr.py
-│       
-├── trainer_qa.py - trainer(custom evaluate, predict)
-├── utils_qa.py - post processing function
-├── prepare.py - get datasets/retriever/reader    
-├── tools.py - arguments/tester
+│   ├── base_retrieval.py
+│   ├── dense
+│   │   ├── dense_base.py
+│   │   ├── dpr.py
+│   │   ├── dpr_base.py
+│   │   └── colbert.py
+│   ├── hybrid
+│   │   ├── hybrid_base.py
+│   │   └── hybrid.py
+│   └── sparse
+│       ├── sparse_base.py
+│       ├── tfidf.py
+│       ├── bm25.py
+│       ├── atire_bm25.py
+│       └── ...
 │
-├── tester.py - debugging, testing
+├── make_dataset/ - make necessary datasets
+│   ├── aggregate_wiki.py
+│   ├── kor_sample_dataset.py
+│   ├── negative_ctxs_dataset.py
+│   ├── qd_pair_bm25.py
+│   ├── triplet_dataset.py
+│   └── ...
+│ 
+├── utils/ - utils
+│   ├── evaluation.py - for evaluation normalize
+│   ├── prepare.py - get datasets/retriever/reader
+│   ├── slack_api.py - for slack api loading, report to slack channel
+│   ├── tokenization_kobert.py - for kobert tokenizer
+│   ├── tools.py - update arguments, tester excuter
+│   ├── tester.py - debugging, testing
+│   ├── trainer_qa.py - trainer(custom evaluate, predict)
+│   └── utils_qa.py - post processing function
 │
-├── run.py - train/evaluate
-├── predict.py - inference
-│
-├── tokenization_kobert.py - tokenizer ( `kobert`, `distilkobert` )
-│
-│
-└── config/ - arguments
-    ├── data_args.py
-    ├── model_args.py
-    └── train_args.py
+├── ensemble.py - do ensemble
+├── run_mrc.py - train/evaluate MRC model
+├── run_retriever.py - train/evaluate retriever model
+├── run.py - evaluate both models
+└── predict.py - inference
 ```
 
 ## Json File Example
@@ -190,36 +202,33 @@ ST00.json 하이퍼파라미터는 아래 파일들을 참고해서 수정할 �
 
 ```json
 {
-    "alias": "base",
+    "alias": "vumblebot",
     "model": {
         "model_name_or_path": "monologg/koelectra-small-v3-discriminator",
-        "model_path": "",
         "retriever_name": "BM25_DPRKOBERT",
-        "reader_name": "DPR",
+        "reader_name": "CNN",
         "config_name": "",
         "tokenizer_name": ""
     },
     "data": {
         "dataset_name": "train_dataset",
-        "sub_datasets": "kor_dataset",
-        "sub_datasets_ratio": "0.4",
+        "sub_datasets": "kor_dataset,etr_dataset",
+        "sub_datasets_ratio": "0.2,0.3", 
         "overwrite_cache": false,
         "preprocessing_num_workers": 2,
         "max_seq_length": 384,
         "pad_to_max_length": false,
         "doc_stride": 128,
-        "max_answer_length": 30,
-        "train_retrieval": true,
-        "eval_retrieval": true
+        "max_answer_length": 30, 
     },
     "train": {
-        "masking_ratio": 0.1,
+        "masking_ratio": 0.0,
         "do_train": true,
         "do_eval": true,
         "do_eval_during_training": true,
-        "eval_step": 200,
-        "pororo_prediction": true,
-        "save_total_limit": 2,
+        "eval_step": 500,
+        "pororo_prediction": false,
+        "save_total_limit": 5,
         "save_steps": 100,
         "logging_steps": 100,
         "overwrite_output_dir": true,
@@ -229,7 +238,7 @@ ST00.json 하이퍼파라미터는 아래 파일들을 참고해서 수정할 �
     "retriever": {
         "b": 0.01,
         "k1": 0.1,
-        "topk": 30,
+        "topk": 5,
         "alpha": 0.1,
         "retrain": false,
         "weight_decay": 0.01,
@@ -249,8 +258,7 @@ Server의 디렉토리 구조에서 input과 같은 수준에 위치하면 됩�
 
 ```
 root/  
-├── input/  
-├── code/  
+├── input/
 └── odqa_baseline_code/  
 ```
 
@@ -259,9 +267,9 @@ root/
 #### READER Train
 
 - ST01 전략을 서로 다른 seed 값으로 3번 실행  
-`python -m run --strategies ST01 --run_cnt 3`    
+`python -m run --strategies ST01 --run_cnt 3`
 - ST01, ST02 전략을 서로 다른 seed 값으로 3번씩 실행 (총 6번)   
-`python -m run --strategies ST01,ST02 --run_cnt 3`   
+`python -m run --strategies ST01,ST02 --run_cnt 3`
 
 #### READER Result  
 
@@ -275,50 +283,59 @@ input/
     └── predictions_valid.json
 ```
 
-#### RETRIVER Train
+#### RETRIEVER Train
 
 - 전략(ST00.json)에 있는 Reader 모델은 사용하지 않습니다.
-- Retriver 모델은 학습이 완료된 이후로는 결과가 불변이기 때문에 run_cnt 값을 1로 설정해주시면 됩니다.
+- Retriever 모델은 학습이 완료된 이후로는 결과가 불변이기 때문에 run_cnt 값을 1로 설정해주시면 됩니다.
 - retrain 인자를 사용해서 재학습을 진행할 수 있습니다.
 
-`python -m run_retrieval --strategies ST01,ST02,ST03,ST04 --run_cnt 1`
+`python -m run_retrieval --strategies ST07,ST08,ST09 --run_cnt 1`
 
-#### RETRIVER Result
+#### RETRIEVER Result
 
 - wandb.ai에서 이미지를 확인 할 수 있습니다.
 
 ```
-전략: ST01 RETRIEVER: TFIDF
-TOPK: 0 ACC: 22.08
-TOPK: 1 ACC: 32.92
-TOPK: 2 ACC: 36.25
-TOPK: 3 ACC: 40.42
-TOPK: 4 ACC: 43.33
-TOPK: 5 ACC: 47.08
-TOPK: 6 ACC: 49.58
-TOPK: 7 ACC: 51.25
-TOPK: 8 ACC: 52.92
-TOPK: 9 ACC: 55.00
+전략: RET_07_ATIREBM25_DPRBERT: ATIREBM25_DPRBERT
+TOPK: 1 ACC: 75.00
+TOPK: 2 ACC: 85.83
+TOPK: 3 ACC: 90.42
+TOPK: 4 ACC: 90.83
+TOPK: 5 ACC: 91.67
+TOPK: 6 ACC: 93.33
+TOPK: 7 ACC: 95.00
+TOPK: 8 ACC: 95.42
+TOPK: 9 ACC: 95.83
+TOPK: 10 ACC: 96.25
 ```
 
-![image](https://user-images.githubusercontent.com/40788624/117123189-b0264400-add1-11eb-8ec6-77b05097d4c8.png)
+![image](https://user-images.githubusercontent.com/40788624/119265923-9c793b00-bc23-11eb-8439-c237fa91f6bb.png)
 
 ```
 input
 └── embed
+    ├── TFIDF
+    │   ├── TFIDF.bin
+    │   └── embedding.bin
     ├── BM25
     │   ├── BM25.bin
     │   └── embedding.bin
-    └── TFIDF
-        ├── TFIDF.bin
-        └── embedding.bin
+    ├── ATIREBM25
+    │   ├── ATIREBM25.bin
+    │   ├── ATIREBM25_idf.bin
+    │   └── embedding.bin
+    ├── DPRBERT
+    │   ├── DPRBERT.pth
+    │   └── embedding.bin
+    └── ATIREBM25_DPRBERT
+        └── classifier.bin
 ```
- 
+
 
 ### Usage: Predict
 
 - strategies로 한 개의 전략만 집어넣는 것을 추천합니다.  
-`python -m run --strategies ST01 --model_path ../input/checkpoint/ST02_95_temp/checkpoint-500`  
+`python -m run --strategies ST01`
   
 #### Predict result  
  
@@ -327,17 +344,19 @@ input/
 └── checkpoint/  
     └── ST01/
         ├── nbest_predictions_test.json
-        └── predictions_test.json
+        ├── predictions_test.json
+        ├── valid_results.json
+        └── (optional) pororo_predictions_test.json
 ```
   
 단일 실행도 가능합니다.
   
 ## TDD
-| [tester.py](./tester.py) : 구현된 기능이 정상 작동되는지 테스트     
+| [tester.py](./utils/tester.py) : 구현된 기능이 정상 작동되는지 테스트     
 
 - 검증할 전략을 옵션으로 입력  
 
-    `python -m tester --strategies ST02,ST01`  
+    `python -m utils.tester --strategies ST02,ST01`  
     `python -m run --strategies ST01`  
 
 
