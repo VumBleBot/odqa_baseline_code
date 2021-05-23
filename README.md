@@ -13,14 +13,16 @@
   - [Retrieval](#retrieval)
 - [TIPS](#tips)
 - [Simple Use](#simple-use)
-  - [predict](#predict)
-  - [reader train/validation](#reader-trainvalidation)
-  - [retriever train/validation](#retriever-trainvalidation)
-  - [reader, retriever validation](#reader-retriever-validation)
-  - [make dataset](#make-dataset)
+  - [Dependencies](#dependencies)
+  - [Install packages](#install-packages)
+  - [Predict](#predict)
+  - [Reader train/validation](#reader-trainvalidation)
+  - [Retriever train/validation](#retriever-trainvalidation)
+  - [Reader, Retriever validation](#reader-retriever-validation)
+  - [Make dataset](#make-dataset)
 - [File Structure](#file-structure)
-  - [input](#input)
-  - [baseline_code](#baseline_code)
+  - [Input](#input)
+  - [Baseline_code](#baseline_code)
 - [Json File Example](#json-file-example)
 - [Usage](#usage)
   - [Usage: Train](#usage-train)
@@ -58,33 +60,52 @@ python -m run_retrieval --strategies RET_05_BM25_DPRBERT,RET_06_TFIDF_DPRBERT,RE
 
 ## Simple Use
 
-### predict
+### Dependencies
+- fuzzywuzzy==0.18.0
+- konlpy==0.5.2
+- kss==2.5.0
+- numpy==1.19.4 
+- pandas==1.1.4 
+- pororo==0.4.2 
+- scikit-learn==0.24.1 
+- seaborn==0.11.1 
+- sentencepiece==0.1.95 
+- slack-sdk==3.5.1 
+- torch==1.6.0 
+- tqdm==4.41.1 
+- transformers==4.5.1 
+- wandb==0.10.27 
+
+### Install packages
+`pip install -r requirements.txt`
+
+### Predict
 ```bash
 python -m predict --strategies ST01 
 ```
 
-### reader train/validation
+### Reader train/validation
 
 ```bash
 python -m run_mrc --strategies ST01,ST02 --debug True --report False --run_cnt 1
 python -m run_mrc --strategies ST01,ST02 --debug False --report True --run_cnt 3
 ```
 
-### retriever train/validation
+### Retriever train/validation
 
 ```bash
 python -m run_retrieval --strategies ST01,ST02 --debug True --report False --run_cnt 1
 python -m run_retrieval --strategies ST01,ST02 --debug False --report True --run_cnt 3
 ```
 
-### reader, retriever validation
+### Reader, Retriever validation
 
 ```bash
 python -m run --strategies ST01,ST02 --debug True --report False --run_cnt 1
 python -m run --strategies ST01,ST02 --debug False --report True --run_cnt 3
 ```
 
-### make dataset
+### Make dataset
 
 ```bash
 python -m make_dataset.cheat_dataset
@@ -94,7 +115,7 @@ python -m make_dataset.qd_pair_bm25
 
 ## File Structure  
 
-### input
+### Input
   
 ```
 input/
@@ -136,7 +157,7 @@ input/
     └── secrets.json
 ```
     
-### baseline_code
+### Baseline_code
   
 ```
 odqa_baseline_code/
