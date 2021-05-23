@@ -22,7 +22,6 @@
     - [Predict result](#predict-result)
 - [TDD](#tdd)
 
-
 ## TIPS
 
 - [전체적인 내용](./documents/README.md)

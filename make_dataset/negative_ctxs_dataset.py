@@ -4,12 +4,10 @@ import os.path as p
 
 import numpy as np
 from fuzzywuzzy import fuzz
-
-#  from datasets import Sequence, Value, Features, Dataset, concatenate_datasets
-
 from datasets import concatenate_datasets
-from tools import get_args
-from prepare import get_dataset
+
+from utils.tools import get_args
+from utils.prepare import get_dataset
 from retrieval.sparse import BM25Retrieval
 
 

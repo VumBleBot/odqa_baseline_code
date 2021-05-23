@@ -19,7 +19,7 @@ A subclass of `Trainer` specific to Question-Answering tasks
 import datasets
 from transformers import Trainer
 
-from utils_qa import get_logits_with_offset
+from utils.utils_qa import get_logits_with_offset
 
 
 class QuestionAnsweringTrainer(Trainer):

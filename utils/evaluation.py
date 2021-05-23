@@ -1,12 +1,12 @@
 # Inspired by KorQuad 1.0 evaluation script.
 # https://korquad.github.io/KorQuad%201.0/
 
-from collections import Counter
-import os.path as p
-import json
 import re
-import string
 import sys
+import json
+import string
+import os.path as p
+from collections import Counter
 
 from datasets import load_from_disk
 

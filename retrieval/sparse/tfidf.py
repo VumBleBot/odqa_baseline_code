@@ -1,10 +1,11 @@
 import numpy as np
+
 from konlpy.tag import Mecab
 from transformers import AutoTokenizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 from retrieval.sparse import SparseRetrieval
-from tokenization_kobert import KoBertTokenizer
+from utils.tokenization_kobert import KoBertTokenizer
 
 
 class TfidfRetrieval(SparseRetrieval):

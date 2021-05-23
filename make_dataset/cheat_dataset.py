@@ -2,7 +2,7 @@ import json
 import os.path as p
 from datasets import load_from_disk, concatenate_datasets
 
-from tools import get_args
+from utils.tools import get_args
 
 
 def check_is_real_cheating(mrc_test_dataset, all_mrc_dummy_dataset, cheat_id):

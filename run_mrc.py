@@ -4,10 +4,10 @@ from itertools import product
 from argparse import Namespace
 from transformers import set_seed
 
-from tools import update_args
-from evaluation import evaluation
-from prepare import get_dataset, get_reader
-from slack_api import report_reader_to_slack
+from utils.tools import update_args
+from utils.evaluation import evaluation
+from utils.prepare import get_dataset, get_reader
+from utils.slack_api import report_reader_to_slack
 
 
 def train_reader(args):
@@ -78,7 +78,7 @@ def train_reader(args):
 
 
 if __name__ == "__main__":
-    from tools import get_args
+    from utils.tools import get_args
 
     args = get_args()
     train_reader(args)

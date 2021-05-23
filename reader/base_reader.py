@@ -1,8 +1,7 @@
-from transformers import TrainerCallback, EvalPrediction, DataCollatorWithPadding
-
 from datasets import load_metric
-from utils_qa import postprocess_qa_predictions
-from trainer_qa import QuestionAnsweringTrainer
+from transformers import EvalPrediction, DataCollatorWithPadding
+
+from utils.utils_qa import postprocess_qa_predictions
 
 
 class BaseReader:

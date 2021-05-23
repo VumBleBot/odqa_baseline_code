@@ -4,10 +4,10 @@ from itertools import product
 from argparse import Namespace
 from transformers import set_seed
 
-from tools import update_args
-from slack_api import report_reader_to_slack
-from prepare import get_dataset, get_reader, get_retriever
-from evaluation import evaluation
+from utils.tools import update_args
+from utils.slack_api import report_reader_to_slack
+from utils.prepare import get_dataset, get_reader, get_retriever
+from utils.evaluation import evaluation
 
 
 def train_reader(args):

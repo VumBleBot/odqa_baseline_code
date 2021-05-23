@@ -1,10 +1,10 @@
 import os.path as p
 
-from tokenization_kobert import KoBertTokenizer
 from datasets import load_from_disk, load_dataset, concatenate_datasets, Dataset
-from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoModel, AutoTokenizer
+from transformers import AutoConfig, AutoModel, AutoTokenizer
 
 from reader import CustomHeadReader
+from utils.tokenization_kobert import KoBertTokenizer
 from retrieval.hybrid import Bm25DprBert, TfidfDprBert, LogisticBm25DprBert, LogisticAtireBm25DprBert, AtireBm25DprBert
 from retrieval.sparse import (
     TfidfRetrieval,
@@ -19,23 +19,24 @@ from retrieval.dense import DprBert, BaseTrainMixin, Bm25TrainMixin, ColBert, Dp
 
 RETRIEVER = {
     # Sparse
+    "TFIDF": TfidfRetrieval,
     "BM25": BM25Retrieval,
-    "ATIREBM25": ATIREBM25Retrieval,
     "BM25L": BM25LRetrieval,
     "BM25Plus": BM25PlusRetrieval,
+    "ATIREBM25": ATIREBM25Retrieval,
     "BM25Ensemble": BM25EnsembleRetrieval,
-    "TFIDF": TfidfRetrieval,
     # Dense
-    "DPRBERT": DprBert,
     "COLBERT": ColBert,
+    "DPRBERT": DprBert,
     "DPRELECTRA": DprElectra,
     # Hybrid
-    "BM25_DPRBERT": Bm25DprBert,
     "TFIDF_DPRBERT": TfidfDprBert,
+    "BM25_DPRBERT": Bm25DprBert,
     "ATIREBM25_DPRBERT": AtireBm25DprBert,
     "LOG_BM25_DPRBERT": LogisticBm25DprBert,
     "LOG_ATIREBM25_DPRBERT": LogisticAtireBm25DprBert,
 }
+
 
 def retriever_mixin_factory(name, base, mixin):
     """ mixin class의 method를 overwriting."""
@@ -108,20 +109,12 @@ def get_reader(args, eval_answers):
         )
     elif "electra" in args.model.model_name_or_path:
         model = AutoModel.from_pretrained(
-            args.model.model_name_or_path, 
-            from_tf=bool(".ckpt" in args.model.model_name_or_path), 
-            config=config
+            args.model.model_name_or_path, from_tf=bool(".ckpt" in args.model.model_name_or_path), config=config
         )
     else:
         raise ValueError("BERT/ELECTRA 외 모델에 대한 Custom head model 미구현")
 
-    reader = CustomHeadReader(
-        args=args, 
-        model=model, 
-        tokenizer=tokenizer, 
-        eval_answers=eval_answers
-    )
-
+    reader = CustomHeadReader(args=args, model=model, tokenizer=tokenizer, eval_answers=eval_answers)
     return reader
 
 

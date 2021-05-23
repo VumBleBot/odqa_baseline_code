@@ -137,7 +137,7 @@ class ComplexCnnEmQAHead(nn.Module):
             = [[0, 1, 0, 0, ..., 1, 0, ...], ...]
         """
         x, exact_match_pos = inputs
-        x = x + self.em_embedding(exact_match_pos) 
+        x = x + self.em_embedding(exact_match_pos)
 
         x = x.transpose(1, 2).contiguous()
         conv1_out = self.relu(self.conv_1(x).transpose(1, 2).contiguous().squeeze(-1))

@@ -69,13 +69,17 @@ class BaseTrainMixin:
         # dataset.features : ['question', 'context', 'answers', ...]
         datasets = get_retriever_dataset(self.args)
 
-#        tokenizer_input = self.tokenizer(datasets["train"][1]["context"], padding="max_length", max_length=512, truncation=True)
-#        print("tokenizer:", self.tokenizer.convert_ids_to_tokens(tokenizer_input["input_ids"]))
+        #        tokenizer_input = self.tokenizer(datasets["train"][1]["context"], padding="max_length", max_length=512, truncation=True)
+        #        print("tokenizer:", self.tokenizer.convert_ids_to_tokens(tokenizer_input["input_ids"]))
 
         train_dataset = datasets["train"]
 
-        q_seqs = self.tokenizer(train_dataset["question"], padding="longest", truncation=True, max_length=512, return_tensors="pt")
-        p_seqs = self.tokenizer(train_dataset["context"], padding="max_length", truncation=True, max_length=512, return_tensors="pt")
+        q_seqs = self.tokenizer(
+            train_dataset["question"], padding="longest", truncation=True, max_length=512, return_tensors="pt"
+        )
+        p_seqs = self.tokenizer(
+            train_dataset["context"], padding="max_length", truncation=True, max_length=512, return_tensors="pt"
+        )
 
         train_dataset = TensorDataset(
             p_seqs["input_ids"],
@@ -91,10 +95,12 @@ class BaseTrainMixin:
 
             eval_dataset = datasets["validation"]
 
-            q_seqs = self.tokenizer(eval_dataset["question"], padding="longest", truncation=True, max_length=512,
-                                    return_tensors="pt")
-            p_seqs = self.tokenizer(eval_dataset["context"], padding="max_length", truncation=True, max_length=512,
-                                    return_tensors="pt")
+            q_seqs = self.tokenizer(
+                eval_dataset["question"], padding="longest", truncation=True, max_length=512, return_tensors="pt"
+            )
+            p_seqs = self.tokenizer(
+                eval_dataset["context"], padding="max_length", truncation=True, max_length=512, return_tensors="pt"
+            )
 
             eval_dataset = TensorDataset(
                 p_seqs["input_ids"],
@@ -225,11 +231,12 @@ class BaseTrainMixin:
 
                         eval_loss += loss.item()
 
-                    print(f"Epoch: {epoch + 1:02}\tEval Loss: {eval_loss / len(eval_dataloader):.4f}\tAccuracy: {correct/total:.4f}")
+                    print(
+                        f"Epoch: {epoch + 1:02}\tEval Loss: {eval_loss / len(eval_dataloader):.4f}\tAccuracy: {correct/total:.4f}"
+                    )
 
             p_model.train()
             q_model.train()
-
 
         return p_model, q_model
 
@@ -244,22 +251,14 @@ class Bm25TrainMixin:
 
         # query
         q_seqs = self.tokenizer(
-            dataset["query"],
-            padding="longest",
-            truncation=True,
-            max_length=512,
-            return_tensors="pt",
+            dataset["query"], padding="longest", truncation=True, max_length=512, return_tensors="pt"
         )
 
         print("query tokenized:", self.tokenizer.convert_ids_to_tokens(q_seqs["input_ids"][0]))
 
         # negative_samples
         p_seqs = self.tokenizer(
-            negative_samples,
-            padding="longest",
-            truncation=True,
-            max_length=512,
-            return_tensors="pt",
+            negative_samples, padding="longest", truncation=True, max_length=512, return_tensors="pt"
         )
 
         print("negative_sample tokenized:", self.tokenizer.convert_ids_to_tokens(p_seqs["input_ids"][0]))

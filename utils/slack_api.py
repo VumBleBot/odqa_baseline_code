@@ -9,10 +9,13 @@ from slack_sdk.errors import SlackApiError
 # TODO: 토큰을 GitHub에 올리면 토큰이 자동으로 재생성되므로 Github에 올리면 안됩니다.
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
 # TODO : input아래에 keys 디렉토리를 만들고, secrets.json 파일을 생성하세요.
 # TODO : json 파일 내에서 세팅을 설정하세요.
-_secret_file_path = os.path.join(BASE_DIR, 'input/keys/secrets.json')
-with open(_secret_file_path, 'r') as secret_file:
+
+_secret_file_path = os.path.join(BASE_DIR, "..", "input/keys/secrets.json")
+
+with open(_secret_file_path, "r") as secret_file:
     secrets = json.loads(secret_file.read())
 
 token = secrets["SLACK"]["TOKEN"]
@@ -88,10 +91,6 @@ def report_retriever_to_slack(fig):
 
 
 if __name__ == "__main__":
-    #  fig = plt.figure(figsize=(12, 12))
-    #  plt.plot([1, 2, 3, 4])
-    #  report_image_to_slack(fig)
-
     from argparse import Namespace
 
     eval_results = {"exact_match": "18.75%", "f1": "28.08%"}

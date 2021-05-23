@@ -3,8 +3,8 @@ import numpy as np
 import pandas as pd
 from datasets import Sequence, Value, Features, Dataset, concatenate_datasets
 
-from tools import get_args
-from prepare import get_dataset
+from utils.tools import get_args
+from utils.prepare import get_dataset
 from retrieval.sparse import BM25Retrieval
 
 

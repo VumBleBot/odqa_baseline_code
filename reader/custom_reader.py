@@ -1,13 +1,12 @@
-import os.path as p
 import random
+import os.path as p
 
-import numpy as np
 import torch
-from torch import nn
-from trainer_qa import QuestionAnsweringTrainer
-
+import numpy as np
+import torch.nn as nn
 from transformers import TrainerCallback
 from transformers.modeling_outputs import QuestionAnsweringModelOutput
+
 from reader.base_reader import BaseReader
 from reader.custom_head import (
     DprQAHead,
@@ -19,6 +18,7 @@ from reader.custom_head import (
     ComplexCnnEmQAHead,
     ComplexCnnLstmEmQAHead,
 )
+from utils.trainer_qa import QuestionAnsweringTrainer
 
 READER_HEAD = {
     "DPR": DprQAHead,

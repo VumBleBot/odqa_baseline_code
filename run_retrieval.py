@@ -8,9 +8,9 @@ import matplotlib.pyplot as plt
 from transformers import set_seed
 
 from fuzzywuzzy import fuzz
-from tools import get_args, update_args
-from slack_api import report_retriever_to_slack
-from prepare import get_dataset, get_retriever
+from utils.tools import get_args, update_args
+from utils.slack_api import report_retriever_to_slack
+from utils.prepare import get_dataset, get_retriever
 
 
 def get_topk_fig(args, topk_result):

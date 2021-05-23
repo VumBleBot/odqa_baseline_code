@@ -1,15 +1,19 @@
 import os
-import os.path as p
+import tqdm
 import pickle
-import tqdm 
+import os.path as p
+
 import numpy as np
-from retrieval.base_retrieval import Retrieval
-from sklearn.linear_model import LogisticRegression
 from scipy.special import softmax
+from sklearn.linear_model import LogisticRegression
 from datasets import load_from_disk, concatenate_datasets
+
+from retrieval.base_retrieval import Retrieval
+
 
 class HybridRetrieval(Retrieval):
     """ 이미 학습된 Sparse, Dense Retriever를 사용한다."""
+
     def __init__(self, args):
         super().__init__(args)
         self.sparse_retriever = None
@@ -34,7 +38,7 @@ class HybridRetrieval(Retrieval):
 
             ranks.append((doc, score))
 
-        ranks = sorted(ranks, key=lambda x: x[1], reverse=True)[: topk]
+        ranks = sorted(ranks, key=lambda x: x[1], reverse=True)[:topk]
 
         doc_index, doc_score = zip(*ranks)
         doc_index, doc_score = list(doc_index), list(doc_score)
@@ -67,10 +71,10 @@ class HybridLogisticRetrieval(Retrieval):
         super().__init__(args)
         self.sparse_retriever = None
         self.dense_retriever = None
-        self.logistic = None 
+        self.logistic = None
         self.num_features = 3
         self.kbound = 3
-        
+
     def get_embedding(self):
         self.sparse_retriever.get_embedding()
         self.dense_retriever.get_embedding()
@@ -78,35 +82,31 @@ class HybridLogisticRetrieval(Retrieval):
         self.p_embedding = 1  # fake for super().retrieve's, assert line
 
     def _exec_logistic_regression(self):
-        datasets = load_from_disk(p.join(self.args.path.train_data_dir, 'train_dataset')) 
-        
-        train_dataset = concatenate_datasets([
-            datasets['train'],
-            datasets['validation']
-        ])
+        datasets = load_from_disk(p.join(self.args.path.train_data_dir, "train_dataset"))
 
-        queries = train_dataset['question']
+        train_dataset = concatenate_datasets([datasets["train"], datasets["validation"]])
+
+        queries = train_dataset["question"]
         doc_scores, doc_indices = self.sparse_retriever.get_relevant_doc_bulk(queries, topk=8)
         doc_scores, doc_indices = np.array(doc_scores), np.array(doc_indices)
 
         contexts = np.array(self.sparse_retriever.contexts)
 
-        train_x, train_y = [], [] 
-    
+        train_x, train_y = [], []
 
         for idx in tqdm.tqdm(range(len(doc_scores))):
             doc_index = doc_indices[idx]
-            org_context = train_dataset['context'][idx]
-            
-            feature_vector = [doc_scores[idx][:pow(2, i)] for i in range(1, self.num_features+1)]
-            feature_vector = list(map(lambda x: x.mean(),feature_vector))
+            org_context = train_dataset["context"][idx]
+
+            feature_vector = [doc_scores[idx][: pow(2, i)] for i in range(1, self.num_features + 1)]
+            feature_vector = list(map(lambda x: x.mean(), feature_vector))
             feature_vector = softmax(feature_vector)
 
             label = 0
             y = -1
             if org_context in contexts[doc_index]:
                 y = list(contexts[doc_index]).index(org_context)
-            if y!=-1 and y < self.kbound:
+            if y != -1 and y < self.kbound:
                 label = 1
 
             train_x.append(feature_vector)
@@ -131,16 +131,16 @@ class HybridLogisticRetrieval(Retrieval):
                 pickle.dump(self.logistic, f)
 
     def get_relevant_doc_bulk(self, queries, topk):
-        min_topk = pow(2,self.num_features)
-        
+        min_topk = pow(2, self.num_features)
+
         dense_scores, dense_indices = self.dense_retriever.get_relevant_doc_bulk(queries, topk)
         sparse_scores, sparse_indices = self.sparse_retriever.get_relevant_doc_bulk(queries, max(min_topk, topk))
         sparse_scores = np.array(sparse_scores)
 
-        feature_vectors=[]
+        feature_vectors = []
         for sparse_score in sparse_scores:
-            feature_vector = [sparse_score[:pow(2, i)] for i in range(1, self.num_features+1)]
-            feature_vector = list(map(lambda x: x.mean(),feature_vector))
+            feature_vector = [sparse_score[: pow(2, i)] for i in range(1, self.num_features + 1)]
+            feature_vector = list(map(lambda x: x.mean(), feature_vector))
             feature_vector = softmax(feature_vector)
             feature_vectors.append(feature_vector)
 
@@ -148,7 +148,7 @@ class HybridLogisticRetrieval(Retrieval):
 
         doc_scores, doc_indices = [], []
         for query_id in range(len(queries)):
-            if labels[query_id]==1:
+            if labels[query_id] == 1:
                 doc_scores.append(sparse_scores[query_id])
                 doc_indices.append(sparse_indices[query_id])
             else:
@@ -156,4 +156,3 @@ class HybridLogisticRetrieval(Retrieval):
                 doc_indices.append(dense_indices[query_id])
 
         return doc_scores, doc_indices
-

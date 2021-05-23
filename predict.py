@@ -1,7 +1,7 @@
 import os.path as p
 
-from tools import update_args
-from prepare import get_dataset, get_reader, get_retriever
+from utils.tools import update_args, get_args
+from utils.prepare import get_dataset, get_reader, get_retriever
 
 
 def predict(args):
@@ -13,7 +13,6 @@ def predict(args):
         args = update_args(args, strategy)  # auto add args.save_path, args.base_path
         args.strategy = strategy
 
-        # args.model.model_name_or_path = args.model_path
         args.train.output_dir = p.join(args.path.checkpoint, strategy)
         args.train.do_predict = True
 
@@ -31,8 +30,6 @@ def predict(args):
 
 
 if __name__ == "__main__":
-    from tools import get_args
-
     args = get_args()
 
     predict(args)

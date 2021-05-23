@@ -7,8 +7,8 @@ from collections import defaultdict
 import numpy as np
 from tqdm.auto import tqdm
 
-from tools import get_args, update_args
-from prepare import get_retriever, get_reader, get_dataset
+from utils.tools import get_args, update_args
+from utils.prepare import get_retriever, get_reader, get_dataset
 
 TOPK = 5
 MAX_ANSWER_LENGTH = 30

@@ -1,13 +1,14 @@
-from tqdm.auto import tqdm
 import pickle
 import numpy as np
 import os.path as p
+from tqdm.auto import tqdm
+
 from konlpy.tag import Mecab
-from sklearn.feature_extraction.text import TfidfVectorizer
-from tokenization_kobert import KoBertTokenizer
 from transformers import AutoTokenizer
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 from retrieval.sparse import SparseRetrieval
+from utils.tokenization_kobert import KoBertTokenizer
 
 
 class BM25PlusRetrieval(SparseRetrieval):
@@ -45,7 +46,13 @@ class BM25PlusRetrieval(SparseRetrieval):
         self.idf = None
 
     def get_embedding(self):
-        if p.isfile(self.embed_path) and p.isfile(self.encoder_path) and p.isfile(self.idf_encoder_path) and p.isfile(self.idf_path) and not self.args.retriever.retrain:
+        if (
+            p.isfile(self.embed_path)
+            and p.isfile(self.encoder_path)
+            and p.isfile(self.idf_encoder_path)
+            and p.isfile(self.idf_path)
+            and not self.args.retriever.retrain
+        ):
             with open(self.embed_path, "rb") as f:
                 self.p_embedding = pickle.load(f)
 

@@ -1,13 +1,14 @@
-from tqdm.auto import tqdm
 import pickle
 import numpy as np
 import os.path as p
+from tqdm.auto import tqdm
+
 from konlpy.tag import Mecab
-from sklearn.feature_extraction.text import TfidfVectorizer
-from tokenization_kobert import KoBertTokenizer
 from transformers import AutoTokenizer
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 from retrieval.sparse import SparseRetrieval
+from utils.tokenization_kobert import KoBertTokenizer
 
 
 class ATIREBM25Retrieval(SparseRetrieval):

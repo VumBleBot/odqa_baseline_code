@@ -2,12 +2,13 @@ import tqdm
 import pickle
 import numpy as np
 import os.path as p
+
 from konlpy.tag import Mecab
-from sklearn.feature_extraction.text import TfidfVectorizer
-from tokenization_kobert import KoBertTokenizer
 from transformers import AutoTokenizer
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 from retrieval.sparse import SparseRetrieval
+from utils.tokenization_kobert import KoBertTokenizer
 
 
 class BM25Retrieval(SparseRetrieval):
@@ -33,7 +34,7 @@ class BM25Retrieval(SparseRetrieval):
         for idx, context in enumerate(self.contexts):
             self.dls[idx] = len(context)
 
-        self.avdl = sum(self.dls)/len(self.contexts)
+        self.avdl = sum(self.dls) / len(self.contexts)
         self.p_embedding = None
 
     def get_embedding(self):

@@ -1,6 +1,8 @@
+import numpy as np
+
 from retrieval.base_retrieval import Retrieval
 from retrieval.sparse import ATIREBM25Retrieval, BM25LRetrieval, BM25PlusRetrieval
-import numpy as np
+
 
 class BM25EnsembleRetrieval(Retrieval):
     """ 이미 학습된 BM25 Retriever들을 사용한다."""
@@ -37,7 +39,7 @@ class BM25EnsembleRetrieval(Retrieval):
         _, _ = self.bm25l.get_relevant_doc_bulk(queries, 1)
         _, _ = self.bm25plus.get_relevant_doc_bulk(queries, 1)
 
-        ensemble_results = (self.atire_bm25.results + self.bm25l.results + self.bm25plus.results)/3
+        ensemble_results = (self.atire_bm25.results + self.bm25l.results + self.bm25plus.results) / 3
 
         doc_scores, doc_indices = [], []
 
