@@ -1,0 +1,15 @@
+{
+    "alias": "EXAMPLES TFIDF",
+    "model": {
+        "retriever_name": "TFIDF",
+        "tokenizer_name": ""
+    },
+    "data": {
+        "dataset_name": "train_dataset",
+        "sub_datasets": ""
+    },
+    "retriever": {
+        "retrain": false,
+        "topk": 10
+    }
+}

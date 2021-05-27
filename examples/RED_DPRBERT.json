@@ -1,0 +1,28 @@
+{
+    "alias": "EXAMPLES DPR ELECTRA",
+    "model": {
+        "model_name_or_path": "monologg/koelectra-small-v3-discriminator",
+        "model_path": "",
+        "reader_name": "DPR"
+    },
+    "data": {
+        "dataset_name": "train_dataset",
+        "sub_datasets": "",
+        "sub_datasets_ratio": ""
+    },
+    "train": {
+        "save_total_limit": 2,
+        "save_steps": 100,
+        "logging_steps": 100,
+        "overwrite_output_dir": true,
+        "do_train": true,
+        "do_eval": true,
+        "do_predict": false,
+        "report_to": ["wandb"]
+    },
+    "retriever": {
+        "retrain": false,
+        "dense_train_dataset": "train_dataset",
+        "topk": 10
+    }
+}
