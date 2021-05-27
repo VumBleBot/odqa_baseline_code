@@ -86,6 +86,14 @@ pip install -r requirements.txt
 python -m predict --strategies ST01 
 ```
 
+### Ensemble
+
+> Ensemble할 모델들은 코드내에서 직접 입력해주시면 됩니다!
+
+```bash
+python -m ensemble
+```
+
 ### Reader train/validation
 
 ```bash
