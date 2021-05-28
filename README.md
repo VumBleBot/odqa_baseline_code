@@ -34,6 +34,14 @@
     - [Predict result](#predict-result)
 - [TDD](#tdd)
 
+## Install
+
+```
+pip install -r requirements.txt
+```
+
+[Mecab 설치](https://joyae.github.io/2020-10-02-Mecab/)
+
 ## DEMO
 
 ### Reader
@@ -408,3 +416,14 @@ input/
 
     OK
     ```
+```
+
+## Reference
+
+- [Using the Hammer Only on Nails: A Hybrid Method for Evidence Retrieval for Question Answering](https://arxiv.org/abs/2009.10791)
+- [Dense Passage Retrieval for Open-Domain Question Answering](https://arxiv.org/abs/2004.04906)
+- [Pyserini: An Easy-to-Use Python Toolkit to Support Replicable IR Research with Sparse and Dense Representations](https://arxiv.org/abs/2102.10073)
+- [Improvements to BM25 and Language Models Examined](http://www.cs.otago.ac.nz/homepages/andrew/papers/2014-2.pdf)
+- [SpanBERT: Improving Pre-training by Representing and Predicting Spans](https://arxiv.org/abs/1907.10529)
+- [ColBERT: Efficient and Effective Passage Search via Contextualized Late Interaction over BERT (SIGIR'20).](https://arxiv.org/abs/2004.12832)
+- [Reading Wikipedia to Answer Open-Domain Questions](https://arxiv.org/abs/1704.00051)
