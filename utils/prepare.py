@@ -1,7 +1,7 @@
 import os.path as p
 
-from datasets import load_from_disk, load_dataset, concatenate_datasets, Dataset
 from transformers import AutoConfig, AutoModel, AutoTokenizer
+from datasets import load_from_disk, load_dataset, concatenate_datasets, Dataset
 
 from reader import CustomHeadReader
 from utils.tokenization_kobert import KoBertTokenizer
