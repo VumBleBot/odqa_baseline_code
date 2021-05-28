@@ -422,8 +422,7 @@ input/
     ```
 
 ## Contributors
-[구건모(ggm1207)](https://github.com/olenmg), [김종헌(olenmg)](https://github.com/ggm1207), [김성익(SeongIkKim)](https://github.com/SeongIkKim), [신지영(ebbunnim)](https://github.com/ebbunnim), [이수연(sooyounlee)](https://github.com/sooyounlee)
-
+[구건모(ggm1207)](https://github.com/olenmg) | [김종헌(olenmg)](https://github.com/ggm1207) | [김성익(SeongIkKim)](https://github.com/SeongIkKim) | [신지영(ebbunnim)](https://github.com/ebbunnim) | [이수연(sooyounlee)](https://github.com/sooyounlee)
 
 ## Reference
 - [KorQuAD](https://korquad.github.io/KorQuad%201.0/)
