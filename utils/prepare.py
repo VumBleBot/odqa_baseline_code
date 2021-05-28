@@ -8,7 +8,6 @@ from utils.tokenization_kobert import KoBertTokenizer
 from retrieval.hybrid import Bm25DprBert, TfidfDprBert, LogisticBm25DprBert, LogisticAtireBm25DprBert, AtireBm25DprBert
 from retrieval.sparse import (
     TfidfRetrieval,
-    BM25Retrieval,
     BM25LRetrieval,
     BM25PlusRetrieval,
     ATIREBM25Retrieval,
@@ -20,7 +19,6 @@ from retrieval.dense import DprBert, BaseTrainMixin, Bm25TrainMixin, ColBert, Dp
 RETRIEVER = {
     # Sparse
     "TFIDF": TfidfRetrieval,
-    "BM25": BM25Retrieval,
     "BM25L": BM25LRetrieval,
     "BM25Plus": BM25PlusRetrieval,
     "ATIREBM25": ATIREBM25Retrieval,
