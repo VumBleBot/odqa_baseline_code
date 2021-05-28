@@ -54,7 +54,7 @@ python -m run_retrieval --strategies RET_05_BM25_DPRBERT,RET_06_TFIDF_DPRBERT,RE
 
 ## TIPS
 
-- [전체적인 내용](./documents/README.md)
+- [Overall](./documents/README.md)
 - [READER class](./documents/reader.md)
 - [RETRIEVER class](./documents/retriever.md)
 
@@ -84,6 +84,14 @@ pip install -r requirements.txt
 ### Predict
 ```bash
 python -m predict --strategies ST01 
+```
+
+### Ensemble
+
+> Ensemble할 모델들은 코드내에서 직접 입력해주시면 됩니다!
+
+```bash
+python -m ensemble
 ```
 
 ### Reader train/validation
