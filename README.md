@@ -8,6 +8,7 @@
 
 # VumbleBot - BaselineCode  <!-- omit in toc -->
 
+- [Install](#install)
 - [DEMO](#demo)
   - [Reader](#reader)
   - [Retrieval](#retrieval)
@@ -16,6 +17,7 @@
   - [Dependencies](#dependencies)
   - [Install packages](#install-packages)
   - [Predict](#predict)
+  - [Ensemble](#ensemble)
   - [Reader train/validation](#reader-trainvalidation)
   - [Retriever train/validation](#retriever-trainvalidation)
   - [Reader, Retriever validation](#reader-retriever-validation)
@@ -33,6 +35,8 @@
   - [Usage: Predict](#usage-predict)
     - [Predict result](#predict-result)
 - [TDD](#tdd)
+- [Contributors](#contributors)
+- [Reference](#reference)
 
 ## Install
 
@@ -416,10 +420,12 @@ input/
 
     OK
     ```
-```
+
+## Contributors
+[구건모(ggm1207)](https://github.com/olenmg) | [김종헌(olenmg)](https://github.com/ggm1207) | [김성익(SeongIkKim)](https://github.com/SeongIkKim) | [신지영(ebbunnim)](https://github.com/ebbunnim) | [이수연(sooyounlee)](https://github.com/sooyounlee)
 
 ## Reference
-
+- [KorQuAD](https://korquad.github.io/KorQuad%201.0/)
 - [Using the Hammer Only on Nails: A Hybrid Method for Evidence Retrieval for Question Answering](https://arxiv.org/abs/2009.10791)
 - [Dense Passage Retrieval for Open-Domain Question Answering](https://arxiv.org/abs/2004.04906)
 - [Pyserini: An Easy-to-Use Python Toolkit to Support Replicable IR Research with Sparse and Dense Representations](https://arxiv.org/abs/2102.10073)
