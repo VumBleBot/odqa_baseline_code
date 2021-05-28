@@ -37,6 +37,9 @@
 - [TDD](#tdd)
 - [Contributors](#contributors)
 - [Reference](#reference)
+  - [Papers](#papers)
+  - [Dataset](#dataset)
+- [License](#license)
 
 ## Install
 
@@ -425,7 +428,7 @@ input/
 [구건모(ggm1207)](https://github.com/olenmg) | [김종헌(olenmg)](https://github.com/ggm1207) | [김성익(SeongIkKim)](https://github.com/SeongIkKim) | [신지영(ebbunnim)](https://github.com/ebbunnim) | [이수연(sooyounlee)](https://github.com/sooyounlee)
 
 ## Reference
-- [KorQuAD](https://korquad.github.io/KorQuad%201.0/)
+### Papers
 - [Using the Hammer Only on Nails: A Hybrid Method for Evidence Retrieval for Question Answering](https://arxiv.org/abs/2009.10791)
 - [Dense Passage Retrieval for Open-Domain Question Answering](https://arxiv.org/abs/2004.04906)
 - [Pyserini: An Easy-to-Use Python Toolkit to Support Replicable IR Research with Sparse and Dense Representations](https://arxiv.org/abs/2102.10073)
@@ -433,3 +436,10 @@ input/
 - [SpanBERT: Improving Pre-training by Representing and Predicting Spans](https://arxiv.org/abs/1907.10529)
 - [ColBERT: Efficient and Effective Passage Search via Contextualized Late Interaction over BERT (SIGIR'20).](https://arxiv.org/abs/2004.12832)
 - [Reading Wikipedia to Answer Open-Domain Questions](https://arxiv.org/abs/1704.00051)
+
+### Dataset
+- [KorQuAD 1.0](https://korquad.github.io/KorQuad%201.0/)
+- [(ko)Wikipedia](https://bit.ly/3uoGPCg)
+
+## License
+`VumBleBot/odqa_baseline_code`는 **Apache License 2.0**을 따릅니다.  
