@@ -1,30 +1,47 @@
+""" slack api
+# TODO : 토큰을 GitHub에 올리면 토큰이 자동으로 재생성되므로 Github에 올리면 안됩니다.
+# TODO : secrets.json 파일을 생성하세요.
+# TODO : json 파일 내에서 세팅을 설정하세요.
+    - TOKEN (required), https://api.slack.com/apps
+    - CHANNEL_ID (required)
+    - USER_NAME
+    - COLOR
+    - EMOJI
+"""
+
 import os
 import json
 import datetime
-from pathlib import Path
 
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
-# TODO: 토큰을 GitHub에 올리면 토큰이 자동으로 재생성되므로 Github에 올리면 안됩니다.
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+USER_NAME = "anonymous"
+COLOR = "#ffffff"
+EMOJI = ":smile:"
+CHANNEL_ID = None
 
-# TODO : input아래에 keys 디렉토리를 만들고, secrets.json 파일을 생성하세요.
-# TODO : json 파일 내에서 세팅을 설정하세요.
 
-_secret_file_path = os.path.join(BASE_DIR, "..", "input/keys/secrets.json")
+def get_slack_client(args):
+    global USER_NAME, COLOR, EMOJI, CHANNEL_ID
+    file_name = "secrets.json"
+    secret_key_path = os.path.join(args.data_path, "keys", file_name)
 
-with open(_secret_file_path, "r") as secret_file:
-    secrets = json.loads(secret_file.read())
+    assert os.path.exists(secret_key_path), f"{secret_key_path} 파일이 존재하지 않습니다."
 
-token = secrets["SLACK"]["TOKEN"]
-channel_id = secrets["SLACK"]["CHANNEL_ID"]
-client = WebClient(token)
+    with open(secret_key_path, "r") as secret_file:
+        secrets = json.loads(secret_file.read())
 
-USER_NAME = secrets["SLACK"]["USER_NAME"]
-COLOR = secrets["SLACK"]["COLOR"]
-EMOJI = secrets["SLACK"]["EMOJI"]
+    token = secrets["SLACK"]["TOKEN"]
+    CHANNEL_ID = secrets["SLACK"]["CHANNEL_ID"]
+    client = WebClient(token)
+
+    USER_NAME = secrets["SLACK"]["USER_NAME"]
+    COLOR = secrets["SLACK"]["COLOR"]
+    EMOJI = secrets["SLACK"]["EMOJI"]
+
+    return client
 
 
 def get_format_datas(args, run_type, eval_results, use_pororo=False):
@@ -58,27 +75,31 @@ def report_reader_to_slack(args, run_type, eval_results, use_pororo=False):
         eval_results: dict, {'exact_match': '00.00%', 'f1': '00.00%'}
     """
 
+    client = get_slack_client(args)
+
     attachments = get_format_datas(args, run_type, eval_results, use_pororo)
 
     try:
-        result = client.chat_postMessage(channel=channel_id, attachments=attachments)
+        result = client.chat_postMessage(channel=CHANNEL_ID, attachments=attachments)
         print(result)
     except SlackApiError as e:
         print("Error uploading file: {}".format(e))
 
 
-def report_retriever_to_slack(fig):
+def report_retriever_to_slack(args, fig):
     """retriever 결과를 slack 으로 전송합니다.
     Args:
         fig : plt.Figure, retriever 성능을 비교한 figure
     """
+    client = get_slack_client(args)
+
     file_path = "./temp.png"
     fig.savefig(file_path)
 
     try:
         result = client.files_upload(
             file=file_path,
-            channels=channel_id,
+            channels=CHANNEL_ID,
             filename="fig_image.png",
             initial_comment="Retrieval Results! :smile:",
             title="_".join([USER_NAME, "Retrievers Results"]),
@@ -88,16 +109,3 @@ def report_retriever_to_slack(fig):
         print("Error uploading file: {}".format(e))
     finally:
         os.remove(file_path)
-
-
-if __name__ == "__main__":
-    from argparse import Namespace
-
-    eval_results = {"exact_match": "18.75%", "f1": "28.08%"}
-
-    args = Namespace()
-    args.strategy = "ST01"
-    args.reader_name = "DPR"
-    args.alias = "테스트 중입니다!"
-
-    report_reader_to_slack(args, "run.py", eval_results)
