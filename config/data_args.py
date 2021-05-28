@@ -8,7 +8,7 @@ class DataTrainingArguments:
     Arguments pertaining to what data we are going to input our model for training and eval.
     """
 
-    dataset_name: Optional[str] = field(default="train_dataset", metadata={"help": "The name of the dataset to use."})
+    dataset_name: Optional[str] = field(default="squad_kor_v1", metadata={"help": "The name of the dataset to use."})
 
     sub_datasets: Optional[str] = field(default="", metadata={"help": "The names of the sub datasets to use"})
     sub_datasets_ratio: Optional[str] = field(default="", metadata={"help": "The ratios of the sub datasets"})

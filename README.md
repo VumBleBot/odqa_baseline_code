@@ -8,7 +8,7 @@
 
 # VumbleBot - BaselineCode  <!-- omit in toc -->
 
-- [Install](#install)
+- [Install](#Install)
 - [DEMO](#demo)
   - [Reader](#reader)
   - [Retrieval](#retrieval)
@@ -50,6 +50,8 @@ pip install -r requirements.txt
 [Mecab 설치](https://joyae.github.io/2020-10-02-Mecab/)
 
 ## DEMO
+
+- `./examples/*` 참고하셔서 작성하시면 됩니다!
 
 ### Reader
 

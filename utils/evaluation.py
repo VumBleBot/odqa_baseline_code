@@ -8,7 +8,7 @@ import string
 import os.path as p
 from collections import Counter
 
-from datasets import load_from_disk
+from datasets import load_from_disk, load_dataset
 
 
 def get_gt_json(args):
@@ -27,9 +27,17 @@ def get_gt_json(args):
         with open(save_path, "r", encoding="utf-8") as f:
             gt_json = json.load(f)
     else:
-        eval_datasets = load_from_disk(p.join(args.path.train_data_dir, args.data.dataset_name))["validation"]
+        eval_datasets = None
+
+        if args.data.dataset_name == "train_data":
+            eval_datasets = load_from_disk(p.join(args.path.train_data_dir, args.data.dataset_name))["validation"]
+        elif args.data.dataset_name == "squad_kor_v1":
+            eval_datasets = load_dataset(args.data.dataset_name)["validation"]
+
+        assert eval_datasets is not None, f"{args.data.dataset_name}이 존재하지 않습니다."
 
         gt_json = []
+
         for data in eval_datasets:
             result = {"id": data["id"], "answer": data["answers"]["text"]}
             gt_json.append(result)

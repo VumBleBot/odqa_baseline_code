@@ -137,6 +137,8 @@ def get_dataset(args, is_train=True):
             datasets = load_from_disk(p.join(args.path.train_data_dir, "test_dataset"))
     elif args.data.dataset_name == "squad_kor_v1":
         datasets = load_dataset(args.data.dataset_name)
+        datasets = datasets.map(lambda examples: {"document_id": examples["id"]})
+
     # Add more dataset option here.
 
     if datasets is None:

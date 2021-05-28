@@ -71,9 +71,10 @@ def update_args(args, strategy):
     :param strategy: strategy file name in config directory(input/config/).
     :return: updated args.
     """
-    json_path = os.path.join(args.data_path, "config", f"{strategy}.json")
+    json_path = os.path.join(args.path.config, f"{strategy}.json")
+
     if not os.path.exists(json_path):
-        raise FileNotFoundError("JSON 파일이 보이지 않습니다.")
+        raise FileNotFoundError(f"{json_path}, JSON 파일이 보이지 않습니다.")
 
     with open(json_path, "r") as f:
         temp = json.load(f)
@@ -100,7 +101,7 @@ def get_args():
     arg_parser.add_argument("--seeds", type=str2intlist, default=SEEDS)
     arg_parser.add_argument("--data_path", type=str, default="../input/")
     arg_parser.add_argument("--debug", type=str2bool, default=False)
-    arg_parser.add_argument("--report", type=str2bool, default=True)
+    arg_parser.add_argument("--report", type=str2bool, default=False)
 
     # use for predict
     arg_parser.add_argument("--model_path", type=str, default="")
@@ -115,8 +116,12 @@ def get_args():
     args.path = argparse.Namespace()
     args.path.info = p.join(args.data_path, "info")
     args.path.embed = p.join(args.data_path, "embed")
-    args.path.config = p.join(args.data_path, "config")
+    #  args.path.config = p.join(args.data_path, "config")
+    args.path.config = "./examples"
     args.path.checkpoint = p.join(args.data_path, "checkpoint")
+
+    if not p.exists(args.data_path):
+        os.mkdir(args.data_path)
 
     for k in ["info", "embed", "config", "checkpoint"]:
         path = getattr(args.path, k)
@@ -125,11 +130,14 @@ def get_args():
 
     args.path.train_data_dir = p.join(args.data_path, "data")
 
+    if not p.exists(args.path.train_data_dir):
+        os.mkdir(args.path.train_data_dir)
+
     if not os.path.exists(args.path.train_data_dir):
         raise FileNotFoundError(
             f"{p.abspath(args.path.train_data_dir)} \
-                위치가 보이지 않습니다. args.path값을 절대 경로로 수정하거나 \
-                input과 같은 폴더에 위치해주세요."
+위치가 보이지 않습니다. args.path값을 절대 경로로 수정하거나 \
+input과 같은 폴더에 위치해주세요."
         )
 
     if args.run_cnt > len(SEEDS):

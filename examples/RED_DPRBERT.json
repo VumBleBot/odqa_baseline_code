@@ -6,7 +6,7 @@
         "reader_name": "DPR"
     },
     "data": {
-        "dataset_name": "train_dataset",
+        "dataset_name": "squad_kor_v1",
         "sub_datasets": "",
         "sub_datasets_ratio": ""
     },
