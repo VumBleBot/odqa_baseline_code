@@ -54,7 +54,7 @@ python -m run_retrieval --strategies RET_05_BM25_DPRBERT,RET_06_TFIDF_DPRBERT,RE
 
 ## TIPS
 
-- [전체적인 내용](./documents/README.md)
+- [Overall](./documents/README.md)
 - [READER class](./documents/reader.md)
 - [RETRIEVER class](./documents/retriever.md)
 
