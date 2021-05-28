@@ -8,6 +8,7 @@
 
 # VumbleBot - BaselineCode  <!-- omit in toc -->
 
+- [Install](#install)
 - [DEMO](#demo)
   - [Reader](#reader)
   - [Retrieval](#retrieval)
@@ -16,6 +17,7 @@
   - [Dependencies](#dependencies)
   - [Install packages](#install-packages)
   - [Predict](#predict)
+  - [Ensemble](#ensemble)
   - [Reader train/validation](#reader-trainvalidation)
   - [Retriever train/validation](#retriever-trainvalidation)
   - [Reader, Retriever validation](#reader-retriever-validation)
@@ -33,6 +35,7 @@
   - [Usage: Predict](#usage-predict)
     - [Predict result](#predict-result)
 - [TDD](#tdd)
+- [Reference](#reference)
 
 ## Install
 
@@ -416,7 +419,6 @@ input/
 
     OK
     ```
-```
 
 ## Reference
 
