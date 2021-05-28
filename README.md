@@ -215,7 +215,7 @@ odqa_baseline_code/
 │   └── sparse
 │       ├── sparse_base.py
 │       ├── tfidf.py
-│       ├── bm25.py
+│       ├── bm25_base.py
 │       ├── atire_bm25.py
 │       └── ...
 │
