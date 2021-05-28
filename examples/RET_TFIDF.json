@@ -4,8 +4,11 @@
         "retriever_name": "TFIDF",
         "tokenizer_name": ""
     },
+    "train": {
+        "save_total_limit": 2
+    },
     "data": {
-        "dataset_name": "train_dataset",
+        "dataset_name": "squad_kor_v1",
         "sub_datasets": ""
     },
     "retriever": {

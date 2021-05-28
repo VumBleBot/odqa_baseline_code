@@ -112,7 +112,7 @@ def train_retriever(args):
     wandb.log({"retriever topk result": wandb.Image(fig)})
 
     if args.report is True:
-        report_retriever_to_slack(fig)
+        report_retriever_to_slack(args, fig)
 
 
 if __name__ == "__main__":
