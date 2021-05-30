@@ -1,5 +1,7 @@
 # Retriever 구조
 
+![image](https://user-images.githubusercontent.com/40788624/120104459-7279c880-c18f-11eb-825a-25fa6376e29a.png)
+
 **현재 구현된 Retriever는 아래와 같이 네가지로 구분할 수 있습니다.**
 
 - 단어 빈도수를 기반으로 문서를 검색하는 **SparseRetrieval**
