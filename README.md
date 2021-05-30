@@ -135,9 +135,12 @@ python -m run --strategies ST01,ST02 --debug False --report True --run_cnt 3
 ### Make dataset
 
 ```bash
-python -m make_dataset.cheat_dataset
-python -m make_dataset.kor_sample_dataset
 python -m make_dataset.qd_pair_bm25
+python -m make_dataset.cheat_dataset
+python -m make_dataset.aggregate_wiki
+python -m make_dataset.triplet_dataset
+python -m make_dataset.kor_sample_dataset
+python -m make_dataset.negative_ctxs_dataset
 ```
 
 ## File Structure  
