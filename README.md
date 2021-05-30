@@ -35,7 +35,11 @@
   
 ## DEMO
 
-- `./examples/*` 참고하셔서 전략 파일을 작성하시면 됩니다!
+아래 문서에서 사용할 수 있는 reader/retriever 모델을 확인하실 수 있습니다.  
+
+- [Overall](./documents/README.md)
+- [Reader class](./documents/reader.md)
+- [Retriever class](./documents/retriever.md)
 
 ### Reader
 
@@ -51,14 +55,8 @@ python -m run_mrc --strategies RED_DPR_BERT --run_cnt 1 --debug False --report T
 python -m run_retrieval --strategies RET_05_BM25_DPRBERT,RET_06_TFIDF_DPRBERT,RET_07_ATIREBM25_DPRBERT --run_cnt 1 --debug False --report False
 ```
 
-![retriever-top-k-compare](https://user-images.githubusercontent.com/40788624/119266107-6daf9480-bc24-11eb-85f5-6f6f09691c9b.png)
+![retriever-top-k-compare](https://user-images.githubusercontent.com/40788624/119266107-6daf9480-bc24-11eb-85f5-6f6f09691c9b.png)  
   
-아래 문서에서 사용할 수 있는 reader/retriever 모델을 확인하실 수 있습니다.  
-
-- [Overall](./documents/README.md)
-- [Reader class](./documents/reader.md)
-- [Retriever class](./documents/retriever.md)
-
 ## Installation
 ### Dependencies
 - fuzzywuzzy==0.18.0
@@ -203,6 +201,8 @@ arguments(hyperparameter)는 아래 파일들을 참고하여 수정하시면 �
 - config/retriever_args.py
 - config/readme.md
 
+예시 전략 파일들이 `examples/`에 존재하니, 참고하셔서 전략 파일을 작성하시면 됩니다.  
+  
 ```json
 {
     "alias": "vumblebot",
