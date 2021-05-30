@@ -1,5 +1,7 @@
 # Reader 구조
 
+![image](https://user-images.githubusercontent.com/40788624/120104436-59711780-c18f-11eb-81fa-9442bfeb14ff.png)
+
 **현재 Reader의 경우 backbone으로써 BERT 기반 모델(bert, distillbert, albert, xlm-roberta 등)과 ELECTRA 기반 모델만 활용할 수 있도록 구현되어있습니다.**  
     
 만약 그 외의 모델을 백본으로 활용하시고 싶으시다면 `reader/custom_reader.py`의 `CustomModel` 클래스에서 `forward()` 메소드를 해당 백본에 맞도록 변경해주셔야합니다. 또한 `utils/prepare.py`의 `get_reader()` 메소드에서 해당 모델을 정상적으로 가져올 수 있도록 코드를 수정해주셔야합니다.  
@@ -38,4 +40,3 @@ CCNN_v2 구조에 Exact Match(EM) token을 추가적인 feature로 활용하는 
 
 ### CCNN_LSTM_EM
 CNN_LSTM 구조에 EM token을 추가적인 feature로 활용하는 모델입니다.  
-  
