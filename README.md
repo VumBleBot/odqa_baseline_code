@@ -6,18 +6,18 @@
 
 [:bookmark_tabs: **Wrap-up report**](https://hackmd.io/@9NfvP9AZQL2Psilxs3oNBA/SyH-EkVt_)에 모델, 실험 관리 및 검증 전략, 앙상블, 코드 추상화 등 저희가 다룬 기술의 흐름과 고민의 흔적들이 담겨있습니다.
 
-# VumbleBot - BaselineCode  <!-- omit in toc -->
+# VumBleBot - BaselineCode  <!-- omit in toc -->
 
 - [DEMO](#demo)
   - [Reader](#reader)
   - [Retrieval](#retrieval)
-- [TIPS](#tips)
 - [Installation](#installation)
   - [Dependencies](#dependencies)
 - [File Structure](#file-structure)
   - [Input](#input)
-  - [Baseline_code](#baseline_code)
+  - [Baseline code](#baseline-code)
 - [Json File Example](#json-file-example)
+- [Dataset](#dataset)
 - [Usage](#usage)
   - [Usage: Directory setting](#usage-directory-setting)
   - [Usage: Train](#usage-train)
@@ -25,12 +25,12 @@
     - [Train/Evaluate Retriever](#trainevaluate-retriever)
   - [Usage: Validation](#usage-validation)
   - [Usage: Predict](#usage-predict)
-  - [Make dataset](#make-dataset)
+  - [Usage: Make additional dataset](#usage-make-additional-dataset)
 - [TDD](#tdd)
 - [Contributors](#contributors)
 - [Reference](#reference)
   - [Papers](#papers)
-  - [Dataset](#dataset)
+  - [Dataset](#dataset-1)
 - [License](#license)
   
 ## DEMO
@@ -52,10 +52,9 @@ python -m run_retrieval --strategies RET_05_BM25_DPRBERT,RET_06_TFIDF_DPRBERT,RE
 ```
 
 ![retriever-top-k-compare](https://user-images.githubusercontent.com/40788624/119266107-6daf9480-bc24-11eb-85f5-6f6f09691c9b.png)
-
-## TIPS
-:explanation: 아래 문서에서 사용할 수 있는 reader/retriever 모델을 확인하실 수 있습니다.  
   
+아래 문서에서 사용할 수 있는 reader/retriever 모델을 확인하실 수 있습니다.  
+
 - [Overall](./documents/README.md)
 - [READER class](./documents/reader.md)
 - [RETRIEVER class](./documents/retriever.md)
@@ -106,7 +105,7 @@ input/
 │   ├── wikipedia_documents.json
 │   └── custom datasets(train_data/test_data) ...
 │
-├─── embed/ - embedding caches of wikidocs.json
+├── embed/ - embedding caches of wikidocs.json
 │   ├── TFIDF
 │   │   ├── TFIDF.bin
 │   │   └── embedding.bin
@@ -124,11 +123,11 @@ input/
 │   └── ATIREBM25_DPRBERT
 │       └── classifier.bin
 │
-└── keys/ - (optional) secret keys or tokens
+└── (optional) keys/ - secret keys or tokens
     └── (optional) secrets.json
 ```
   
-### Baseline_code
+### Baseline code
   
 ```
 odqa_baseline_code/
@@ -254,6 +253,97 @@ ST00.json 하이퍼파라미터는 아래 파일들을 참고해서 수정할 �
 }
 ```
 
+## Dataset
+본 프로젝트는 `transformers` 라이브러리를 통해 KorQuAD 1.0을 불러와 학습 및 검증을 수행합니다.    
+**만약 custom dataset을 통해 학습을 수행하려면 아래와 같이 `input/data`에 커스텀 데이터셋을 넣어주어야 합니다.**
+
+```
+input/
+│
+├── data
+│   ├── train_dataset
+│   │   ├── dataset_dict.json
+│   │   ├── train
+│   │   │   ├── dataset.arrow
+│   │   │   ├── dataset_info.json
+│   │   │   ├── indices.arrow
+│   │   │   └── state.json
+│   │   └── validation
+│   │       ├── dataset.arrow
+│   │       ├── dataset_info.json
+│   │       ├── indices.arrow
+│   │       └── state.json
+│   ├── test_dataset
+│   │   ├── dataset_dict.json
+│   │   └── validation
+│   │       ├── dataset.arrow
+│   │       ├── dataset_info.json
+│   │       ├── indices.arrow
+│   │       └── state.json
+│   └── wikipedia_documents.json
+```
+
+:exclamation: 특히 **predict**를 수행하려면 **`input/data/wikipedia_documents.json` 과 `input/data/test_dataset`**이 필수적으로 존재해야합니다.  
+
+- `wikipedia_documents.json`은 용량이 큰 관계로 프로젝트에서 직접적으로 제공하지 않습니다. [한국어 위키피디아](https://bit.ly/3yJ8KAl) 홈페이지에서 위키피디아 데이터를 다운받아 `examples/wikipedia_documents.json`과 같은 형식으로 가공하여 활용하시면 됩니다.  
+- `test_dataset`은 커스텀 데이터셋으로 [huggingface 공식 문서](https://huggingface.co/docs/datasets/v1.7.0/quicktour.html)를 참고하여 아래와 같은 형식으로 만들어 활용해주세요.  
+  - Dataset 예시
+    ```
+    DatasetDict({
+      validation: Dataset({
+          features: ['id', 'question'],
+          num_rows: 100
+      })
+    })
+    ```
+
+  - Data 예시
+    ```
+    {
+      'id': '질문 ID(str)',
+      'question': '질문(str)'
+    }
+    ```
+
+- `train_dataset`은 KorQuAD로 모델 학습을 진행하실 경우 별도로 필요하지 않습니다. 커스텀 데이터셋으로 학습을 하려면 아래와 같은 형식으로 데이터셋을 만들어주세요.
+  - Dataset 예시
+    ```
+    DatasetDict({
+        train: Dataset({
+            features: ['answers', 'context', 'document_id', 'id', 'question', 'title'],
+            num_rows: 3000
+        })
+        validation: Dataset({
+            features: ['answers', 'context', 'document_id', 'id', 'question', 'title'],
+            num_rows: 500
+        })
+    })
+    ```
+
+  - Data 예시
+    ```
+    {
+      'title': '제목(str)',
+      'context': '내용(str)',
+      'question': '질문(str)',
+      'id': '질문 ID(str)',
+      'answers': {'answer_start': [시작위치(int)], 'text': ['답(str)']},
+      'document_id': 문서 ID(int)
+    }
+    ```
+
+- 커스텀 데이터셋을 활용하여 학습을 하려면 [utils/prepare.py](./utils/prepare.py)를 참고하여 아래와 같이 전략 config를 수정해주세요.  
+  ```
+      ...
+      "data": {
+          "dataset_name": "train_dataset",
+          "sub_datasets": "",
+          "sub_datasets_ratio": "", 
+      ...
+  ```
+
+
+
 ## Usage
 
 ### Usage: Directory setting
@@ -275,7 +365,7 @@ input/
 └── (optional) keys/ - secret keys or tokens
 ```
 
-Slack 알람 봇을 활용하시려면 `input/keys/`에 `secrets.json`을 넣어주시고, `--report` argument를 `True`로 설정해주세요.    
+Slack 알람 봇을 활용하시려면 `input/keys`에 `secrets.json`을 넣어주시고, `--report` argument를 `True`로 설정해주세요.    
 `secrets.json`은 아래와 같은 형식으로 작성해주세요.  
   
 ```
@@ -339,7 +429,7 @@ Train/Validation
 ![image](https://user-images.githubusercontent.com/40788624/119265923-9c793b00-bc23-11eb-8439-c237fa91f6bb.png)
 
 ### Usage: Validation
-Validation
+Validation  
 `./scripts/run.sh`
 
 - Reader와 Retriever를 동시에 활용하여 ODQA 성능을 종합적으로 검증합니다.
@@ -379,7 +469,9 @@ input/
         └── (optional) pororo_predictions_test.json
 ```
   
-### Make dataset
+### Usage: Make additional dataset
+부가적인 데이터셋을 생성합니다.    
+데이터셋을 생성하려면 앞서 언급한 **커스텀 데이터셋**이 존재해야합니다.  
 
 ```bash
 python -m make_dataset.qd_pair_bm25
@@ -391,7 +483,7 @@ python -m make_dataset.negative_ctxs_dataset
 ```
 
 ## TDD
-| [tester.py](./utils/tester.py) : 구현된 기능이 정상 작동되는지 테스트     
+| [tester.py](./utils/tester.py) : 구현된 기능이 정상 작동되는지 테스트합니다.    
 
 - 검증할 전략을 옵션으로 입력  
 
@@ -434,7 +526,7 @@ python -m make_dataset.negative_ctxs_dataset
     ```
 
 ## Contributors
-[구건모(ggm1207)](https://github.com/olenmg) | [김종헌(olenmg)](https://github.com/ggm1207) | [김성익(SeongIkKim)](https://github.com/SeongIkKim) | [신지영(ebbunnim)](https://github.com/ebbunnim) | [이수연(sooyounlee)](https://github.com/sooyounlee)
+[구건모(ggm1207)](https://github.com/ggm1207) | [김종헌(olenmg)](https://github.com/olenmg) | [김성익(SeongIkKim)](https://github.com/SeongIkKim) | [신지영(ebbunnim)](https://github.com/ebbunnim) | [이수연(sooyounlee)](https://github.com/sooyounlee)
 
 ## Reference
 ### Papers
