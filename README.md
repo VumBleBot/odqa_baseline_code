@@ -157,7 +157,6 @@ odqa_baseline_code/
 └── predict.py - inference
 ```
 
-
 ### Input
   
 ```
@@ -256,7 +255,7 @@ arguments(hyperparameter)는 아래 파일들을 참고하여 수정하시면 �
         "per_device_eval_batch_size": 2,
         "gradient_accumulation_steps": 1,
         "per_device_train_batch_size": 4,
-        "dense_train_dataset": "train_dataset"
+        "dense_train_dataset": "squad_kor_v1"
     }
 }
 ```
@@ -340,7 +339,7 @@ input/
     }
     ```
 
-- 커스텀 데이터셋을 활용하여 학습을 하려면 [utils/prepare.py](./utils/prepare.py)를 참고하여 아래와 같이 전략 config를 수정해주세요.  
+- 커스텀 데이터셋을 활용하여 **reader** 모델 학습을 하려면 [utils/prepare.py](./utils/prepare.py)를 참고하여 아래와 같이 전략 config를 수정해주세요.  
   ```
       ...
       "data": {
@@ -349,9 +348,18 @@ input/
           "sub_datasets_ratio": "0.3", 
       ...
   ```
-
   - 커스텀 데이터셋을 활용하실 경우, KorQuAD 데이터셋을 위와 같이 `sub_datasets`로 주어 학습에 함께 활용할 수 있습니다. 이 때 `sub_datasets_ratio`를 이용하여 추가적인 데이터셋을 얼마나 활용할지 설정할 수 있습니다. 
   - `sub_datasets`를 활용하시려면 [아래 파트](#usage-make-additional-dataset)를 참고하여 추가적인 데이터셋을 생성해주세요.
+
+- 커스텀 데이터셋을 활용하여 **dense retriever** 모델 학습을 하려면 아래와 같이 전략 config를 수정해주세요.
+  ```
+    ...
+    "retriever": {
+        ...
+        "dense_train_dataset": "train_dataset"
+    }
+    ...
+  ```
 
 
 ## Usage
