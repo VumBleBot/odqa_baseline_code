@@ -17,7 +17,7 @@
   - [Baseline code](#baseline-code)
   - [Input](#input)
 - [Json File Example](#json-file-example)
-- [Dataset](#dataset)
+- [Dataset setting](#dataset-setting)
 - [Usage](#usage)
   - [Usage: Directory setting](#usage-directory-setting)
   - [Usage: Train](#usage-train)
@@ -30,7 +30,7 @@
 - [Contributors](#contributors)
 - [Reference](#reference)
   - [Papers](#papers)
-  - [Dataset](#dataset-1)
+  - [Dataset](#dataset)
 - [License](#license)
   
 ## DEMO
@@ -260,7 +260,7 @@ arguments(hyperparameter)는 아래 파일들을 참고하여 수정하시면 �
 }
 ```
 
-## Dataset
+## Dataset setting
 본 프로젝트는 `transformers` 라이브러리를 통해 KorQuAD 1.0을 불러와 학습 및 검증을 수행합니다.    
 **만약 custom dataset을 통해 학습을 수행하려면 아래와 같이 `input/data`에 커스텀 데이터셋을 넣어주어야 합니다.**
 
@@ -487,7 +487,7 @@ input/
 
 - Reader와 Retriever를 동시에 활용하여 prediction을 진행합니다.
 - 예측에 활용할 전략 한개만 활용할 것을 추천합니다.  
-- **예측을 위해서는 예측 대상인 질문 dataset과 retrieval의 대상인 wikipedia document dataset이 필요합니다.** 자세한 내용은 [데이터셋 부분](#dataset)을 참조해주세요.
+- **예측을 위해서는 예측 대상인 질문 dataset과 retrieval의 대상인 wikipedia document dataset이 필요합니다.** 자세한 내용은 [데이터셋 설정](#dataset-setting)을 참조해주세요.
   
 - 예측 결과로 아래와 같이 전략명에 대한 디렉토리와 파일이 생성됩니다.
 - config 파일에서 `train.pororo_prediction` argument를 `True`로 주면 `pororo` 라이브러리로 예측값이 보완된 `pororo_predictions_test.json`이 함께 생성됩니다.
