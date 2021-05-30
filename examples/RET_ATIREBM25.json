@@ -5,7 +5,7 @@
         "tokenizer_name": "xlm-roberta-large"
     },
     "data": {
-        "dataset_name": "train_dataset",
+        "dataset_name": "squad_kor_v1",
         "sub_datasets": ""
     },
     "retriever": {

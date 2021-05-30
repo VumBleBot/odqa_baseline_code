@@ -1,12 +1,24 @@
 {
     "alias": "EXAMPLES BM25",
     "model": {
-        "retriever_name": "BM25",
+        "reader_name": "DPR",
+        "model_name_or_path": "monologg/koelectra-small-v3-discriminator",
+        "retriever_name": "ATIREBM25",
         "tokenizer_name": "xlm-roberta-large"
     },
+    "train": {
+        "save_total_limit": 2,
+        "save_steps": 100,
+        "logging_steps": 100,
+        "overwrite_output_dir": true,
+        "do_train": true,
+        "do_eval": true,
+        "do_predict": false,
+        "report_to": ["wandb"]
+    },
     "data": {
-        "dataset_name": "train_dataset",
-        "sub_datasets": ""
+        "dataset_name": "squad_kor_v1",
+        "Truesub_datasets": ""
     },
     "retriever": {
         "retrain": false,
