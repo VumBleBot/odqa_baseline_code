@@ -6,7 +6,7 @@ from itertools import chain
 import torch
 import numpy as np
 import torch.nn.functional as F
-from datasets import load_from_disk
+from datasets import load_from_disk, load_dataset
 from transformers import TrainingArguments
 from transformers import AdamW, get_linear_schedule_with_warmup
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler
@@ -17,12 +17,19 @@ from retrieval.dense import DenseRetrieval
 def get_retriever_dataset(args):
     if args.retriever.dense_train_dataset not in [
         "train_dataset",
+        "squad_kor_v1",
         "bm25_document_questions",
         "bm25_question_documents",
     ]:
-        raise FileNotFoundError(f"{args.retriever.dense_train_dataset}이 존재하지 않습니다.")
+        raise FileNotFoundError(f"{args.retriever.dense_train_dataset}은 DenseRetrieval 데이터셋이 아닙니다.")
 
-    train_dataset = load_from_disk(p.join(args.path.train_data_dir, args.retriever.dense_train_dataset))
+    if args.retriever.dense_train_dataset == "squad_kor_v1":
+        train_dataset = load_dataset(args.retriever.dense_train_dataset)
+    else:
+        dataset_path = p.join(args.path.train_data_dir, args.retriever.dense_train_dataset)
+        assert p.exists(dataset_path), f"{args.retriever.dense_train_dataset}이 경로에 존재하지 않습니다."
+        train_dataset = load_from_disk(dataset_path)
+
     return train_dataset
 
 

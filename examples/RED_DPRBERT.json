@@ -18,11 +18,13 @@
         "do_train": true,
         "do_eval": true,
         "do_predict": false,
-        "report_to": ["wandb"]
+        "report_to": [
+            "wandb"
+        ]
     },
     "retriever": {
         "retrain": false,
-        "dense_train_dataset": "train_dataset",
+        "dense_train_dataset": "squad_kor_v1",
         "topk": 10
     }
 }

@@ -10,7 +10,7 @@
     "data": {
         "dataset_name": "squad_kor_v1",
         "sub_datasets": "",
-        "sub_datasets_ratio": "", 
+        "sub_datasets_ratio": "",
         "overwrite_cache": false,
         "preprocessing_num_workers": 2,
         "max_seq_length": 384,
@@ -44,6 +44,6 @@
         "per_device_eval_batch_size": 2,
         "gradient_accumulation_steps": 1,
         "per_device_train_batch_size": 4,
-        "dense_train_dataset": "train_dataset"
+        "dense_train_dataset": "squad_kor_v1"
     }
 }
