@@ -4,6 +4,51 @@
 - [retriever.md](retriever.md): retriever 구조에 대해 설명되어 있습니다.
 
 
+## 사용 가능한 모델들
+
+### READER
+
+- DPR
+- LSTM
+- CNN
+- CCNN
+- CCNN_v2
+- CNN_LSTM
+- CCNN_EM
+- CCNN_LSTM_EM
+
+**EX) examples/reader.json**
+
+-  **"reader_name": "DPR"**
+
+### RETRIEVER
+
+**SparseRetrieval** : 단어 빈도수로 문서를 검색하는 전통적인 방법의 Retriever 입니다.
+
+**DenseRetrieval**  : 잠재 벡터로 문서를 검색하는 딥러닝 기법의 Retriever 입니다.
+
+**HybridRetrieval** : SparseRetrieval와 DenseRetrieval의 문서 반환 결과를 Weighted Sum을 사용하여 재정렬한 후 반환하는 Retriever 입니다.
+
+**HybridLogisticRetrieval** : SparseRetrieval와 DenseRetrieval중에 어떤 것을 사용하여 예측할 지 LogisticRegression으로 판단하는 Retriever 입니다.
+
+- TFIDF ( SparseRetrieval )
+- BM25L ( SparseRetrieval )
+- BM25Plus ( SparseRetrieval )
+- ATIREBM25 ( SparseRetrieval )
+- BM25Ensemble ( SparseRetrieval )
+- COLBERT ( DenseRetrieval )
+- DPRBERT ( DenseRetrieval )
+- DPRELECTRA ( DenseRetrieval )
+- TFIDF_DPRBERT ( HybridRetrieval )
+- BM25_DPRBERT ( HybridRetrieval )
+- ATIREBM25_DPRBERT ( HybridRetrieval )
+- LOG_BM25_DPRBERT ( HybridLogisticRetrieval )
+- LOG_ATIREBM25_DPRBERT ( HybridLogisticRetrieval )
+
+**EX) examples/retriever.json**
+
+-  **"retriever_name": "TFIDF"**
+
 ## 전체적인 구조
 
 모듈기준으로 프로젝트의 전체적인 구조를 설명하겠습니다.
@@ -68,6 +113,9 @@ run_mrc를 사용하기 위해서 참고해야 하는 Args들을 알아봅시다
         "do_train": true,
         "do_eval": true,
         "report_to": ["wandb"]
+    },
+    "retriever": {
+        "retrain": false,
     }
 }
 ```
@@ -96,6 +144,9 @@ run_mrc를 사용하기 위해서 참고해야 하는 Args들을 알아봅시다
     "data": {
         "dataset_name": "train_dataset",
         "sub_datasets": "",
+    },
+    "train": {
+        "save_total_limit": 2,
     },
     "retriever": {
         "retrain": true,

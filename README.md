@@ -59,7 +59,7 @@ pip install -r requirements.txt
 python -m run_mrc --strategies RED_DPR_BERT --run_cnt 1 --debug False --report False
 ```
 
-![image](https://user-images.githubusercontent.com/40788624/119266204-cf6ffe80-bc24-11eb-9d33-369c239b857e.png)
+![image](https://user-images.githubusercontent.com/40788624/120093538-f3b46980-c155-11eb-938e-f8b44197d01b.png)
 
 ### Retrieval
 
@@ -135,9 +135,12 @@ python -m run --strategies ST01,ST02 --debug False --report True --run_cnt 3
 ### Make dataset
 
 ```bash
-python -m make_dataset.cheat_dataset
-python -m make_dataset.kor_sample_dataset
 python -m make_dataset.qd_pair_bm25
+python -m make_dataset.cheat_dataset
+python -m make_dataset.aggregate_wiki
+python -m make_dataset.triplet_dataset
+python -m make_dataset.kor_sample_dataset
+python -m make_dataset.negative_ctxs_dataset
 ```
 
 ## File Structure  

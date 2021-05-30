@@ -66,10 +66,18 @@
 
 ### [Depth 2] hybrid_base.py 설명
 
-- \_rank_fusion_by_hybrid: sparse와 dense의 score를 사용하여 새로운 score를 계산합니다. 그리고 정렬해서 반환합니다.
-- \_get_relevant_doc_bulk: sparse와 dense의 결과를 조합하여 반환합니다.
+- **HybridRetrieval**
+   - **\_rank_fusion_by_hybrid**: sparse와 dense의 score를 사용하여 새로운 score를 계산합니다. 그리고 정렬해서 반환합니다.
+   - **get_relevant_doc_bulk**: sparse와 dense의 결과를 조합하여 반환합니다.
+- **HybridLogisticRetrieval**
+   - **_exec_logistic_regression**: logistic_regression을 학습합니다.
+   - **_get_logistic_regression**: logistic_regression을 얻어옵니다.
+   - 
 
 #### [Depth 3] hybrid.py 설명
 
-- Bm25DprBert: Bm25와 DprBert를 사용합니다.
-- TfidfDprBert:  Tfidf와 DprBert를 사용합니다.
+- **Bm25DprBert**: Bm25와 DprBert를 사용합니다.
+- **TfidfDprBert**:  Tfidf와 DprBert를 사용합니다.
+- **AtireBm25DprBert**: AtireBm25와 DprBert를 사용합니다.
+- **LogisticBm25DprBert**: Logistic과 Bm25와 DprBert를 사용합니다.
+- **LogisticAtireBm25DprBert**: Logistic과 AtireBm25와 DprBert를 사용합니다.
