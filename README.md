@@ -283,7 +283,7 @@ input/
     └── wikipedia_documents.json
 ```
 
-:exclamation: 특히 **predict를 수행하려면 `input/data/wikipedia_documents.json`과 `input/data/test_dataset`이 필수적으로 존재**해야합니다.  
+:exclamation: **predict를 수행하려면 `input/data/wikipedia_documents.json`과 `input/data/test_dataset`이 필수적으로 존재**해야합니다.  
 
 - `wikipedia_documents.json`은 용량이 큰 관계로 프로젝트에서 직접적으로 제공하지 않습니다. [한국어 위키피디아](https://bit.ly/3yJ8KAl) 홈페이지에서 위키피디아 데이터를 다운받아 `examples/wikipedia_documents.json`과 같은 형식으로 가공하여 활용하시면 됩니다.  
 - `test_dataset`은 커스텀 데이터셋으로 [huggingface 공식 문서](https://huggingface.co/docs/datasets/v1.7.0/quicktour.html)를 참고하여 아래와 같은 형식으로 만들어 활용해주세요.  
