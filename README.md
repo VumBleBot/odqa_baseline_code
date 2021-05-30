@@ -14,15 +14,15 @@
 - [Installation](#installation)
   - [Dependencies](#dependencies)
 - [File Structure](#file-structure)
-  - [Input](#input)
   - [Baseline code](#baseline-code)
+  - [Input](#input)
 - [Json File Example](#json-file-example)
 - [Dataset](#dataset)
 - [Usage](#usage)
   - [Usage: Directory setting](#usage-directory-setting)
   - [Usage: Train](#usage-train)
-    - [Train/Evaluate Reader](#trainevaluate-reader)
-    - [Train/Evaluate Retriever](#trainevaluate-retriever)
+    - [Reader](#reader-1)
+    - [Retriever](#retriever)
   - [Usage: Validation](#usage-validation)
   - [Usage: Predict](#usage-predict)
   - [Usage: Make additional dataset](#usage-make-additional-dataset)
@@ -35,12 +35,16 @@
   
 ## DEMO
 
-- `./examples/*` 참고하셔서 전략 파일을 작성하시면 됩니다!
+아래 문서에서 사용할 수 있는 reader/retriever 모델을 확인하실 수 있습니다.  
+
+- [Overall](./documents/README.md)
+- [Reader class](./documents/reader.md)
+- [Retriever class](./documents/retriever.md)
 
 ### Reader
 
 ```
-python -m run_mrc --strategies RED_DPR_BERT --run_cnt 1 --debug False --report False
+python -m run_mrc --strategies RED_DPR_BERT --run_cnt 1 --debug False --report True
 ```
 
 ![image](https://user-images.githubusercontent.com/40788624/120093538-f3b46980-c155-11eb-938e-f8b44197d01b.png)
@@ -51,14 +55,8 @@ python -m run_mrc --strategies RED_DPR_BERT --run_cnt 1 --debug False --report F
 python -m run_retrieval --strategies RET_05_BM25_DPRBERT,RET_06_TFIDF_DPRBERT,RET_07_ATIREBM25_DPRBERT --run_cnt 1 --debug False --report False
 ```
 
-![retriever-top-k-compare](https://user-images.githubusercontent.com/40788624/119266107-6daf9480-bc24-11eb-85f5-6f6f09691c9b.png)
+![retriever-top-k-compare](https://user-images.githubusercontent.com/40788624/119266107-6daf9480-bc24-11eb-85f5-6f6f09691c9b.png)  
   
-아래 문서에서 사용할 수 있는 reader/retriever 모델을 확인하실 수 있습니다.  
-
-- [Overall](./documents/README.md)
-- [READER class](./documents/reader.md)
-- [RETRIEVER class](./documents/retriever.md)
-
 ## Installation
 ### Dependencies
 - fuzzywuzzy==0.18.0
@@ -81,52 +79,14 @@ pip install -r requirements.txt
 :exclamation: **이 프로젝트는 `mecab`을 사용합니다.**  
 [KoNLPy 공식 홈페이지](https://konlpy.org/en/latest/install/)를 참고하여 KoNLPy 및 MeCab 설치를 진행해주세요.  
 
-:exclamation: **현재 pororo 설치 시 GPU가 활성화되지 않는 이슈가 존재합니다.**  
-아래 명령으로 `torch` 버전업을 통해 GPU를 활성화해주세요.  
+:exclamation: **현재 CUDA 버전이 낮을 경우 pororo 설치 시 GPU가 활성화되지 않는 이슈가 존재합니다.**  
+만약 `pororo` 설치 이후 학습속도가 지나치게 느려졌을 경우, 아래 명령으로 `torch` 버전업을 통해 GPU를 활성화해주세요. [이슈 참고](https://github.com/VumBleBot/odqa_baseline_code/issues/82)
 
 ```
 pip install torch==1.7.1+cu101 torchvision==0.8.2+cu101 torchaudio==0.7.2 -f https://download.pytorch.org/whl/torch_stable.html
 ```
 
 ## File Structure  
-### Input
-  
-```
-input/
-│
-├── checkpoint/ - checkpoints&predictions (strategy_alias_seed)
-│   ├── ST01_base_00
-│   │   ├── checkpoint-500
-│   │   └── ...
-│   ├── ST01_base_95
-│   └── ...
-│ 
-├── data/ - competition data
-│   ├── wikipedia_documents.json
-│   └── custom datasets(train_data/test_data) ...
-│
-├── embed/ - embedding caches of wikidocs.json
-│   ├── TFIDF
-│   │   ├── TFIDF.bin
-│   │   └── embedding.bin
-│   ├── BM25
-│   │   ├── BM25.bin
-│   │   └── embedding.bin
-│   ├── ATIREBM25
-│   │   ├── ATIREBM25_idf.bin
-│   │   ├── ATIREBM25.bin
-│   │   ├── embedding.bin
-│   │   └── idf.bin
-│   ├── DPRBERT
-│   │   ├── DPRBERT.pth
-│   │   └── embedding.bin
-│   └── ATIREBM25_DPRBERT
-│       └── classifier.bin
-│
-└── (optional) keys/ - secret keys or tokens
-    └── (optional) secrets.json
-```
-  
 ### Baseline code
   
 ```
@@ -184,16 +144,62 @@ odqa_baseline_code/
 │   ├── ST01.json
 │   └── ...
 │
+├── scripts/ - executable script files
+│   ├── run_mrc.sh - execute run_mrc module
+│   ├── run_retrieval.sh - execute run_retrieval module
+│   ├── run.sh - execute run module
+│   └── predict.sh - execute predict module
+│
 ├── ensemble.py - do ensemble
 ├── run_mrc.py - train/evaluate MRC model
-├── run_retriever.py - train/evaluate retriever model
+├── run_retrieval.py - train/evaluate retriever model
 ├── run.py - evaluate both models
 └── predict.py - inference
 ```
 
+
+### Input
+  
+```
+input/
+│
+├── checkpoint/ - checkpoints&predictions (strategy_alias_seed)
+│   ├── ST01_base_00
+│   │   ├── checkpoint-500
+│   │   └── ...
+│   ├── ST01_base_95
+│   └── ...
+│ 
+├── data/ - competition data
+│   ├── wikipedia_documents.json
+│   └── custom datasets(train_data/test_data) ...
+│
+├── embed/ - embedding caches of wikidocs.json
+│   ├── TFIDF
+│   │   ├── TFIDF.bin
+│   │   └── embedding.bin
+│   ├── BM25
+│   │   ├── BM25.bin
+│   │   └── embedding.bin
+│   ├── ATIREBM25
+│   │   ├── ATIREBM25_idf.bin
+│   │   ├── ATIREBM25.bin
+│   │   ├── embedding.bin
+│   │   └── idf.bin
+│   ├── DPRBERT
+│   │   ├── DPRBERT.pth
+│   │   └── embedding.bin
+│   └── ATIREBM25_DPRBERT
+│       └── classifier.bin
+│
+└── (optional) keys/ - secret keys or tokens
+    └── (optional) secrets.json
+```
+
 ## Json File Example
 
-ST00.json 하이퍼파라미터는 아래 파일들을 참고해서 수정할 수 있습니다.
+전략 config 파일(ST00.json) 예시입니다.    
+arguments(hyperparameter)는 아래 파일들을 참고하여 수정하시면 됩니다.    
 
 - config/model_args.py
 - config/train_args.py
@@ -201,6 +207,8 @@ ST00.json 하이퍼파라미터는 아래 파일들을 참고해서 수정할 �
 - config/retriever_args.py
 - config/readme.md
 
+예시 전략 파일들이 `examples/`에 존재하니, 참고하셔서 전략 파일을 작성하시면 됩니다.  
+  
 ```json
 {
     "alias": "vumblebot",
@@ -283,7 +291,7 @@ input/
     └── wikipedia_documents.json
 ```
 
-:exclamation: 특히 **predict를 수행하려면 `input/data/wikipedia_documents.json`과 `input/data/test_dataset`이 필수적으로 존재**해야합니다.  
+:exclamation: **predict를 수행하려면 `input/data/wikipedia_documents.json`과 `input/data/test_dataset`이 필수적으로 존재**해야합니다.  
 
 - `wikipedia_documents.json`은 용량이 큰 관계로 프로젝트에서 직접적으로 제공하지 않습니다. [한국어 위키피디아](https://bit.ly/3yJ8KAl) 홈페이지에서 위키피디아 데이터를 다운받아 `examples/wikipedia_documents.json`과 같은 형식으로 가공하여 활용하시면 됩니다.  
 - `test_dataset`은 커스텀 데이터셋으로 [huggingface 공식 문서](https://huggingface.co/docs/datasets/v1.7.0/quicktour.html)를 참고하여 아래와 같은 형식으로 만들어 활용해주세요.  
@@ -367,7 +375,7 @@ input/
 └── (optional) keys/ - secret keys or tokens
 ```
 
-Slack 알람 봇을 활용하시려면 `input/keys`에 `secrets.json`을 넣어주시고, `--report` argument를 `True`로 설정해주세요.    
+**Slack 알람 봇을 활용하시려면** `input/keys`에 `secrets.json`을 넣어주시고, `--report` argument를 `True`로 설정해주세요.    
 `secrets.json`은 아래와 같은 형식으로 작성해주세요.  
   
 ```
@@ -382,13 +390,16 @@ Slack 알람 봇을 활용하시려면 `input/keys`에 `secrets.json`을 넣어�
 }
 ```
   
-알람 봇을 사용하지 않으실 경우 해당 디렉토리 및 파일은 만들지 않으셔도 됩니다.  
+**Slack 알람 봇을 사용하지 않으실 경우 해당 디렉토리 및 파일은 만들지 않으셔도 됩니다.**  
   
 ### Usage: Train   
   
-#### Train/Evaluate Reader
-**Train/Validation**  
-`./scripts/run_mrc.sh`
+#### Reader
+아래 스크립트를 실행하여 Reader 모델의 학습 및 평가를 진행합니다.
+
+```
+./scripts/run_mrc.sh
+```
 
 - 전략 config의 Retriever 모델은 사용하지 않습니다. MRC 모델 학습시에는 정답 문서를 reader 모델에 바로 제공합니다.
 - 실행하면 아래와 같이 checkpoint와 validation set에 대한 결과파일이 생성됩니다.  
@@ -406,9 +417,12 @@ input/
     └── valid_results.json
 ```
 
-#### Train/Evaluate Retriever
-**Train/Validation**  
-`./scripts/run_retrieval.sh`
+#### Retriever
+아래 스크립트를 실행하여 Retriever 모델의 학습 및 평가를 진행합니다.
+
+```
+./scripts/run_retrieval.sh
+```
 
 - 전략 config의 Reader 모델은 사용하지 않습니다. 문서 검색을 위한 retriever 모델만을 학습 및 평가합니다.
 - 전략 config에서 `retriever.retrain` argument를 `True`로 주면 retriever의 embedding을 재학습시킬 수 있습니다.
@@ -431,8 +445,11 @@ input/
 ![image](https://user-images.githubusercontent.com/40788624/119265923-9c793b00-bc23-11eb-8439-c237fa91f6bb.png)
 
 ### Usage: Validation
-**Validation**  
-`./scripts/run.sh`
+아래 스크립트를 실행하여 종합적인 ODQA 프로세스의 성능 평가를 진행합니다.
+
+```
+./scripts/run.sh
+```
 
 - Reader와 Retriever를 동시에 활용하여 ODQA 성능을 종합적으로 검증합니다.
 - 기학습된 파일들을 불러오기 때문에, train은 진행하지 않고 validation score만 측정합니다.
@@ -454,12 +471,17 @@ input/
 ```
 
 ### Usage: Predict
-`./scripts/predict.sh`  
+아래 스크립트를 실행하여 학습된 모델을 불러와 예측(predict)을 진행합니다.   
+
+```
+./scripts/predict.sh
+```    
 
 - Reader와 Retriever를 동시에 활용하여 prediction을 진행합니다.
 - 예측에 활용할 전략 한개만 활용할 것을 추천합니다.  
-
-- 아래와 같이 전략명에 대한 디렉토리와 파일이 생성됩니다.
+- **예측을 위해서는 예측 대상인 질문 dataset과 retrieval의 대상인 wikipedia document dataset이 필요합니다.** 자세한 내용은 [데이터셋 부분](#dataset)을 참조해주세요.
+  
+- 예측 결과로 아래와 같이 전략명에 대한 디렉토리와 파일이 생성됩니다.
 - config 파일에서 `train.pororo_prediction` argument를 `True`로 주면 `pororo` 라이브러리로 예측값이 보완된 `pororo_predictions_test.json`이 함께 생성됩니다.
 
 ```
@@ -474,7 +496,7 @@ input/
   
 ### Usage: Make additional dataset
 부가적인 데이터셋을 생성합니다.    
-데이터셋을 생성하려면 앞서 언급한 **커스텀 데이터셋**이 존재해야합니다.  
+일부 데이터셋은 생성 이전에 앞서 언급한 **커스텀 데이터셋**을 필요로 합니다. 
 
 ```bash
 python -m make_dataset.qd_pair_bm25

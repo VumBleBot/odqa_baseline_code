@@ -1,82 +1,55 @@
-# Retriver 구조
+# Retriever 구조
 
-- retrieval
-    - dense
-    - hybrid
-    - sparse
+![image](https://user-images.githubusercontent.com/40788624/120104459-7279c880-c18f-11eb-825a-25fa6376e29a.png)
 
+**현재 구현된 Retriever는 아래와 같이 네가지로 구분할 수 있습니다.**
 
-**Depth는 상속 Depth를 의미합니다.** 표현이 좀 이상하긴 한데 찰떡같이 이해하실거라고 믿습니다 ㅎㅎ
+- 단어 빈도수를 기반으로 문서를 검색하는 **SparseRetrieval**
+- 잠재 벡터를 기반으로 문서를 검색하는 **DenseRetrieval**
+- SparseRetrieval, DenseRetrieval를 같이 사용하는 **HybridRetrieval**
+- LogisticRegression으로 SparseRetrieval와 DenseRetrieval중 하나를 선택하여 사용하는 **HybridLogisticRetrieval**
 
-## [Depth 1] Base Retriver 설명
+## Base Retriever
 
-- retrieve(self, query_or_dataset, topk=1)
-    - 검색된 topk개의 문서를 DatasetDict 형식으로 반환합니다.
-    - 240개의 문서를 검색하고 topk가 3이라면, 총 720개의 데이터가 반환이 됩니다.
-    - `question`, `context`, `기타`... 형식
+모든 Retriever가 참조하는 클래스입니다. Retriever의 `retrieve`기능이 구현되어 있습니다.
 
-### [Depth 2] Sparse Retriver 설명
+### Sparse Retriever
 
-- get\_embedding: 파일이 경로에 존재할 경우 사용, 없을 경우 학습을 진행합니다.
-    - 파일: 'embed.bin', 'encoder.bin'
+단어 빈도수를 기반으로 문서를 검색하는 SparseRetrieval입니다. `sklearn`에서 제공하는 `TfidfVectorizer`를 사용하여 `encoder`를 학습합니다.
 
-#### [Depth 3] Tfidf Retriver 설명
+document score를 어떻게 계산하냐에 따라서 여러가지 Retriever를 만들 수 있습니다.
 
-- \_exec_embedding: TFIDF 알고리즘으로 wiki 데이터 셋을 학습합니다.
-- - get_relevant_doc_bulk: TFIDF 점수를 기준으로 question에 맞는 document들을 top-k개 뽑아옵니다.
+- tfidf 
+- bm25plus
+- bm25l
+- atirebm25
 
-#### [Depth 3] Bm25 Retriver 설명
+### Dense Retriever
 
-- \_exec_embedding: TFIDF 알고리즘으로 wiki 데이터 셋을 학습합니다.
-    - BM25는 TFIDF 점수는 위와 동일하나 Score 계산을 다르게 합니다.
-- \_get_relevant_doc_bulk: TFIDF 점수와 BM25 알고리즘을 기준으로 question에 맞는 document들을 top-k개 뽑아옵니다.
+잠재 벡터를 기반으로 문서를 검색하는 DenseRetrieval입니다.
 
-### [Depth 2] Dense Retriver 설명
+`CLS Token`을 사용하여 Context Level 유사도 기반으로 문서를 검색하거나 `Word Token`을 사용하여 Token Level 유사도 기반으로 문서를 검색합니다.
 
-- \_get_embedding: 파일이 경로에 존재할 경우 사용, 없을 경우 학습을 진행합니다.
-    - 파일: 'embed.bin', 'encoder.pth'
-- \_get_relevant_doc_bulk question_vector와 context_vector의 유사도를 계산해 반환합니다.
+- DPR ( Dense Passage Retriever )
+- ColBERT
 
-#### [Depth 3] dpr base 설명
+> 데이터셋에 따라서 학습하는 과정이 달라지므로 `train()` 메소드를 mixin으로 구현했습니다.
 
-> DPR을 학습하는 모듈이라고 보시며 될 것 같습니다.
+- Dataset
+    - BaseTrainMixin : 기존 데이터 셋, in-batch 학습을 진행합니다.
+    - Bm25TrainMixin : Bm25 Score를 기준으로 negative context가 추가된 데이터 셋
 
-- get_retriever_dataset: retriever 데이터 셋을 가져옵니다. prepare.py의 get_dataset과 비슷하지만 따로 구현을 했습니다. > 리팩토링 가능성 굉장히 높습니다.
-- epoch_time: epoch 시간을 계산해주는 함수입니다.
-- DprRetrieval: 
-    - 모델을 불러오고
-    - 데이터 셋을 준비합니다.
-    - 그리고 학습을 진행합니다.
-    - 학습이 완료된 후 context 임베딩 벡터를 생성합니다.
+### HybridRetrieval
 
-- BaseTrainMixin
-    - \_load_dataset: `train_dataset` 데이터 셋을 준비합니다.
-    - \_train: `train_dataset` 데이터 셋으로 학습합니다.
+SparseRetrieval, DenseRetrieval를 같이 사용하는 HybridRetrieval입니다. sparse score와 dense score를 rank_fusion한 후 새로운 score를 기준으로 정렬한 문서를 반환합니다.
 
-- Bm25TrainMixin
-    - \_load_dataset: `bm25로 구축된` 데이터 셋을 준비합니다.
-    - \_train: `bm25로 구축된` 데이터 셋으로 학습합니다.
+- TfidfDprBert
+- Bm25DprBert
+- AtireBm25DprBert
 
-> mixin은 `get_retriever`에서 Rretrieval을 호출할 때 `dataset`을 기준으로 적용됩니다.
+### HybridLogisticRetrieval
 
-#### [Depth 4] dpr 설명
+LogisticRegression으로 SparseRetrieval와 DenseRetrieval중 하나를 선택하여 사용하는 HybridLogisticRetrieval입니다. SparseRetrieval의 TOP-K Score에서 Feature Vector를 생성한 후 LogisticRegression에서 SparseRetrieval의 사용 유무를 결정합니다.
 
-- BertEncoder: `다국어 Bert` 인코더입니다.
-- DprBert: `다국어 Bert`를 기반으로 DPR 모델입니다.
-
-### [Depth 2] hybrid_base.py 설명
-
-- **HybridRetrieval**
-   - **\_rank_fusion_by_hybrid**: sparse와 dense의 score를 사용하여 새로운 score를 계산합니다. 그리고 정렬해서 반환합니다.
-   - **get_relevant_doc_bulk**: sparse와 dense의 결과를 조합하여 반환합니다.
-- **HybridLogisticRetrieval**
-   - **_exec_logistic_regression**: logistic_regression을 학습합니다.
-   - **_get_logistic_regression**: logistic_regression을 얻어옵니다.
-
-#### [Depth 3] hybrid.py 설명
-
-- **Bm25DprBert**: Bm25와 DprBert를 사용합니다.
-- **TfidfDprBert**:  Tfidf와 DprBert를 사용합니다.
-- **AtireBm25DprBert**: AtireBm25와 DprBert를 사용합니다.
-- **LogisticBm25DprBert**: Logistic과 Bm25와 DprBert를 사용합니다.
-- **LogisticAtireBm25DprBert**: Logistic과 AtireBm25와 DprBert를 사용합니다.
+- LogisticBm25DprBert
+- LogisticAtireBm25DprBert
