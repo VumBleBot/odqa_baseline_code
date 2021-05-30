@@ -516,7 +516,7 @@ python -m make_dataset.negative_ctxs_dataset
 ```
 
 ## Test Driven Development
-| [tester.py](./utils/tester.py) : 구현된 기능이 정상 작동되는지 테스트합니다.    
+- [tester.py](./utils/tester.py): 구현된 기능이 정상 작동되는지 테스트합니다.    
 
 - 검증할 전략을 옵션으로 입력  
 
