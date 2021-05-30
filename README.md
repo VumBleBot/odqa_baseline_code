@@ -14,15 +14,15 @@
 - [Installation](#installation)
   - [Dependencies](#dependencies)
 - [File Structure](#file-structure)
-  - [Input](#input)
   - [Baseline code](#baseline-code)
+  - [Input](#input)
 - [Json File Example](#json-file-example)
 - [Dataset](#dataset)
 - [Usage](#usage)
   - [Usage: Directory setting](#usage-directory-setting)
   - [Usage: Train](#usage-train)
-    - [Train/Evaluate Reader](#trainevaluate-reader)
-    - [Train/Evaluate Retriever](#trainevaluate-retriever)
+    - [Reader](#reader-1)
+    - [Retriever](#retriever)
   - [Usage: Validation](#usage-validation)
   - [Usage: Predict](#usage-predict)
   - [Usage: Make additional dataset](#usage-make-additional-dataset)
@@ -40,7 +40,7 @@
 ### Reader
 
 ```
-python -m run_mrc --strategies RED_DPR_BERT --run_cnt 1 --debug False --report False
+python -m run_mrc --strategies RED_DPR_BERT --run_cnt 1 --debug False --report True
 ```
 
 ![image](https://user-images.githubusercontent.com/40788624/120093538-f3b46980-c155-11eb-938e-f8b44197d01b.png)
@@ -56,8 +56,8 @@ python -m run_retrieval --strategies RET_05_BM25_DPRBERT,RET_06_TFIDF_DPRBERT,RE
 아래 문서에서 사용할 수 있는 reader/retriever 모델을 확인하실 수 있습니다.  
 
 - [Overall](./documents/README.md)
-- [READER class](./documents/reader.md)
-- [RETRIEVER class](./documents/retriever.md)
+- [Reader class](./documents/reader.md)
+- [Retriever class](./documents/retriever.md)
 
 ## Installation
 ### Dependencies
@@ -81,52 +81,14 @@ pip install -r requirements.txt
 :exclamation: **이 프로젝트는 `mecab`을 사용합니다.**  
 [KoNLPy 공식 홈페이지](https://konlpy.org/en/latest/install/)를 참고하여 KoNLPy 및 MeCab 설치를 진행해주세요.  
 
-:exclamation: **현재 pororo 설치 시 GPU가 활성화되지 않는 이슈가 존재합니다.**  
-아래 명령으로 `torch` 버전업을 통해 GPU를 활성화해주세요.  
+:exclamation: **현재 CUDA 버전이 낮을 경우 pororo 설치 시 GPU가 활성화되지 않는 이슈가 존재합니다.**  
+만약 `pororo` 설치 이후 학습속도가 지나치게 느려졌을 경우, 아래 명령으로 `torch` 버전업을 통해 GPU를 활성화해주세요. [이슈 참고](https://github.com/VumBleBot/odqa_baseline_code/issues/82)
 
 ```
 pip install torch==1.7.1+cu101 torchvision==0.8.2+cu101 torchaudio==0.7.2 -f https://download.pytorch.org/whl/torch_stable.html
 ```
 
 ## File Structure  
-### Input
-  
-```
-input/
-│
-├── checkpoint/ - checkpoints&predictions (strategy_alias_seed)
-│   ├── ST01_base_00
-│   │   ├── checkpoint-500
-│   │   └── ...
-│   ├── ST01_base_95
-│   └── ...
-│ 
-├── data/ - competition data
-│   ├── wikipedia_documents.json
-│   └── custom datasets(train_data/test_data) ...
-│
-├── embed/ - embedding caches of wikidocs.json
-│   ├── TFIDF
-│   │   ├── TFIDF.bin
-│   │   └── embedding.bin
-│   ├── BM25
-│   │   ├── BM25.bin
-│   │   └── embedding.bin
-│   ├── ATIREBM25
-│   │   ├── ATIREBM25_idf.bin
-│   │   ├── ATIREBM25.bin
-│   │   ├── embedding.bin
-│   │   └── idf.bin
-│   ├── DPRBERT
-│   │   ├── DPRBERT.pth
-│   │   └── embedding.bin
-│   └── ATIREBM25_DPRBERT
-│       └── classifier.bin
-│
-└── (optional) keys/ - secret keys or tokens
-    └── (optional) secrets.json
-```
-  
 ### Baseline code
   
 ```
@@ -191,9 +153,49 @@ odqa_baseline_code/
 └── predict.py - inference
 ```
 
+
+### Input
+  
+```
+input/
+│
+├── checkpoint/ - checkpoints&predictions (strategy_alias_seed)
+│   ├── ST01_base_00
+│   │   ├── checkpoint-500
+│   │   └── ...
+│   ├── ST01_base_95
+│   └── ...
+│ 
+├── data/ - competition data
+│   ├── wikipedia_documents.json
+│   └── custom datasets(train_data/test_data) ...
+│
+├── embed/ - embedding caches of wikidocs.json
+│   ├── TFIDF
+│   │   ├── TFIDF.bin
+│   │   └── embedding.bin
+│   ├── BM25
+│   │   ├── BM25.bin
+│   │   └── embedding.bin
+│   ├── ATIREBM25
+│   │   ├── ATIREBM25_idf.bin
+│   │   ├── ATIREBM25.bin
+│   │   ├── embedding.bin
+│   │   └── idf.bin
+│   ├── DPRBERT
+│   │   ├── DPRBERT.pth
+│   │   └── embedding.bin
+│   └── ATIREBM25_DPRBERT
+│       └── classifier.bin
+│
+└── (optional) keys/ - secret keys or tokens
+    └── (optional) secrets.json
+```
+
 ## Json File Example
 
-ST00.json 하이퍼파라미터는 아래 파일들을 참고해서 수정할 수 있습니다.
+전략 config 파일(ST00.json) 예시입니다.    
+arguments(hyperparameter)는 아래 파일들을 참고하여 수정하시면 됩니다.    
 
 - config/model_args.py
 - config/train_args.py
@@ -367,7 +369,7 @@ input/
 └── (optional) keys/ - secret keys or tokens
 ```
 
-Slack 알람 봇을 활용하시려면 `input/keys`에 `secrets.json`을 넣어주시고, `--report` argument를 `True`로 설정해주세요.    
+**Slack 알람 봇을 활용하시려면** `input/keys`에 `secrets.json`을 넣어주시고, `--report` argument를 `True`로 설정해주세요.    
 `secrets.json`은 아래와 같은 형식으로 작성해주세요.  
   
 ```
@@ -382,11 +384,11 @@ Slack 알람 봇을 활용하시려면 `input/keys`에 `secrets.json`을 넣어�
 }
 ```
   
-알람 봇을 사용하지 않으실 경우 해당 디렉토리 및 파일은 만들지 않으셔도 됩니다.  
+**Slack 알람 봇을 사용하지 않으실 경우 해당 디렉토리 및 파일은 만들지 않으셔도 됩니다.**  
   
 ### Usage: Train   
   
-#### Train/Evaluate Reader
+#### Reader
 아래 스크립트를 실행하여 Reader 모델의 학습 및 평가를 진행합니다.
 
 ```
@@ -409,7 +411,7 @@ input/
     └── valid_results.json
 ```
 
-#### Train/Evaluate Retriever
+#### Retriever
 아래 스크립트를 실행하여 Retriever 모델의 학습 및 평가를 진행합니다.
 
 ```
@@ -463,7 +465,7 @@ input/
 ```
 
 ### Usage: Predict
-아래 스크립트를 실행하여 기학습된 모델로 예측을 진행합니다.   
+아래 스크립트를 실행하여 학습된 모델을 불러와 예측(predict)을 진행합니다.   
 
 ```
 ./scripts/predict.sh
