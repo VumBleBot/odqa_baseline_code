@@ -25,25 +25,28 @@
 
 **SparseRetrieval** : 단어 빈도수로 문서를 검색하는 전통적인 방법의 Retriever 입니다.
 
+- TFIDF 
+- BM25L 
+- BM25Plus
+- ATIREBM25
+- BM25Ensemble
+
 **DenseRetrieval**  : 잠재 벡터로 문서를 검색하는 딥러닝 기법의 Retriever 입니다.
+
+- COLBERT
+- DPRBERT
+- DPRELECTRA
 
 **HybridRetrieval** : SparseRetrieval와 DenseRetrieval의 문서 반환 결과를 Weighted Sum을 사용하여 재정렬한 후 반환하는 Retriever 입니다.
 
-**HybridLogisticRetrieval** : SparseRetrieval와 DenseRetrieval중에 어떤 것을 사용하여 예측할 지 LogisticRegression으로 판단하는 Retriever 입니다.
+- TFIDF_DPRBERT
+- BM25_DPRBERT
+- ATIREBM25_DPRBERT
 
-- TFIDF ( SparseRetrieval )
-- BM25L ( SparseRetrieval )
-- BM25Plus ( SparseRetrieval )
-- ATIREBM25 ( SparseRetrieval )
-- BM25Ensemble ( SparseRetrieval )
-- COLBERT ( DenseRetrieval )
-- DPRBERT ( DenseRetrieval )
-- DPRELECTRA ( DenseRetrieval )
-- TFIDF_DPRBERT ( HybridRetrieval )
-- BM25_DPRBERT ( HybridRetrieval )
-- ATIREBM25_DPRBERT ( HybridRetrieval )
-- LOG_BM25_DPRBERT ( HybridLogisticRetrieval )
-- LOG_ATIREBM25_DPRBERT ( HybridLogisticRetrieval )
+**HybridLogisticRetrieval** : SparseRetrieval와 DenseRetrieval중에 어떤 것을 사용하여 문서를 검색할 지 LogisticRegression 모델을 사용하여 판단하는 Retriever 입니다.
+
+- LOG_BM25_DPRBERT
+- LOG_ATIREBM25_DPRBERT
 
 **EX) examples/retriever.json**
 
@@ -53,26 +56,28 @@
 
 모듈 기준으로 프로젝트의 전체적인 구조를 나열하였습니다.
 
-### 실행 모듈
+### 실행 모듈 구조도
 
-구현한 모듈들을 실제로 실행하는데에 관여하는 메인 실행 모듈입니다.
+메인 모듈들과 연관 모듈들의 구조 및 간략한 설명입니다.
 
 - `run.py` : RETRIVER와 READER모델을 함께 활용하여 종합적으로 ODQA 성능을 평가하는 모듈입니다.
-    - `run_mrc.py`와 관련있는 모듈들
-    - `run_retrieval.py`와 관련있는 모듈들
+    - `run_mrc.py`의 연관 모듈들
+    - `run_retrieval.py`의 연관 모듈들
 - `run_mrc.py` : 문서 검색 없이 READER의 기계 독해 능력을 평가하는 모듈입니다.
     - `reader/*`
+        - reader 모델들을 구현한 폴더입니다.
     - `prepare.py`
         - get_dataset: 데이터 셋을 가져옵니다.
         - get_reader: READER 모델을 불러옵니다.
 - `run_retrieval.py` : RETRIEVER의 검색 성능을 평가하는 모듈입니다.
     - `retriever/*`
+        - retriever 모델들을 구현한 폴더입니다.
     - `prepare.py`
         - get_dataset: 데이터 셋을 가져옵니다.
         - get_retriever: RETRIEVER 모델을 불러옵니다.
 - `predict.py` : test\_dataset에 대한 결과값을 예측하는 모듈입니다.
     - `prepare.py`
-        - get_dataset: 
+        - get_dataset: 데이터 셋을 가져옵니다.
         - get_reader: READER 모델을 불러옵니다.
         - get_retriever: RETRIEVER 모델을 불러옵니다.
 
@@ -134,7 +139,7 @@ run_mrc를 사용하기 위해 필요한 argument들을 알아봅니다.
     - `sub_datasets_ratio`: 추가 데이터셋의 비율을 결정합니다. sub_datasets이 빈 문자열이면 무시됩니다.
 
 - train
-    - `masking_ratio`: 학습 단계에서 masking을 적용하려면 
+    - `masking_ratio`: 학습 단계에서 masking을 적용하려면 0~1의 값을 적어주시면 됩니다.
     - `do_eval_during_training`: 학습 단계에서 매 `eval_step`마다 evaluation을 진행합니다.
     - `pororo_prediction`: validation 단계에서 `pororo`로 보완된 결과값을 저장할지 결정합니다. (`pororo`가 무조건적인 성능 향상을 보장하지는 않습니다!)
     - `freeze_backbone`: backbone을 얼리고 head만 학습을 진행할지 결정합니다.
@@ -169,14 +174,14 @@ run_mrc를 사용하기 위해 필요한 argument들을 알아봅니다.
 
 - model
     - `retriever_name`: DPR RETRIEVER를 사용합니다. `backbone`모델은 기본적으로 다국어 BERT 모델(bert-multilingual)을 사용하고 있습니다.
-    - `tokenizer_name`: BM25 RETRIEVER에서 사용하는 tokenizer를 설정합니다. 프로젝트 내 실험에서는 `xlm-roberta-large` tokenizer가 최고 성능을 보였습니다.
+    - `tokenizer_name`: SPARSE RETRIEVER에서 사용하는 tokenizer를 설정합니다. 프로젝트 내 실험에서는 `xlm-roberta-large` tokenizer가 최고 성능을 보였습니다.
 - data
     - `dataset_name`: retriever 성능 평가를 위해 활용할 데이터셋입니다.
 - retriever
-    - `retrain`: `true`일 경우 retriever의 embedding을 재학습하고 기존 파일에 덮어씌웁니다.
+    - `retrain`: `true`일 경우 retriever의 encoder을 재학습하고 passage embedding을 기존 파일에 덮어씌웁니다.
         - 경로: `../input/embed/{retriever_name}`
         - 경로에 파일이 존재하지 않으면 이 argument 값과 무관하게 embedding을 학습 및 저장합니다.
     - `dense_train_dataset`: dense retriever의 경우 학습에 사용할 데이터셋을 추가할 수 있습니다.
         - train_dataset: custom dataset으로 batch_size를 16까지 설정할 수 있습니다.
         - bm25_document_questions, bm25_question_documents: BM25로 구축된 데이터 셋이며, batch_size를 반드시 1로 설정해야 합니다.
-            - 여기서의 batch_size는 gradient_accumulation_step으로 조정할 수 있습니다.
+            - batch_size의 대안으로 gradient_accumulation_step을 사용합니다.

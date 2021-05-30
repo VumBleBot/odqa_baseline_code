@@ -38,4 +38,3 @@ CCNN_v2 구조에 Exact Match(EM) token을 추가적인 feature로 활용하는 
 
 ### CCNN_LSTM_EM
 CNN_LSTM 구조에 EM token을 추가적인 feature로 활용하는 모델입니다.  
-  
