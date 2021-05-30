@@ -10,7 +10,7 @@
     },
     "retriever": {
         "retrain": false,
-        "dense_train_dataset": "train_dataset",
+        "dense_train_dataset": "squad_kor_v1",
         "topk": 10,
         "learning_rate": 3e-5,
         "per_device_train_batch_size": 16,
