@@ -260,30 +260,30 @@ ST00.json 하이퍼파라미터는 아래 파일들을 참고해서 수정할 �
 ```
 input/
 │
-├── data
-│   ├── train_dataset
-│   │   ├── dataset_dict.json
-│   │   ├── train
-│   │   │   ├── dataset.arrow
-│   │   │   ├── dataset_info.json
-│   │   │   ├── indices.arrow
-│   │   │   └── state.json
-│   │   └── validation
-│   │       ├── dataset.arrow
-│   │       ├── dataset_info.json
-│   │       ├── indices.arrow
-│   │       └── state.json
-│   ├── test_dataset
-│   │   ├── dataset_dict.json
-│   │   └── validation
-│   │       ├── dataset.arrow
-│   │       ├── dataset_info.json
-│   │       ├── indices.arrow
-│   │       └── state.json
-│   └── wikipedia_documents.json
+└── data
+    ├── train_dataset
+    │   ├── dataset_dict.json
+    │   ├── train
+    │   │   ├── dataset.arrow
+    │   │   ├── dataset_info.json
+    │   │   ├── indices.arrow
+    │   │   └── state.json
+    │   └── validation
+    │       ├── dataset.arrow
+    │       ├── dataset_info.json
+    │       ├── indices.arrow
+    │       └── state.json
+    ├── test_dataset
+    │   ├── dataset_dict.json
+    │   └── validation
+    │       ├── dataset.arrow
+    │       ├── dataset_info.json
+    │       ├── indices.arrow
+    │       └── state.json
+    └── wikipedia_documents.json
 ```
 
-:exclamation: 특히 **predict**를 수행하려면 **`input/data/wikipedia_documents.json` 과 `input/data/test_dataset`**이 필수적으로 존재해야합니다.  
+:exclamation: 특히 **predict를 수행하려면 `input/data/wikipedia_documents.json`과 `input/data/test_dataset`이 필수적으로 존재**해야합니다.  
 
 - `wikipedia_documents.json`은 용량이 큰 관계로 프로젝트에서 직접적으로 제공하지 않습니다. [한국어 위키피디아](https://bit.ly/3yJ8KAl) 홈페이지에서 위키피디아 데이터를 다운받아 `examples/wikipedia_documents.json`과 같은 형식으로 가공하여 활용하시면 됩니다.  
 - `test_dataset`은 커스텀 데이터셋으로 [huggingface 공식 문서](https://huggingface.co/docs/datasets/v1.7.0/quicktour.html)를 참고하여 아래와 같은 형식으로 만들어 활용해주세요.  
@@ -337,11 +337,13 @@ input/
       ...
       "data": {
           "dataset_name": "train_dataset",
-          "sub_datasets": "",
-          "sub_datasets_ratio": "", 
+          "sub_datasets": "kor_dataset",
+          "sub_datasets_ratio": "0.3", 
       ...
   ```
 
+  - 커스텀 데이터셋을 활용하실 경우, KorQuAD 데이터셋을 위와 같이 `sub_datasets`로 주어 학습에 함께 활용할 수 있습니다. 이 때 `sub_datasets_ratio`를 이용하여 추가적인 데이터셋을 얼마나 활용할지 설정할 수 있습니다. 
+  - `sub_datasets`를 활용하시려면 [아래 파트](#usage-make-additional-dataset)를 참고하여 추가적인 데이터셋을 생성해주세요.
 
 
 ## Usage
@@ -385,7 +387,7 @@ Slack 알람 봇을 활용하시려면 `input/keys`에 `secrets.json`을 넣어�
 ### Usage: Train   
   
 #### Train/Evaluate Reader
-Train/Validation
+**Train/Validation**  
 `./scripts/run_mrc.sh`
 
 - 전략 config의 Retriever 모델은 사용하지 않습니다. MRC 모델 학습시에는 정답 문서를 reader 모델에 바로 제공합니다.
@@ -405,7 +407,7 @@ input/
 ```
 
 #### Train/Evaluate Retriever
-Train/Validation
+**Train/Validation**  
 `./scripts/run_retrieval.sh`
 
 - 전략 config의 Reader 모델은 사용하지 않습니다. 문서 검색을 위한 retriever 모델만을 학습 및 평가합니다.
@@ -429,7 +431,7 @@ Train/Validation
 ![image](https://user-images.githubusercontent.com/40788624/119265923-9c793b00-bc23-11eb-8439-c237fa91f6bb.png)
 
 ### Usage: Validation
-Validation  
+**Validation**  
 `./scripts/run.sh`
 
 - Reader와 Retriever를 동시에 활용하여 ODQA 성능을 종합적으로 검증합니다.
