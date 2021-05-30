@@ -10,7 +10,7 @@
 
 - [DEMO](#demo)
   - [Reader](#reader)
-  - [Retrieval](#retrieval)
+  - [Retriever](#retriever)
 - [Installation](#installation)
   - [Dependencies](#dependencies)
 - [File Structure](#file-structure)
@@ -22,11 +22,11 @@
   - [Usage: Directory setting](#usage-directory-setting)
   - [Usage: Train](#usage-train)
     - [Reader](#reader-1)
-    - [Retriever](#retriever)
+    - [Retriever](#retriever-1)
   - [Usage: Validation](#usage-validation)
   - [Usage: Predict](#usage-predict)
   - [Usage: Make additional dataset](#usage-make-additional-dataset)
-- [TDD](#tdd)
+- [Test Driven Development](#test-driven-development)
 - [Contributors](#contributors)
 - [Reference](#reference)
   - [Papers](#papers)
@@ -49,7 +49,7 @@ python -m run_mrc --strategies RED_DPR_BERT --run_cnt 1 --debug False --report T
 
 ![image](https://user-images.githubusercontent.com/40788624/120093538-f3b46980-c155-11eb-938e-f8b44197d01b.png)
 
-### Retrieval
+### Retriever
 
 ```
 python -m run_retrieval --strategies RET_05_BM25_DPRBERT,RET_06_TFIDF_DPRBERT,RET_07_ATIREBM25_DPRBERT --run_cnt 1 --debug False --report False
@@ -200,13 +200,13 @@ input/
 전략 config 파일(ST00.json) 예시입니다.    
 arguments(hyperparameter)는 아래 파일들을 참고하여 수정하시면 됩니다.    
 
-- config/model_args.py
-- config/train_args.py
-- config/data_args.py
-- config/retriever_args.py
-- config/readme.md
+- [config/model_args.py](./config/model_args.py)
+- [config/train_args.py](./config/train_args.py)
+- [config/data_args.py](./config/data_args.py)
+- [config/retriever_args.py](./config/retriever_args.py)
+- [config/README.md](./config/README.md)
 
-예시 전략 파일들이 `examples/`에 존재하니, 참고하셔서 전략 파일을 작성하시면 됩니다.  
+예시 전략 파일들이 [examples/](./examples)에 존재하니, 참고하셔서 전략 파일을 작성하시면 됩니다.  
   
 ```json
 {
@@ -262,7 +262,7 @@ arguments(hyperparameter)는 아래 파일들을 참고하여 수정하시면 �
 
 ## Dataset setting
 본 프로젝트는 `transformers` 라이브러리를 통해 KorQuAD 1.0을 불러와 학습 및 검증을 수행합니다.    
-**만약 custom dataset을 통해 학습을 수행하려면 아래와 같이 `input/data`에 커스텀 데이터셋을 넣어주어야 합니다.**
+**만약 custom dataset을 통해 학습을 수행하려면 아래와 같이 `input/data` 경로에 커스텀 데이터셋을 넣어주어야 합니다.**
 
 ```
 input/
@@ -292,7 +292,7 @@ input/
 
 :exclamation: **predict를 수행하려면 `input/data/wikipedia_documents.json`과 `input/data/test_dataset`이 필수적으로 존재**해야합니다.  
 
-- `wikipedia_documents.json`은 용량이 큰 관계로 프로젝트에서 직접적으로 제공하지 않습니다. [한국어 위키피디아](https://bit.ly/3yJ8KAl) 홈페이지에서 위키피디아 데이터를 다운받아 `examples/wikipedia_documents.json`과 같은 형식으로 가공하여 활용하시면 됩니다.  
+- `wikipedia_documents.json`은 용량이 큰 관계로 프로젝트에서 직접적으로 제공하지 않습니다. [한국어 위키피디아](https://bit.ly/3yJ8KAl) 홈페이지에서 위키피디아 데이터를 다운받아 [examples/wikipedia_documents.json](./examples/wikipedia_documents.json)과 같은 형식으로 가공하여 활용하시면 됩니다.  
 - `test_dataset`은 커스텀 데이터셋으로 [huggingface 공식 문서](https://huggingface.co/docs/datasets/v1.7.0/quicktour.html)를 참고하여 아래와 같은 형식으로 만들어 활용해주세요.  
   - Dataset 예시
     ```
@@ -515,7 +515,7 @@ python -m make_dataset.kor_sample_dataset
 python -m make_dataset.negative_ctxs_dataset
 ```
 
-## TDD
+## Test Driven Development
 | [tester.py](./utils/tester.py) : 구현된 기능이 정상 작동되는지 테스트합니다.    
 
 - 검증할 전략을 옵션으로 입력  
