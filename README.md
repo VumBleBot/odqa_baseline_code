@@ -10,7 +10,7 @@
 
 - [DEMO](#demo)
   - [Reader](#reader)
-  - [Retriever](#retriever)
+  - [Retrieval](#retrieval)
 - [Installation](#installation)
   - [Dependencies](#dependencies)
 - [File Structure](#file-structure)
@@ -22,7 +22,7 @@
   - [Usage: Directory setting](#usage-directory-setting)
   - [Usage: Train](#usage-train)
     - [Reader](#reader-1)
-    - [Retriever](#retriever-1)
+    - [Retriever](#retriever)
   - [Usage: Validation](#usage-validation)
   - [Usage: Predict](#usage-predict)
   - [Usage: Make additional dataset](#usage-make-additional-dataset)
@@ -49,7 +49,7 @@ python -m run_mrc --strategies RED_DPR_BERT --run_cnt 1 --debug False --report T
 
 ![image](https://user-images.githubusercontent.com/40788624/120093538-f3b46980-c155-11eb-938e-f8b44197d01b.png)
 
-### Retriever
+### Retrieval
 
 ```
 python -m run_retrieval --strategies RET_05_BM25_DPRBERT,RET_06_TFIDF_DPRBERT,RET_07_ATIREBM25_DPRBERT --run_cnt 1 --debug False --report False
