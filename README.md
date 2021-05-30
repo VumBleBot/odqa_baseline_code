@@ -59,7 +59,7 @@ pip install -r requirements.txt
 python -m run_mrc --strategies RED_DPR_BERT --run_cnt 1 --debug False --report False
 ```
 
-![image](https://user-images.githubusercontent.com/40788624/119266204-cf6ffe80-bc24-11eb-9d33-369c239b857e.png)
+![image](https://user-images.githubusercontent.com/40788624/120093538-f3b46980-c155-11eb-938e-f8b44197d01b.png)
 
 ### Retrieval
 
