@@ -72,7 +72,6 @@
 - **HybridLogisticRetrieval**
    - **_exec_logistic_regression**: logistic_regression을 학습합니다.
    - **_get_logistic_regression**: logistic_regression을 얻어옵니다.
-   - 
 
 #### [Depth 3] hybrid.py 설명
 
