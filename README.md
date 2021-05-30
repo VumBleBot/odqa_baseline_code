@@ -144,9 +144,15 @@ odqa_baseline_code/
 │   ├── ST01.json
 │   └── ...
 │
+├── scripts/ - executable script files
+│   ├── run_mrc.sh - execute run_mrc module
+│   ├── run_retrieval.sh - execute run_retrieval module
+│   ├── run.sh - execute run module
+│   └── predict.sh - execute predict module
+│
 ├── ensemble.py - do ensemble
 ├── run_mrc.py - train/evaluate MRC model
-├── run_retriever.py - train/evaluate retriever model
+├── run_retrieval.py - train/evaluate retriever model
 ├── run.py - evaluate both models
 └── predict.py - inference
 ```
