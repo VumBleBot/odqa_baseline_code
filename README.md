@@ -454,6 +454,7 @@ input/
 ```
 
 ### Usage: Predict
+`./scripts/predict.sh`  
 
 - Reader와 Retriever를 동시에 활용하여 prediction을 진행합니다.
 - 예측에 활용할 전략 한개만 활용할 것을 추천합니다.  
