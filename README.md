@@ -52,10 +52,13 @@ python -m run_mrc --strategies RED_DPR_BERT --run_cnt 1 --debug False --report T
 ### Retrieval
 
 ```
-python -m run_retrieval --strategies RET_05_BM25_DPRBERT,RET_06_TFIDF_DPRBERT,RET_07_ATIREBM25_DPRBERT --run_cnt 1 --debug False --report False
+python -m run_retrieval --strategies RET_05_BM25_DPRBERT,RET_06_TFIDF_DPRBERT,RET_07_ATIREBM25_DPRBERT \
+                        --run_cnt 1 \
+                        --debug False \
+                        --report False
 ```
 
-![retriever-top-k-compare](https://user-images.githubuserc`ontent.com/40788624/119266107-6daf9480-bc24-11eb-85f5-6f6f09691c9b.png)  
+![retriever-top-k-compare](https://user-images.githubusercontent.com/40788624/119266107-6daf9480-bc24-11eb-85f5-6f6f09691c9b.png)  
   
 ## Installation
 ### Dependencies
