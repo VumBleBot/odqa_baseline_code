@@ -55,7 +55,7 @@ python -m run_mrc --strategies RED_DPR_BERT --run_cnt 1 --debug False --report T
 python -m run_retrieval --strategies RET_05_BM25_DPRBERT,RET_06_TFIDF_DPRBERT,RET_07_ATIREBM25_DPRBERT --run_cnt 1 --debug False --report False
 ```
 
-![retriever-top-k-compare](https://user-images.githubusercontent.com/40788624/119266107-6daf9480-bc24-11eb-85f5-6f6f09691c9b.png)  
+![retriever-top-k-compare](https://user-images.githubuserc`ontent.com/40788624/119266107-6daf9480-bc24-11eb-85f5-6f6f09691c9b.png)  
   
 ## Installation
 ### Dependencies
@@ -69,7 +69,8 @@ python -m run_retrieval --strategies RET_05_BM25_DPRBERT,RET_06_TFIDF_DPRBERT,RE
 - slack-sdk==3.5.1 
 - torch==1.7.1 
 - tqdm==4.41.1 
-- transformers==4.5.1   
+- transformers==4.5.1  
+- datasets==1.5.0
 - wandb==0.10.27 
 
 ```
@@ -83,7 +84,7 @@ pip install -r requirements.txt
 만약 `pororo` 설치 이후 학습속도가 지나치게 느려졌을 경우, 아래 명령으로 `torch` 버전업을 통해 GPU를 활성화해주세요. [이슈 참고](https://github.com/VumBleBot/odqa_baseline_code/issues/82)
 
 ```
-pip install torch==1.7.1+cu101 torchvision==0.8.2+cu101 torchaudio==0.7.2 -f https://download.pytorch.org/whl/torch_stable.html
+pip install torch==1.7.1+cu101 -f https://download.pytorch.org/whl/torch_stable.html
 ```
 
 ## File Structure  
