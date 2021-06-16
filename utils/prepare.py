@@ -5,7 +5,7 @@ from datasets import load_from_disk, load_dataset, concatenate_datasets, Dataset
 
 from reader import CustomHeadReader
 from utils.tokenization_kobert import KoBertTokenizer
-from retrieval.hybrid import Bm25DprBert, TfidfDprBert, LogisticBm25DprBert, LogisticAtireBm25DprBert, AtireBm25DprBert
+from retrieval.hybrid import TfidfDprBert, AtireBm25DprBert, LogisticTfidfDprBert, LogisticAtireBm25DprBert
 from retrieval.sparse import (
     TfidfRetrieval,
     BM25LRetrieval,
@@ -29,9 +29,8 @@ RETRIEVER = {
     "DPRELECTRA": DprElectra,
     # Hybrid
     "TFIDF_DPRBERT": TfidfDprBert,
-    "BM25_DPRBERT": Bm25DprBert,
     "ATIREBM25_DPRBERT": AtireBm25DprBert,
-    "LOG_BM25_DPRBERT": LogisticBm25DprBert,
+    "LOG_TFIDF_DPRBERT": LogisticTfidfDprBert,
     "LOG_ATIREBM25_DPRBERT": LogisticAtireBm25DprBert,
 }
 
