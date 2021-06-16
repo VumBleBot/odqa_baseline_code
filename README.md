@@ -17,7 +17,7 @@
   - [Baseline code](#baseline-code)
   - [Input](#input)
 - [Json File Example](#json-file-example)
-- [Dataset](#dataset)
+- [Dataset setting](#dataset-setting)
 - [Usage](#usage)
   - [Usage: Directory setting](#usage-directory-setting)
   - [Usage: Train](#usage-train)
@@ -26,11 +26,11 @@
   - [Usage: Validation](#usage-validation)
   - [Usage: Predict](#usage-predict)
   - [Usage: Make additional dataset](#usage-make-additional-dataset)
-- [TDD](#tdd)
+- [Test Driven Development](#test-driven-development)
 - [Contributors](#contributors)
 - [Reference](#reference)
   - [Papers](#papers)
-  - [Dataset](#dataset-1)
+  - [Dataset](#dataset)
 - [License](#license)
   
 ## DEMO
@@ -52,7 +52,10 @@ python -m run_mrc --strategies RED_DPR_BERT --run_cnt 1 --debug False --report T
 ### Retrieval
 
 ```
-python -m run_retrieval --strategies RET_05_BM25_DPRBERT,RET_06_TFIDF_DPRBERT,RET_07_ATIREBM25_DPRBERT --run_cnt 1 --debug False --report False
+python -m run_retrieval --strategies RET_05_BM25_DPRBERT,RET_06_TFIDF_DPRBERT,RET_07_ATIREBM25_DPRBERT \
+                        --run_cnt 1 \
+                        --debug False \
+                        --report False
 ```
 
 ![retriever-top-k-compare](https://user-images.githubusercontent.com/40788624/119266107-6daf9480-bc24-11eb-85f5-6f6f09691c9b.png)  
@@ -69,7 +72,8 @@ python -m run_retrieval --strategies RET_05_BM25_DPRBERT,RET_06_TFIDF_DPRBERT,RE
 - slack-sdk==3.5.1 
 - torch==1.7.1 
 - tqdm==4.41.1 
-- transformers==4.5.1   
+- transformers==4.5.1  
+- datasets==1.5.0
 - wandb==0.10.27 
 
 ```
@@ -83,7 +87,7 @@ pip install -r requirements.txt
 만약 `pororo` 설치 이후 학습속도가 지나치게 느려졌을 경우, 아래 명령으로 `torch` 버전업을 통해 GPU를 활성화해주세요. [이슈 참고](https://github.com/VumBleBot/odqa_baseline_code/issues/82)
 
 ```
-pip install torch==1.7.1+cu101 torchvision==0.8.2+cu101 torchaudio==0.7.2 -f https://download.pytorch.org/whl/torch_stable.html
+pip install torch==1.7.1+cu101 -f https://download.pytorch.org/whl/torch_stable.html
 ```
 
 ## File Structure  
@@ -200,13 +204,13 @@ input/
 전략 config 파일(ST00.json) 예시입니다.    
 arguments(hyperparameter)는 아래 파일들을 참고하여 수정하시면 됩니다.    
 
-- config/model_args.py
-- config/train_args.py
-- config/data_args.py
-- config/retriever_args.py
-- config/readme.md
+- [config/model_args.py](./config/model_args.py)
+- [config/train_args.py](./config/train_args.py)
+- [config/data_args.py](./config/data_args.py)
+- [config/retriever_args.py](./config/retriever_args.py)
+- [config/README.md](./config/README.md)
 
-예시 전략 파일들이 `examples/`에 존재하니, 참고하셔서 전략 파일을 작성하시면 됩니다.  
+예시 전략 파일들이 [examples/](./examples)에 존재하니, 참고하셔서 전략 파일을 작성하시면 됩니다.  
   
 ```json
 {
@@ -260,9 +264,9 @@ arguments(hyperparameter)는 아래 파일들을 참고하여 수정하시면 �
 }
 ```
 
-## Dataset
+## Dataset setting
 본 프로젝트는 `transformers` 라이브러리를 통해 KorQuAD 1.0을 불러와 학습 및 검증을 수행합니다.    
-**만약 custom dataset을 통해 학습을 수행하려면 아래와 같이 `input/data`에 커스텀 데이터셋을 넣어주어야 합니다.**
+**만약 custom dataset을 통해 학습을 수행하려면 아래와 같이 `input/data` 경로에 커스텀 데이터셋을 넣어주어야 합니다.**
 
 ```
 input/
@@ -292,7 +296,7 @@ input/
 
 :exclamation: **predict를 수행하려면 `input/data/wikipedia_documents.json`과 `input/data/test_dataset`이 필수적으로 존재**해야합니다.  
 
-- `wikipedia_documents.json`은 용량이 큰 관계로 프로젝트에서 직접적으로 제공하지 않습니다. [한국어 위키피디아](https://bit.ly/3yJ8KAl) 홈페이지에서 위키피디아 데이터를 다운받아 `examples/wikipedia_documents.json`과 같은 형식으로 가공하여 활용하시면 됩니다.  
+- `wikipedia_documents.json`은 용량이 큰 관계로 프로젝트에서 직접적으로 제공하지 않습니다. [한국어 위키피디아](https://bit.ly/3yJ8KAl) 홈페이지에서 위키피디아 데이터를 다운받아 [examples/wikipedia_documents.json](./examples/wikipedia_documents.json)과 같은 형식으로 가공하여 활용하시면 됩니다.  
 - `test_dataset`은 커스텀 데이터셋으로 [huggingface 공식 문서](https://huggingface.co/docs/datasets/v1.7.0/quicktour.html)를 참고하여 아래와 같은 형식으로 만들어 활용해주세요.  
   - Dataset 예시
     ```
@@ -487,7 +491,7 @@ input/
 
 - Reader와 Retriever를 동시에 활용하여 prediction을 진행합니다.
 - 예측에 활용할 전략 한개만 활용할 것을 추천합니다.  
-- **예측을 위해서는 예측 대상인 질문 dataset과 retrieval의 대상인 wikipedia document dataset이 필요합니다.** 자세한 내용은 [데이터셋 부분](#dataset)을 참조해주세요.
+- **예측을 위해서는 예측 대상인 질문 dataset과 retrieval의 대상인 wikipedia document dataset이 필요합니다.** 자세한 내용은 [데이터셋 설정](#dataset-setting)을 참조해주세요.
   
 - 예측 결과로 아래와 같이 전략명에 대한 디렉토리와 파일이 생성됩니다.
 - config 파일에서 `train.pororo_prediction` argument를 `True`로 주면 `pororo` 라이브러리로 예측값이 보완된 `pororo_predictions_test.json`이 함께 생성됩니다.
@@ -515,8 +519,8 @@ python -m make_dataset.kor_sample_dataset
 python -m make_dataset.negative_ctxs_dataset
 ```
 
-## TDD
-| [tester.py](./utils/tester.py) : 구현된 기능이 정상 작동되는지 테스트합니다.    
+## Test Driven Development
+- [tester.py](./utils/tester.py): 구현된 기능이 정상 작동되는지 테스트합니다.    
 
 - 검증할 전략을 옵션으로 입력  
 
