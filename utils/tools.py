@@ -88,7 +88,7 @@ def update_args(args, strategy):
     return args
 
 
-def get_args():
+def get_args(is_notebook=False):
     """
     Parse arguments and handle exceptions.
 
@@ -112,7 +112,11 @@ def get_args():
     # data_path + 'embed', 임베딩 데이터
     # data_path + 'train_data', MRC 데이터
 
-    args = arg_parser.parse_args()
+    if is_notebook:
+        args = arg_parser.parse_args([])
+    else:
+        args = arg_parser.parse_args()
+
     args.path = argparse.Namespace()
     args.path.info = p.join(args.data_path, "info")
     args.path.embed = p.join(args.data_path, "embed")

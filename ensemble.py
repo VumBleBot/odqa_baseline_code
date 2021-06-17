@@ -224,7 +224,7 @@ def run(args, models, eval_answers, datasets):
             reader.eval_dataset, datasets["validation"], keys=["context", "context_id", "id"]
         )
 
-        # Logit Standardization, ~1 ~ 1
+        # Logit Standardization, -1 ~ 1
         logit_list = logit_list_standardization(logit_list)
 
         soft_voting_use_offset(soft_offset_predictions, logit_list, contexts, document_ids, question_ids)
