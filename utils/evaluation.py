@@ -29,7 +29,7 @@ def get_gt_json(args):
     else:
         eval_datasets = None
 
-        if args.data.dataset_name == "train_data":
+        if args.data.dataset_name == "train_dataset":
             eval_datasets = load_from_disk(p.join(args.path.train_data_dir, args.data.dataset_name))["validation"]
         elif args.data.dataset_name == "squad_kor_v1":
             eval_datasets = load_dataset(args.data.dataset_name)["validation"]
