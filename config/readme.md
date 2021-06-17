@@ -23,7 +23,7 @@
 - config_name
 - tokenizer_name
 
-## TrainigArgs ( transformers에서 제공되는 인자들 )
+## TrainingArgs ( transformers에서 제공되는 인자들 )
 
 - output_dir: str
 - overwrite_output_dir: bool = False
