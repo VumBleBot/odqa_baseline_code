@@ -1,4 +1,4 @@
-![vumblebot-logo](https://i.imgur.com/ch7hFii.png)
+![vumblebot](https://user-images.githubusercontent.com/61135159/122643559-660fdc80-d14b-11eb-8595-a12589a7b77e.png)
 
 <b>Open-Domain Question Answering(ODQA)</b>는 다양한 주제에 대한 문서 집합으로부터 자연어 질의에 대한 답변을 찾아오는 task입니다. 이때 사용자 질의에 답변하기 위해 주어지는 지문이 따로 존재하지 않습니다. 따라서 사전에 구축되어있는 Knowledge Resource(본 글에서는 한국어 Wikipedia)에서 질문에 대답할 수 있는 문서를 찾는 과정이 필요합니다.
 
@@ -8,7 +8,7 @@
 
 # VumBleBot - BaselineCode  <!-- omit in toc -->
 
-- [Tutorial](#Tutorial)
+- [Tutorial](#tutorial)
 - [DEMO](#demo)
   - [Reader](#reader)
   - [Retrieval](#retrieval)
@@ -34,15 +34,15 @@
   - [Dataset](#dataset)
 - [License](#license)
 
-## Tutorial
+## Tutorial  
 
-Google Colab환경에서 간편하게  VumBleBot의 베이스라인 코드를 사용할 수 있습니다.
-
-- [ODQA Tutorial](https://colab.research.google.com/drive/1r1wJ4emb-esyq1L-R2_Aix81k44lJtwK?usp=sharing)
-- [Retrieval Tutorial](https://colab.research.google.com/drive/1U1P_WoNbBV3XO7I_YqVJmggPKVtQUXgi?usp=sharing)
-- [Reader Tutorial](https://colab.research.google.com/drive/1EZZy3xkSM1XbC9M9X1aeVpvMa7iKPP0W?usp=sharing)
-
-  
+Google Colab환경에서 간편하게 VumBleBot의 베이스라인 코드를 사용할 수 있습니다.
+<table>
+  <tr><td><strong>ODQA Tutorial</strong></td><td><a href="https://colab.research.google.com/drive/1r1wJ4emb-esyq1L-R2_Aix81k44lJtwK?usp=sharing"><img src="https://colab.research.google.com/assets/colab-badge.svg"/></a></td></tr>
+  <tr><td><strong>Retrieval Tutorial</strong></td><td><a href="https://colab.research.google.com/drive/1U1P_WoNbBV3XO7I_YqVJmggPKVtQUXgi?usp=sharing"><img src="https://colab.research.google.com/assets/colab-badge.svg"/></a></td></tr>
+  <tr><td><strong>Reader Tutorial</strong></td><td><a href="https://colab.research.google.com/drive/1EZZy3xkSM1XbC9M9X1aeVpvMa7iKPP0W?usp=sharing"><img src="https://colab.research.google.com/assets/colab-badge.svg"/></a></td></tr>
+</table>
+   
 ## DEMO
 
 아래 문서에서 사용할 수 있는 reader/retriever 모델을 확인하실 수 있습니다.  
