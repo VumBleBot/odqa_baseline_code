@@ -8,6 +8,7 @@
 
 # VumBleBot - BaselineCode  <!-- omit in toc -->
 
+- [Tutorial](#Tutorial)
 - [DEMO](#demo)
   - [Reader](#reader)
   - [Retrieval](#retrieval)
@@ -32,6 +33,15 @@
   - [Papers](#papers)
   - [Dataset](#dataset)
 - [License](#license)
+
+## Tutorial
+
+Google Colab환경에서 간편하게  VumBleBot의 베이스라인 코드를 사용할 수 있습니다.
+
+- [ODQA Tutorial](https://colab.research.google.com/drive/1r1wJ4emb-esyq1L-R2_Aix81k44lJtwK?usp=sharing)
+- [Retrieval Tutorial](https://colab.research.google.com/drive/1U1P_WoNbBV3XO7I_YqVJmggPKVtQUXgi?usp=sharing)
+- [Reader Tutorial](https://colab.research.google.com/drive/1EZZy3xkSM1XbC9M9X1aeVpvMa7iKPP0W?usp=sharing)
+
   
 ## DEMO
 
