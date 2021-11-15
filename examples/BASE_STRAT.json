@@ -1,0 +1,33 @@
+{
+    "alias": "BASE STRATEGIES",
+    "model": {
+        "retriever_name": "DPRBERT",
+        "tokenizer_name": "xlm-roberta-large"
+    },
+    "data": {
+        "dataset_name": "train_dataset",
+        "sub_datasets": ""
+    },
+    "train": {
+        "save_total_limit": 2,
+        "save_steps": 100,
+        "logging_steps": 100,
+        "overwrite_output_dir": true,
+        "do_train": true,
+        "do_eval": false,
+        "do_predict": false,
+        "report_to": [
+            "wandb"
+        ]
+    },
+    "retriever": {
+        "retrain": true,
+        "dense_train_dataset": "train_dataset",
+        "per_device_train_batch_size": 8,
+        "per_device_eval_batch_size": 1,
+        "topk": 10,
+        "alpha": 0.1,
+        "k1": 1.1,
+        "b": 0.3
+    }
+}
