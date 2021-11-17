@@ -83,11 +83,11 @@ class DpRetrieval(DenseRetrieval):
         # p_embedding: numpy, q_embedding: numpy
         result = np.matmul(q_embedding, self.p_embedding.T)
         phrase_indices = np.argsort(result, axis=1)[:, -topk:][:, ::-1]
-        print(self.mappings)
-        doc_indices = [self.mappings[idx] for idx in phrase_indices.flatten().tolist()]
+        doc_indices = [[self.mappings[phrase_indices[i][j]] for j in range(len(phrase_indices[i]))] for i in range(len(phrase_indices))]
+        doc_scores = []
 
-        for i in range(len(doc_indices)):
-            doc_scores.append(result[i][[doc_indices[i]]])
+        for i in range(len(phrase_indices)):
+            doc_scores.append(result[i][[phrase_indices[i].tolist()]])
 
         return doc_scores, doc_indices
 
@@ -114,7 +114,7 @@ class DpRetrieval(DenseRetrieval):
         for idx, passage in enumerate(tqdm.tqdm(self.contexts)):  # wiki
             splitted = passage.split()
             for i in range(len(splitted) // self.window_size * 2):
-                phrase = ' '.join(splitted[i*(self.window_size // 2):(i+2)*(self,window_size //2)])
+                phrase = ' '.join(splitted[i*(self.window_size // 2):(i+2)*(self.window_size //2)])
                 phrase = self.tokenizer(
                     phrase, padding="max_length", truncation=True, max_length=self.window_size, return_tensors="pt"
                 ).to("cuda")
