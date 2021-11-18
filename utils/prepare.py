@@ -13,7 +13,7 @@ from retrieval.sparse import (
     ATIREBM25Retrieval,
     BM25EnsembleRetrieval,
 )
-from retrieval.dense import DprBert, DpBert, BaseTrainMixin, Bm25TrainMixin, DPTrainMixin, ColBert, DprElectra
+from retrieval.dense import DprBert, DpBert, BaseTrainMixin, Bm25TrainMixin, DPTrainMixin, ColBert, DprElectra, BiEncoder
 
 
 RETRIEVER = {
@@ -27,6 +27,7 @@ RETRIEVER = {
     "COLBERT": ColBert,
     "DPRBERT": DprBert,
     "DensePhrase": DpBert,
+    "BPR": BiEncoder,
     "DPRELECTRA": DprElectra,
     # Hybrid
     "TFIDF_DPRBERT": TfidfDprBert,
@@ -66,6 +67,8 @@ def get_retriever(args):
         retriever_class = retriever_mixin_factory("bm25_mixin_class", retriever_class, Bm25TrainMixin)
     elif args.model.retriever_name == "DensePhrase":
         retriever_class = retriever_mixin_factory("dp_mixin_class", retriever_class, DPTrainMixin)
+    elif args.model.retriever_name == "BPR":
+        pass
     elif args.model.retriever_name != "COLBERT":
         retriever_class = retriever_mixin_factory("base_mixin_class", retriever_class, BaseTrainMixin)
 
